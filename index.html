@@ -1,0 +1,54 @@
+<!--
+ * Shimti Multimedia: Main HTML file for the sci-fi portfolio website
+ * Sets up the canvas, SVG, and panels for rendering UI elements, carousel, and animations.
+ * References consolidated scripts and styles, with meta tags for SEO and accessibility.
+ * @requires assets/styles/styles.css
+ * @requires assets/scripts/ui-elements.js, assets/scripts/background.js, assets/scripts/title-panel.js
+ * @requires assets/images/logo.svg, assets/images/*.svg for menu icons
+ * @requires assets/data/languages.xml for carousel
+ * @requires assets/images/favicon/favicon.ico for favicon
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Shimti Multimedia: Cutting-edge music, video, and AI projects with a futuristic sci-fi aesthetic.">
+  <meta name="keywords" content="Shimti Multimedia, music, video, AI, sci-fi, portfolio">
+  <meta name="author" content="Shimti Multimedia">
+  <meta property="og:title" content="Shimti Multimedia">
+  <meta property="og:description" content="Explore music, video, and AI projects with a sci-fi flair.">
+  <meta property="og:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/logo.svg">
+  <meta property="og:type" content="website">
+  <title>Shimti Multimedia</title>
+  <link rel="stylesheet" href="assets/styles/styles.css">
+  <link rel="icon" href="assets/images/favicon/favicon.ico" type="image/x-icon">
+  <!-- Fallback favicon (uncomment if needed): -->
+  <!-- <link rel="icon" href="assets/images/favicon.png" type="image/png"> -->
+</head>
+<body>
+  <!-- Background canvas for grid and particle animations -->
+  <canvas id="backgroundCanvas" aria-hidden="true"></canvas>
+  <!-- SVG container for UI elements (rings, squares, connection lines, etc.) -->
+  <svg id="uiSvg" aria-label="UI Elements"></svg>
+  <!-- Top branding panel with logo and text -->
+  <div id="shimtiPanel">
+    <img src="assets/images/logo.svg" alt="Shimti Multimedia Logo">
+    <span>SHIMTI MULTIMEDIA</span>
+  </div>
+  <!-- Radial menu SVG with interactive sectors -->
+  <div id="radialMenu">
+    <svg aria-label="Radial Navigation Menu">
+      <g id="wheelMenu"></g>
+    </svg>
+  </div>
+  <!-- Bottom panel with welcome text carousel -->
+  <div id="shimtiPanelBottom">
+    <span id="welcomeText" role="status">Loading...</span>
+  </div>
+  <!-- Consolidated scripts -->
+  <script src="assets/scripts/ui-elements.js"></script>
+  <script src="assets/scripts/title-panel.js"></script>
+  <script src="assets/scripts/background.js"></script>
+</body>
+</html>
