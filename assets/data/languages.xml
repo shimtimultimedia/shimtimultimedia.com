@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Language entries for the welcome text carousel -->
+<languages>
+  <language lang="English" text="Welcome" /> <!-- Shown once -->
+  <language lang="Spanish" text="Bienvenido" />
+  <language lang="French" text="Bienvenue" />
+  <language lang="German" text="Willkommen" />
+  <language lang="Russian" text="Добро пожаловать" />
+  <language lang="Mandarin" text="欢迎" />
+  <language lang="Japanese" text="ようこそ" />
+  <language lang="Hindi" text="स्वागत है" />
+  <language lang="Swahili" text="Karibu" />
+  <language lang="Arabic" text="أهلاً" />
+  <language lang="Portuguese" text="Bem-vindo" />
+  <language lang="Yoruba" text="Kaabọ" />
+  <language lang="Italian" text="Benvenuto" />
+  <language lang="Korean" text="환영합니다" />
+  <language lang="Bengali" text="স্বাগত" />
+  <language lang="Turkish" text="Hoş geldiniz" />
+  <language lang="Vietnamese" text="Chào mừng" />
+  <language lang="Polish" text="Witamy" />
+  <language lang="Ukrainian" text="Ласкаво просимо" />
+  <language lang="Thai" text="ยินดีต้อนรับ" />
+  <language lang="Dutch" text="Welkom" />
+  <language lang="Greek" text="Καλώς ήρθες" />
+  <language lang="Hebrew" text="ברוך הבא" />
+  <language lang="Indonesian" text="Selamat datang" />
+  <language lang="Malay" text="Selamat datang" />
+  <language lang="Persian" text="خوش آمدید" />
+  <language lang="Tamil" text="வரவேற்பு" />
+  <language lang="Urdu" text="خوش آمدید" />
+  <language lang="Punjabi" text="ਸੁਆਗਤ ਹੈ" />
+  <language lang="Telugu" text="స్వాగతం" />
+  <language lang="Marathi" text="स्वागत" />
+  <language lang="Amharic" text="እንኳን ደህና መጡ" />
+  <language lang="Zulu" text="Wamukelekile" />
+  <language lang="Hausa" text="Barka da zuwa" />
+  <language lang="Somali" text="Soo dhowow" />
+  <language lang="Igbo" text="Nnoo" />
+  <language lang="Tigrinya" text="እንቋዕ ብደሓን መፁ" />
+  <language lang="Xhosa" text="Wamkelekile" />
+  <language lang="Afrikaans" text="Welkom" />
+  <language lang="Shona" text="Mhoro" />
+  <language lang="Tagalog" text="Maligayang pagdating" />
+  <language lang="Burmese" text="ကြိုဆိုပါတယ်" />
+  <language lang="Khmer" text="ស្វាគមន៍" />
+  <language lang="Lao" text="ຍິນດີຕ້ອນຮັບ" />
+  <language lang="Sinhala" text="සාදරයෙන් පිළිගනිමු" />
+  <language lang="Nepali" text="स्वागत छ" />
+  <language lang="Pashto" text="ښه راغلاست" />
+  <language lang="Malagasy" text="Tongasoa" />
+  <language lang="Quechua" text="Allinlla" />
+  <language lang="Guarani" text="Tereg̃uahẽporãite" />
+  <language lang="Maori" text="Nau mai" />
+</languages>
