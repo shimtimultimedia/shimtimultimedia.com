@@ -42,10 +42,14 @@
   const PORT_RADIUS = 5;
   const STORAGE_KEY = 'shimti.nodePositions';
 
+  // `home` is the node's resting position: 12 o'clock above the wheel, 6 o'clock below.
   const NODES = [
-    { id: 'shimtiPanel', label: 'Shimti Multimedia panel' },
-    { id: 'shimtiPanelBottom', label: 'Welcome panel' },
+    { id: 'shimtiPanel', label: 'Shimti Multimedia panel', home: 'top' },
+    { id: 'shimtiPanelBottom', label: 'Welcome panel', home: 'bottom' },
   ];
+
+  const HOME_MARGIN_TOP = 20;
+  const HOME_MARGIN_BOTTOM = 12;
 
   const nodes = [];
 
@@ -99,6 +103,31 @@
     };
   }
 
+  /**
+   * The node's resting position, computed rather than measured.
+   *
+   * Reading the stylesheet-rendered position instead was subtly wrong: the branding
+   * panel is centred with translateX(-50%), and its width depends on the Orbitron
+   * webfont. Measuring before that font loads captures a narrower box, so the stored
+   * left ended up around 12px off centre and stayed there. Deriving the position from
+   * the current width is correct whenever it runs.
+   */
+  function homePosition(node) {
+    const left = (window.innerWidth - node.w) / 2;
+    const top = node.home === 'bottom'
+      ? window.innerHeight - node.h - HOME_MARGIN_BOTTOM
+      : HOME_MARGIN_TOP;
+    return { left, top };
+  }
+
+  /** Returns a node to its resting position, unless the visitor has moved it. */
+  function applyHome(node) {
+    if (node.userMoved) return;
+    measureNode(node);
+    const { left, top } = homePosition(node);
+    place(node, left, top);
+  }
+
   /** Re-measures everything. For resize, wheel rebuilds and content changes. */
   function remeasure() {
     measureWheel();
@@ -117,32 +146,116 @@
   function route(nodeRect, wheel) {
     const nx = nodeRect.left + nodeRect.width / 2;
     const ny = nodeRect.top + nodeRect.height / 2;
-    const dx = nx - wheel.cx;
-    const dy = ny - wheel.cy;
 
-    // Whichever axis the node is further out on decides which port it plugs into.
-    if (Math.abs(dx) >= Math.abs(dy)) {
-      const side = Math.sign(dx) || 1;
-      const port = { x: wheel.cx + side * wheel.r, y: wheel.cy };
-      // Leave from the node edge that faces the wheel.
-      const start = { x: side > 0 ? nodeRect.left : nodeRect.right, y: ny };
-      const mid = (start.x + port.x) / 2;
-      return {
-        d: `M ${start.x} ${start.y} H ${mid} V ${port.y} H ${port.x}`,
-        start,
-        port,
-      };
-    }
+    // Ports are always on the sides, never the top or bottom - the convention every node
+    // editor uses, where a node's connections enter on its left and leave on its right.
+    // The side is chosen by which half of the wheel the node sits on, so the wire never
+    // has to double back across the interface.
+    const side = Math.sign(nx - wheel.cx) || 1;
+    const port = { x: wheel.cx + side * wheel.r, y: wheel.cy };
+    // Leave from the node edge that faces the wheel.
+    const start = { x: side > 0 ? nodeRect.left : nodeRect.right, y: ny };
 
-    const side = Math.sign(dy) || 1;
-    const port = { x: wheel.cx, y: wheel.cy + side * wheel.r };
-    const start = { x: nx, y: side > 0 ? nodeRect.top : nodeRect.bottom };
-    const mid = (start.y + port.y) / 2;
+    // Run horizontally to the port's own column, then vertically into it.
+    //
+    // Bending at the midpoint instead would put the vertical segment somewhere between
+    // the node and the port - and for a node at 12 or 6 o'clock that column falls inside
+    // the wheel, so the wire would be drawn straight through the menu. The port sits on
+    // the wheel's extremity, so its column is tangent to the circle and always clear.
     return {
-      d: `M ${start.x} ${start.y} V ${mid} H ${port.x} V ${port.y}`,
+      d: `M ${start.x} ${start.y} H ${port.x} V ${port.y}`,
       start,
       port,
     };
+  }
+
+  /**
+   * Orthogonal route between two rectangles, for wiring a satellite panel to its host
+   * node. Same right-angled Z as route(), but ending on a box edge rather than a point
+   * on the wheel.
+   */
+  function routeBetween(from, to) {
+    const fy = from.top + from.height / 2;
+    const ty = to.top + to.height / 2;
+
+    // Side ports only, matching route(). Which side depends on where the satellite ended
+    // up relative to its host, so the wire leaves the facing edge of each box.
+    const right = to.left + to.width / 2 >= from.left + from.width / 2;
+    const start = { x: right ? from.right : from.left, y: fy };
+    const end = { x: right ? to.left : to.right, y: ty };
+    const mid = (start.x + end.x) / 2;
+
+    return { d: `M ${start.x} ${start.y} H ${mid} V ${end.y} H ${end.x}`, start, port: end };
+  }
+
+  /* -------------------------------------------------------------- satellites */
+
+  /*
+   * A satellite is a panel that hangs off a node rather than off the wheel - the section
+   * previews attached to the branding panel.
+   *
+   * It is placed beside its host and wired to it, and it follows whenever the host is
+   * dragged. Placement is clamped to the viewport and falls back through candidate sides
+   * so the panel can never end up hanging off the edge of the screen, no matter where
+   * the host has been moved to.
+   */
+  const satellites = [];
+  const SATELLITE_GAP = 18;
+  // Below this width the stylesheet turns the previews into a bottom sheet, which is far
+  // more usable on a phone than a panel tethered to a node. Anchoring is skipped there.
+  const ANCHOR_MIN_WIDTH = 901;
+
+  function anchoringEnabled() {
+    return window.innerWidth >= ANCHOR_MIN_WIDTH;
+  }
+
+  function positionSatellite(sat) {
+    const host = nodes.find((n) => n.id === sat.hostId);
+    if (!host) return;
+
+    // Cached size, never measured here. positionSatellite runs on every drag frame via
+    // drawWires, so a getBoundingClientRect in this function would reintroduce exactly
+    // the per-move synchronous reflow that made the wires lag in the first place.
+    // A panel's size is fixed once it is open, so measuring at anchor time is enough.
+    const w = sat.w;
+    const h = sat.h;
+    const hostBox = nodeBox(host);
+
+    // Candidate placements, in order of preference: right of the host, left of it, below,
+    // then above. The first that fits entirely on screen wins.
+    const candidates = [
+      { left: hostBox.right + SATELLITE_GAP, top: hostBox.top },
+      { left: hostBox.left - w - SATELLITE_GAP, top: hostBox.top },
+      { left: hostBox.left, top: hostBox.bottom + SATELLITE_GAP },
+      { left: hostBox.left, top: hostBox.top - h - SATELLITE_GAP },
+    ];
+
+    const fits = (c) =>
+      c.left >= EDGE_MARGIN &&
+      c.top >= EDGE_MARGIN &&
+      c.left + w <= window.innerWidth - EDGE_MARGIN &&
+      c.top + h <= window.innerHeight - EDGE_MARGIN;
+
+    // If none fits outright, clamp the first candidate. Clamping always yields a fully
+    // on-screen box, so the panel is never cut off - it just sits closer to the host.
+    const chosen = candidates.find(fits) || candidates[0];
+    const left = clamp(chosen.left, EDGE_MARGIN, Math.max(EDGE_MARGIN, window.innerWidth - w - EDGE_MARGIN));
+    const top = clamp(chosen.top, EDGE_MARGIN, Math.max(EDGE_MARGIN, window.innerHeight - h - EDGE_MARGIN));
+
+    sat.el.style.left = `${left}px`;
+    sat.el.style.top = `${top}px`;
+
+    const satBox = { left, top, width: w, height: h, right: left + w, bottom: top + h };
+    const { d, start, port } = routeBetween(hostBox, satBox);
+    sat.wire.path.setAttribute('d', d);
+    sat.wire.from.setAttribute('cx', start.x);
+    sat.wire.from.setAttribute('cy', start.y);
+    sat.wire.to.setAttribute('cx', port.x);
+    sat.wire.to.setAttribute('cy', port.y);
+  }
+
+  function updateSatellites() {
+    for (const sat of satellites) if (sat.active) positionSatellite(sat);
   }
 
   /* ------------------------------------------------------------------ wires */
@@ -172,6 +285,7 @@
       node.wire.to.setAttribute('cx', port.x);
       node.wire.to.setAttribute('cy', port.y);
     }
+    updateSatellites();
   }
 
   /* -------------------------------------------------------------- positioning */
@@ -245,7 +359,9 @@
     try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
     for (const node of nodes) {
       node.el.style.cssText = node.originalCss;
+      node.userMoved = false;
       detach(node);
+      applyHome(node);
     }
     drawWires();
   }
@@ -285,6 +401,7 @@
       node.el.removeEventListener('pointermove', move);
       node.el.removeEventListener('pointerup', end);
       node.el.removeEventListener('pointercancel', end);
+      node.userMoved = true;
       save();
     };
 
@@ -305,6 +422,7 @@
     else return;
 
     event.preventDefault();
+    node.userMoved = true;
     place(node, node.left + dx, node.top + dy);
     save();
   }
@@ -318,13 +436,16 @@
       const el = document.getElementById(spec.id);
       if (!el) continue;
 
-      const node = { id: spec.id, el, wire: makeWire(), originalCss: el.style.cssText };
+      const node = { id: spec.id, home: spec.home, el, wire: makeWire(), originalCss: el.style.cssText };
       nodes.push(node);
 
       detach(node);
       const pos = saved[spec.id];
       if (pos && Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
+        node.userMoved = true;
         place(node, pos.left, pos.top);
+      } else {
+        applyHome(node);
       }
 
       el.classList.add('node-panel');
@@ -340,6 +461,14 @@
 
     drawWires();
 
+    // Orbitron loads after first paint and changes the branding panel's width, which
+    // moves its centre. Re-home once the font is ready so 12 o'clock is exact.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        for (const node of nodes) applyHome(node);
+      });
+    }
+
     // Re-clamp on resize: a node parked against the right edge would otherwise end up
     // outside a narrowed window, unreachable and unrecoverable.
     window.addEventListener('resize', () => {
@@ -347,7 +476,8 @@
       measureWheel();
       for (const node of nodes) {
         measureNode(node);
-        place(node, node.left, node.top);
+        if (node.userMoved) place(node, node.left, node.top);
+        else applyHome(node);
       }
     });
 
@@ -364,6 +494,55 @@
       new MutationObserver(remeasure).observe(welcome, { childList: true, characterData: true, subtree: true });
     }
   }
+
+  /* ------------------------------------------------------------------- api */
+
+  /*
+   * Exposed so section-panels.js can attach a preview to a node without duplicating any
+   * geometry. Keeping every position and every wire in one module is what stopped the
+   * original connectors from being computed in two places that could disagree.
+   */
+  window.ShimtiNodes = {
+    /** Attaches `el` beside the node `hostId`, wired to it, and keeps it there. */
+    anchorTo(hostId, el) {
+      if (!el) return;
+      let sat = satellites.find((s) => s.el === el);
+      if (!sat) {
+        sat = { el, hostId, wire: makeWire(), active: false };
+        satellites.push(sat);
+      }
+      sat.hostId = hostId;
+
+      if (!anchoringEnabled()) {
+        // Narrow viewport: the stylesheet's bottom sheet takes over, so drop the inline
+        // position it would otherwise fight and hide the wire.
+        el.style.left = '';
+        el.style.top = '';
+        sat.wire.path.setAttribute('d', '');
+        sat.wire.from.setAttribute('cx', -9999);
+        sat.wire.to.setAttribute('cx', -9999);
+        sat.active = false;
+        return;
+      }
+
+      // Measure once, here, while it is safe to touch layout.
+      const r = el.getBoundingClientRect();
+      sat.w = r.width;
+      sat.h = r.height;
+      sat.active = true;
+      positionSatellite(sat);
+    },
+
+    /** Detaches `el`, hiding its wire. */
+    release(el) {
+      const sat = satellites.find((s) => s.el === el);
+      if (!sat) return;
+      sat.active = false;
+      sat.wire.path.setAttribute('d', '');
+      sat.wire.from.setAttribute('cx', -9999);
+      sat.wire.to.setAttribute('cx', -9999);
+    },
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

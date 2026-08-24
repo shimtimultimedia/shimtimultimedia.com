@@ -54,20 +54,25 @@ canvas#backgroundCanvas {
 }
 
 /*
- * Stacking order:
- *   0    #backgroundCanvas   grid + particles (positioned)
- *   -    #uiSvg              menu chrome (static, so it paints under positioned layers)
- *   1    #backgroundRings    decorative ring field and arced wordmark
- *   5    #shimtiPanel / #shimtiPanelBottom
- *   1000 #radialMenu         interactive layer, stays on top
+ * Stacking order, back to front:
  *
- * The ring field is deliberately translucent (alpha 0.1) and pointer-events:none, so
- * layering it over the static #uiSvg chrome tints it rather than hiding it, and never
- * intercepts a click meant for the radial menu.
+ *   0  #backgroundCanvas  particle grid
+ *   1  #backgroundRings   decorative ring field
+ *   2  #nodeWires         connectors, so they tuck under the menu they attach to
+ *   3  #uiSvg             the radial menu itself
+ *   4  #ringTitle         arced SHIMTI MULTIMEDIA wordmark
+ *   5  #shimtiPanel, #shimtiPanelBottom   the draggable nodes
+ *   6  #sectionPanels     section previews, above everything they overlap
  *
- * Note: ui-elements.js sets #uiSvg.style.zIndex = '999', which has no effect while the
- * element is position:static. Left as-is on purpose - giving it a position would lift
- * it above the branding panels and change the existing composition.
+ * #uiSvg previously had no position, and a static element paints beneath every
+ * positioned one regardless of z-index - so the menu sat behind the ring field, the
+ * wires and the panels, and read as background. It is positioned now so its place in
+ * this order is real. ui-elements.js used to set z-index 999 on it inline, which did
+ * nothing for the same reason; that assignment has been removed.
+ *
+ * Only #uiSvg and the node panels accept pointer events. Every other layer here spans
+ * the whole viewport, so any one of them left interactive becomes an invisible lid over
+ * the navigation.
  */
 
 /* Background Ring Field */
@@ -82,7 +87,30 @@ canvas#backgroundCanvas {
   background: transparent;
 }
 
-#backgroundRings .ring-title {
+/* The radial menu. Positioned so it sits in front of the ring field and the wires
+   rather than behind them - see the stacking note above. */
+#uiSvg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+}
+
+/* Arced wordmark, in front of the menu. */
+#ringTitle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+  background: transparent;
+}
+
+.ring-title {
   fill: var(--text-color);
   text-transform: uppercase;
   /* glowPulse animates the `filter` property, so a static `filter` declaration here
@@ -143,11 +171,19 @@ canvas#backgroundCanvas {
   border-color: var(--focus-outline);
 }
 
-/* Branding Panel (Top) */
+/*
+ * Branding Panel - default position: 12 o'clock.
+ *
+ * Centred on the same vertical axis as the radial menu, directly above it, with the
+ * welcome panel mirroring it at 6 o'clock. node-panels.js converts this to explicit
+ * coordinates on load and clears the centring transform, so it is only the starting
+ * position - the node can be dragged anywhere from there.
+ */
 #shimtiPanel {
   position: fixed;
   top: 20px;
-  left: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--panel-bg);
   padding: 8px 16px;
   border-radius: 10px;
@@ -180,7 +216,7 @@ canvas#backgroundCanvas {
   animation: glowPulse 3s ease-in-out infinite;
 }
 
-/* Welcome Panel (Bottom) */
+/* Welcome Panel - default position: 6 o'clock, mirroring the branding node above. */
 #shimtiPanelBottom {
   position: fixed;
   bottom: 12px;
@@ -308,41 +344,38 @@ canvas#backgroundCanvas {
   pointer-events: none;
 }
 
+/*
+ * Preview panels are positioned by node-panels.js, which anchors each one beside the
+ * branding node and keeps it inside the viewport.
+ *
+ * The stylesheet deliberately sets no left/top here: the two would fight, and whichever
+ * ran last would win. The data-hemisphere attribute is retained in the markup because it
+ * still describes which side of the wheel a section sits on, but it no longer drives
+ * placement.
+ */
 .section-panel {
-  position: absolute;
-  top: 50%;
+  position: fixed;
+  left: 0;
+  top: 0;
   width: min(390px, 26vw);
   margin: 0;
 
   /* Hidden with opacity, never display:none or visibility:hidden.
      Each sector link references this panel's paragraph via aria-describedby, and both
-     of those would drop the text out of the accessibility tree and break it. */
+     of those would drop the text out of the accessibility tree and break it.
+     It also has to keep a real size while closed, since it is measured before it is
+     shown in order to work out where it will fit. */
   opacity: 0;
   pointer-events: none;
 
-  transition:
-    opacity 0.42s ease,
-    transform 0.72s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Only opacity transitions. Animating position would make the panel visibly drift into
+     place after the wire had already arrived, reintroducing exactly the lag that was
+     just removed from the node wires. */
+  transition: opacity 0.28s ease;
 }
 
-.section-panel[data-hemisphere="left"] {
-  left: 2vw;
-  transform: translateY(-50%) translateX(-24px);
-}
-
-.section-panel[data-hemisphere="right"] {
-  right: 2vw;
-  transform: translateY(-50%) translateX(24px);
-}
-
-/* Open state: settle to resting position. */
 .section-panel.is-open {
   opacity: 1;
-}
-
-.section-panel.is-open[data-hemisphere="left"],
-.section-panel.is-open[data-hemisphere="right"] {
-  transform: translateY(-50%) translateX(0);
 }
 
 .section-panel-surface {
@@ -415,23 +448,19 @@ canvas#backgroundCanvas {
  * and two side panels competing for width, which starts well before tablet width.
  */
 @media (max-width: 900px) {
-  .section-panel,
-  .section-panel[data-hemisphere="left"],
-  .section-panel[data-hemisphere="right"] {
-    top: auto;
+  /* !important because node-panels.js may have written an inline left/top before the
+     viewport was narrowed. Anchoring is disabled below this width, but a panel anchored
+     while the window was wide must still fall back cleanly to the bottom sheet. */
+  .section-panel {
+    top: auto !important;
     bottom: 64px;
-    left: 50%;
+    left: 50% !important;
     right: auto;
     width: min(440px, 92vw);
     max-height: 46vh;
     overflow-y: auto;
     overscroll-behavior: contain;
-    transform: translateX(-50%) translateY(16px);
-  }
-
-  .section-panel.is-open[data-hemisphere="left"],
-  .section-panel.is-open[data-hemisphere="right"] {
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%);
   }
 
   /* The image is the first thing to sacrifice when height is tight - the copy is what
@@ -446,9 +475,7 @@ canvas#backgroundCanvas {
     display: none;
   }
 
-  .section-panel,
-  .section-panel[data-hemisphere="left"],
-  .section-panel[data-hemisphere="right"] {
+  .section-panel {
     bottom: 56px;
     max-height: 40vh;
   }
@@ -589,7 +616,6 @@ canvas#backgroundCanvas {
 @media (max-width: 768px) {
   #shimtiPanel {
     top: 10px;
-    left: 10px;
     padding: 6px 12px;
   }
 
@@ -621,7 +647,6 @@ canvas#backgroundCanvas {
 @media (max-width: 480px) {
   #shimtiPanel {
     top: 10px;
-    left: 10px;
     padding: 4px 8px;
   }
 

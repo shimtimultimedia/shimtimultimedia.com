@@ -439,7 +439,8 @@ function initUIElements() {
         const ctx = canvas.getContext('2d', { willReadFrequently: true }); // Added willReadFrequently: true to optimize getImageData calls
 
         svgElement.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
-        svgElement.style.zIndex = '999';
+        // Stacking is set in the stylesheet. Assigning it here had no effect anyway:
+        // the element is position:static, where z-index is ignored.
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
 

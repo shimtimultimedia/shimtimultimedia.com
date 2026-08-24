@@ -186,9 +186,21 @@
       </g>
     </g>
 
-    <!-- Rotating arced wordmark. Slow 160s revolution around the same centre. -->
+  </svg>
+
+  <!--
+    Arced wordmark, on its own layer above the radial menu.
+
+    It was previously inside #backgroundRings, which is a background layer, so the
+    wordmark was painted behind the menu chrome along with the decorative rings. Same
+    viewBox, so the geometry is identical; only the stacking changes.
+  -->
+  <svg id="ringTitle" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <defs>
+      <path id="titleArc" d="M 48 100 A 52 52 0 0 1 152 100" />
+    </defs>
     <text class="ring-title" font-family="Orbitron, sans-serif" font-weight="600" font-size="8" letter-spacing="0.1em">
-      <textPath href="#textArc" startOffset="50%" text-anchor="middle">SHIMTI MULTIMEDIA</textPath>
+      <textPath href="#titleArc" startOffset="50%" text-anchor="middle">SHIMTI MULTIMEDIA</textPath>
       <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="160s" repeatCount="indefinite"/>
     </text>
   </svg>

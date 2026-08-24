@@ -63,12 +63,20 @@
     if (!panel) return;
     revealImage(panel);
     panel.classList.add('is-open');
+    // Hang the preview off the branding node and wire it there. node-panels.js owns all
+    // node geometry, so it decides where the panel actually lands - including keeping it
+    // on screen wherever the branding node has been dragged to.
+    window.ShimtiNodes?.anchorTo('shimtiPanel', panel);
     openSection = section;
   }
 
   function close() {
     if (openSection === null) return;
-    panels.get(openSection)?.classList.remove('is-open');
+    const panel = panels.get(openSection);
+    if (panel) {
+      panel.classList.remove('is-open');
+      window.ShimtiNodes?.release(panel);
+    }
     openSection = null;
   }
 
