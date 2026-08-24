@@ -1,0 +1,39 @@
+# Environment files and credentials
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Local AI/session state
+_chatgpt/
+.claude/settings.local.json
+
+# Google Drive temporary synchronization directories
+.tmp.drivedownload/
+.tmp.driveupload/
+
+# Test and coverage output
+test-results/
+playwright-report/
+coverage/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
