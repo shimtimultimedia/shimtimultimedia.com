@@ -464,22 +464,6 @@ canvas#backgroundCanvas {
   color: var(--text-color);
 }
 
-.section-panel-cue {
-  align-self: flex-start;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid rgba(180, 220, 255, 0.6);
-  border-radius: 5px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-color);
-}
-
-.section-panel-cue::after {
-  content: ' \2192';
-}
-
 /*
  * Narrow screens: the side panels become a bottom sheet.
  *

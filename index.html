@@ -285,6 +285,10 @@
     image inside an opacity-driven subtree never satisfies the browser's visibility
     heuristic and can stay blank permanently - the same trap already hit and documented
     in the Bryant Duhart codebase.
+
+    These panels contain no controls, and must not. They are pointer-events:none, so
+    anything button-shaped in here can never be clicked - it would be a control that
+    looks operable and silently is not. Activating the radial sector is what navigates.
   -->
   <div id="sectionPanels">
     <article class="section-panel" id="panel-contact" data-hemisphere="right">
@@ -292,7 +296,6 @@
         <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/contact.webp" alt="" width="640" height="360" decoding="async">
         <h2 class="section-panel-title">Contact</h2>
         <p class="section-panel-copy" id="copy-contact">Reach out through our digital conduits for inquiries or collaborations. Discover how Shimti Multimedia can elevate your projects with custom AI and multimedia solutions&mdash;your gateway to innovation awaits just a message away.</p>
-        <span class="section-panel-cue" aria-hidden="true">Open section</span>
       </div>
     </article>
 
@@ -301,7 +304,6 @@
         <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/ai.webp" alt="" width="640" height="360" decoding="async">
         <h2 class="section-panel-title">AI</h2>
         <p class="section-panel-copy" id="copy-ai">Navigate the AI frontier with Shimti Multimedia&rsquo;s advanced services, symbolized by a landscape of intelligent circuits. Uncover our cutting-edge tools and consultations that empower your creative vision&mdash;prepare to unlock new realms of possibility.</p>
-        <span class="section-panel-cue" aria-hidden="true">Open section</span>
       </div>
     </article>
 
@@ -310,7 +312,6 @@
         <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/work.webp" alt="" width="640" height="360" decoding="async">
         <h2 class="section-panel-title">Work</h2>
         <p class="section-panel-copy" id="copy-work">Traverse the dynamic landscape of our portfolio, showcasing Shimti Multimedia&rsquo;s groundbreaking projects in digital and print assets. Explore how we blend art and technology to create lasting impact&mdash;your inspiration for what&rsquo;s possible starts here.</p>
-        <span class="section-panel-cue" aria-hidden="true">Open section</span>
       </div>
     </article>
 
@@ -319,7 +320,6 @@
         <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/media.webp" alt="" width="640" height="360" decoding="async">
         <h2 class="section-panel-title">Media</h2>
         <p class="section-panel-copy" id="copy-media">Embark on a sonic and visual adventure with Shimti Multimedia&rsquo;s media offerings, where immersive audio and captivating visuals converge. Tease your senses with our collection of soundtracks and effects&mdash;dive deeper to experience the full spectrum of our multimedia mastery.</p>
-        <span class="section-panel-cue" aria-hidden="true">Open section</span>
       </div>
     </article>
 
@@ -328,7 +328,6 @@
         <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/shop.webp" alt="" width="640" height="360" decoding="async">
         <h2 class="section-panel-title">Shop</h2>
         <p class="section-panel-copy" id="copy-shop">Wander through our storefront landscape, filled with premium digital and print assets ready for your projects. Discover the tools that bring your ideas to life with Shimti Multimedia&mdash;your journey to creative excellence begins with a single purchase.</p>
-        <span class="section-panel-cue" aria-hidden="true">Open section</span>
       </div>
     </article>
 
@@ -337,7 +336,6 @@
         <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/about.webp" alt="" width="640" height="360" decoding="async">
         <h2 class="section-panel-title">About</h2>
         <p class="section-panel-copy" id="copy-about">Journey through the innovative landscape of Shimti Multimedia, where art and technology merge seamlessly. Learn about our commitment to &ldquo;Bringing Art To Life&rdquo; since 2007&mdash;uncover the story behind our digital assets, AI services, and immersive audio.</p>
-        <span class="section-panel-cue" aria-hidden="true">Open section</span>
       </div>
     </article>
   </div>
