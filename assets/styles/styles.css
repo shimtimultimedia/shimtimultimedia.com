@@ -173,6 +173,27 @@ canvas#backgroundCanvas {
   to   { transform: rotate(0deg); }
 }
 
+/*
+ * Markers turning on their own centres while the ring carries them around, as the ones in
+ * the middle of the menu do.
+ *
+ * transform-box:fill-box here, not view-box: each marker turns about ITS OWN centre, so
+ * the origin has to be its own box. The ring around them uses view-box, because that one
+ * turns about the field's shared centre.
+ *
+ * Each carries a negative animation-delay, so they sit at different points in the cycle
+ * and read as independent rather than as one stamped pattern. Costs nothing - same
+ * animation, different start phase.
+ *
+ * These were 16 SMIL timelines before. As CSS transforms the compositor handles them, so
+ * the effect comes back without the main-thread cost that made it worth removing.
+ */
+.ring-marker-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ringSpinCw 6s linear infinite;
+}
+
 .ring-title {
   fill: var(--text-color);
   text-transform: uppercase;
@@ -834,6 +855,7 @@ canvas#backgroundCanvas {
      also what replaced the SMIL pause script, since none of this is SMIL any more. */
   .ring-spin-cw,
   .ring-spin-ccw,
+  .ring-marker-spin,
   .rotating-squares,
   .rotating-square,
   .segmented-ring.ring-0,
