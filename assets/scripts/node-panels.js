@@ -40,7 +40,10 @@
   const KEY_STEP = 8;         // Pixels moved per arrow-key press.
   const KEY_STEP_LARGE = 32;  // With Shift held.
   const PORT_RADIUS = 5;
-  const STORAGE_KEY = 'shimti.nodePositions';
+  // Versioned. The resting positions changed to 12 and 6 o'clock, and a stored layout
+  // from before that keeps overriding them - the node looks stuck in its old place with
+  // no obvious cause. Bumping the key retires stale layouts instead of stranding them.
+  const STORAGE_KEY = 'shimti.nodePositions.v2';
 
   // `home` is the node's resting position: 12 o'clock above the wheel, 6 o'clock below.
   const NODES = [
@@ -146,27 +149,44 @@
   function route(nodeRect, wheel) {
     const nx = nodeRect.left + nodeRect.width / 2;
     const ny = nodeRect.top + nodeRect.height / 2;
+    const dx = nx - wheel.cx;
+    const dy = ny - wheel.cy;
 
-    // Ports are always on the sides, never the top or bottom - the convention every node
-    // editor uses, where a node's connections enter on its left and leave on its right.
-    // The side is chosen by which half of the wheel the node sits on, so the wire never
-    // has to double back across the interface.
-    const side = Math.sign(nx - wheel.cx) || 1;
+    // The axis the node sits furthest out on decides which port it plugs into. At the
+    // resting positions - 12 and 6 o'clock - that is the vertical axis, so the wire runs
+    // straight down out of the title's bottom edge into the top of the wheel, and
+    // straight up out of the welcome panel's top edge into the bottom of it.
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      const side = Math.sign(dy) || -1;
+      const port = { x: wheel.cx, y: wheel.cy + side * wheel.r };
+      // Leave from the node edge facing the wheel, at its horizontal centre.
+      const start = { x: nx, y: side > 0 ? nodeRect.top : nodeRect.bottom };
+
+      // Centred on the port: one unbroken vertical line, with no redundant command.
+      if (Math.abs(start.x - port.x) < 0.5) {
+        return { d: `M ${port.x} ${start.y} V ${port.y}`, start: { x: port.x, y: start.y }, port };
+      }
+
+      // Dragged off the axis: drop halfway, step across, continue down. The crossing
+      // happens at the midpoint between node and wheel, which is clear of the wheel
+      // because the node is above or below it.
+      const mid = (start.y + port.y) / 2;
+      return { d: `M ${start.x} ${start.y} V ${mid} H ${port.x} V ${port.y}`, start, port };
+    }
+
+    // Node is out to one side: use the left or right port instead.
+    const side = Math.sign(dx) || 1;
     const port = { x: wheel.cx + side * wheel.r, y: wheel.cy };
-    // Leave from the node edge that faces the wheel.
     const start = { x: side > 0 ? nodeRect.left : nodeRect.right, y: ny };
 
-    // Run horizontally to the port's own column, then vertically into it.
-    //
-    // Bending at the midpoint instead would put the vertical segment somewhere between
-    // the node and the port - and for a node at 12 or 6 o'clock that column falls inside
-    // the wheel, so the wire would be drawn straight through the menu. The port sits on
-    // the wheel's extremity, so its column is tangent to the circle and always clear.
-    return {
-      d: `M ${start.x} ${start.y} H ${port.x} V ${port.y}`,
-      start,
-      port,
-    };
+    if (Math.abs(start.y - port.y) < 0.5) {
+      return { d: `M ${start.x} ${port.y} H ${port.x}`, start: { x: start.x, y: port.y }, port };
+    }
+
+    // Run to the port's own column before turning. Bending at the midpoint would put the
+    // vertical segment inside the wheel; the port sits on the wheel's extremity, so its
+    // column is tangent to the circle and always clear.
+    return { d: `M ${start.x} ${start.y} H ${port.x} V ${port.y}`, start, port };
   }
 
   /**
