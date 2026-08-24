@@ -449,7 +449,12 @@ canvas#backgroundCanvas {
  * origin is the SVG viewport's origin, not the circle's own centre, so the core would
  * swing around the middle of the screen instead of swelling in place.
  */
+/* transform-box is required here, not optional. coreHalo scales this circle, and without
+   fill-box the origin is the SVG viewport's corner rather than the circle's own centre -
+   so it swings across the screen instead of swelling in place. */
 #wheelMenu .inner-filled-circle {
+  transform-box: fill-box;
+  transform-origin: center;
   animation: coreHalo 9s ease-in-out infinite;
 }
 
