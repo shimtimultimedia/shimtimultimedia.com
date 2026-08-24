@@ -51,17 +51,59 @@
 
   /* ---------------------------------------------------------------- geometry */
 
-  /**
-   * The rendered wheel, in screen pixels. Measured rather than assumed: #wheelMenu is
-   * the group holding the six sectors, so its box is the wheel.
+  /*
+   * Cached geometry.
+   *
+   * Nothing here reads layout while a drag is in progress. Measuring inside pointermove
+   * is what made the wire trail behind the panel: each move wrote style.left/top and
+   * then called getBoundingClientRect, forcing a synchronous reflow on every event.
+   * Two panels plus an SVG bounding-box read per move overruns the frame budget, so the
+   * panel - which the compositor can move cheaply - paints while the wire arrives a
+   * frame or two later.
+   *
+   * Sizes and the wheel's position cannot change during a drag, so they are measured
+   * once and reused. Both the panel's style and its wire are then derived from the same
+   * in-memory numbers, which is what guarantees they land in the same frame.
    */
-  function wheelGeometry() {
+  let wheelCache = null;
+
+  function measureWheel() {
     const wheel = document.getElementById('wheelMenu');
     const box = wheel && wheel.getBoundingClientRect();
-    if (box && box.width > 0) {
-      return { cx: box.left + box.width / 2, cy: box.top + box.height / 2, r: box.width / 2 };
-    }
-    return { cx: window.innerWidth / 2, cy: window.innerHeight / 2, r: 180 };
+    wheelCache = (box && box.width > 0)
+      ? { cx: box.left + box.width / 2, cy: box.top + box.height / 2, r: box.width / 2 }
+      : { cx: window.innerWidth / 2, cy: window.innerHeight / 2, r: 180 };
+    return wheelCache;
+  }
+
+  function wheelGeometry() {
+    return wheelCache || measureWheel();
+  }
+
+  /** Caches a node's rendered size. Called only when it can actually have changed. */
+  function measureNode(node) {
+    const r = node.el.getBoundingClientRect();
+    node.w = r.width;
+    node.h = r.height;
+  }
+
+  /** A node's box built from cached numbers, with no layout read. */
+  function nodeBox(node) {
+    return {
+      left: node.left,
+      top: node.top,
+      width: node.w,
+      height: node.h,
+      right: node.left + node.w,
+      bottom: node.top + node.h,
+    };
+  }
+
+  /** Re-measures everything. For resize, wheel rebuilds and content changes. */
+  function remeasure() {
+    measureWheel();
+    for (const node of nodes) measureNode(node);
+    drawWires();
   }
 
   /**
@@ -123,8 +165,7 @@
   function drawWires() {
     const wheel = wheelGeometry();
     for (const node of nodes) {
-      const r = node.el.getBoundingClientRect();
-      const { d, start, port } = route(r, wheel);
+      const { d, start, port } = route(nodeBox(node), wheel);
       node.wire.path.setAttribute('d', d);
       node.wire.from.setAttribute('cx', start.x);
       node.wire.from.setAttribute('cy', start.y);
@@ -141,11 +182,16 @@
     return Math.max(min, Math.min(value, max));
   }
 
-  /** Moves a node to an absolute viewport position, never allowing it off screen. */
+  /**
+   * Moves a node to an absolute viewport position, never allowing it off screen.
+   *
+   * Uses the cached size rather than measuring, so this stays a pure write during a
+   * drag: no layout is read, and the panel's style and its wire are both derived from
+   * node.left/node.top in the same pass.
+   */
   function place(node, left, top) {
-    const r = node.el.getBoundingClientRect();
-    const maxLeft = window.innerWidth - r.width - EDGE_MARGIN;
-    const maxTop = window.innerHeight - r.height - EDGE_MARGIN;
+    const maxLeft = window.innerWidth - node.w - EDGE_MARGIN;
+    const maxTop = window.innerHeight - node.h - EDGE_MARGIN;
     node.left = clamp(left, EDGE_MARGIN, maxLeft);
     node.top = clamp(top, EDGE_MARGIN, maxTop);
     node.el.style.left = `${node.left}px`;
@@ -170,6 +216,8 @@
     node.el.style.top = `${r.top}px`;
     node.left = r.left;
     node.top = r.top;
+    node.w = r.width;
+    node.h = r.height;
   }
 
   /* -------------------------------------------------------------- persistence */
@@ -221,9 +269,9 @@
     }
     node.el.classList.add('is-dragging');
 
-    const r = node.el.getBoundingClientRect();
-    const grabX = event.clientX - r.left;
-    const grabY = event.clientY - r.top;
+    // Cached position, not a measurement: the drag must not touch layout at all.
+    const grabX = event.clientX - node.left;
+    const grabY = event.clientY - node.top;
 
     const move = (e) => place(node, e.clientX - grabX, e.clientY - grabY);
 
@@ -295,20 +343,25 @@
     // Re-clamp on resize: a node parked against the right edge would otherwise end up
     // outside a narrowed window, unreachable and unrecoverable.
     window.addEventListener('resize', () => {
-      for (const node of nodes) place(node, node.left, node.top);
+      // The wheel re-centres and the panels can reflow, so the caches are stale here.
+      measureWheel();
+      for (const node of nodes) {
+        measureNode(node);
+        place(node, node.left, node.top);
+      }
     });
 
     // The wheel is built about a second after DOMContentLoaded and rebuilt on resize.
     // Redraw whenever it changes so the wires stay attached to where it actually is.
     const uiSvg = document.getElementById('uiSvg');
     if (uiSvg) {
-      new MutationObserver(drawWires).observe(uiSvg, { childList: true, subtree: true });
+      new MutationObserver(remeasure).observe(uiSvg, { childList: true, subtree: true });
     }
 
     // The welcome carousel changes the bottom panel's text, which can change its width.
     const welcome = document.getElementById('welcomeText');
     if (welcome) {
-      new MutationObserver(drawWires).observe(welcome, { childList: true, characterData: true, subtree: true });
+      new MutationObserver(remeasure).observe(welcome, { childList: true, characterData: true, subtree: true });
     }
   }
 
