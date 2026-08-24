@@ -257,7 +257,19 @@
    * the host has been moved to.
    */
   const satellites = [];
-  const SATELLITE_GAP = 18;
+  /*
+   * How far a preview stands off from its host.
+   *
+   * Generous on purpose. At a small gap the preview crowds the title panel, and the
+   * connector between them collapses to a stub that reads as the two boxes being stuck
+   * together rather than wired. Standing it well clear gives the wire room to be legible
+   * as a connection, which is the whole point of the node metaphor.
+   *
+   * It is a preference, not a guarantee: candidates are clamped into the viewport before
+   * they are scored, so on a narrow window the gap simply closes up rather than pushing
+   * the panel off screen.
+   */
+  const SATELLITE_GAP = 140;
   // Below this width the stylesheet turns the previews into a bottom sheet, which is far
   // more usable on a phone than a panel tethered to a node. Anchoring is skipped there.
   const ANCHOR_MIN_WIDTH = 901;
@@ -292,6 +304,13 @@
      * whichever side is actually clear rather than always favouring one.
      */
     const midTop = hostBox.top + hostBox.height / 2 - h / 2;
+
+    // Each preview belongs to a hemisphere of the wheel - About, Shop and Media sit on
+    // the left, Contact, AI and Work on the right - and opens on that side, so the panel
+    // appears on the same side as the sector that summoned it. Carried on the markup as
+    // data-hemisphere.
+    const wantRight = sat.side !== 'left';
+
     const raw = [
       { left: hostBox.right + SATELLITE_GAP, top: hostBox.top },
       { left: hostBox.left - w - SATELLITE_GAP, top: hostBox.top },
@@ -301,7 +320,10 @@
       { left: hostBox.left, top: hostBox.top - h - SATELLITE_GAP },
       { left: hostBox.right + SATELLITE_GAP, top: hostBox.bottom + SATELLITE_GAP },
       { left: hostBox.left - w - SATELLITE_GAP, top: hostBox.bottom + SATELLITE_GAP },
-      // Screen corners, for when the host is boxed in and nothing beside it is clear.
+      // Screen edges on the preferred side, so a boxed-in host still yields a placement
+      // on the correct hemisphere rather than falling to whichever corner scores first.
+      { left: EDGE_MARGIN, top: midTop },
+      { left: window.innerWidth - w - EDGE_MARGIN, top: midTop },
       { left: EDGE_MARGIN, top: EDGE_MARGIN },
       { left: window.innerWidth - w - EDGE_MARGIN, top: EDGE_MARGIN },
       { left: EDGE_MARGIN, top: window.innerHeight - h - EDGE_MARGIN },
@@ -347,6 +369,19 @@
     const distanceFromHost = (c) =>
       Math.hypot(c.left + w / 2 - hostCx, c.top + h / 2 - hostCy);
 
+    /*
+     * Ranking, in strict order of importance:
+     *
+     *   1. covers none of the foreground
+     *   2. lands on the preview's own hemisphere
+     *   3. sits closest to the host
+     *
+     * Combined into one number so the comparison cannot drift out of that order: the
+     * weights are far enough apart that no amount of distance can outvote a side, and no
+     * side can outvote covering the menu. Sorting by side before coverage would put a
+     * panel on the correct side and on top of the menu, which is the worse failure.
+     */
+    const midX = window.innerWidth / 2;
     let best = null;
     for (const c of raw) {
       const cand = {
@@ -355,8 +390,11 @@
       };
       const cover = coverage(cand);
       const near = distanceFromHost(cand);
-      if (!best || cover < best.cover - 1 || (Math.abs(cover - best.cover) <= 1 && near < best.near)) {
-        best = { ...cand, cover, near };
+      const onRight = cand.left + w / 2 >= midX;
+      const wrongSide = onRight === wantRight ? 0 : 1;
+      const score = cover * 1e7 + wrongSide * 1e4 + near;
+      if (!best || score < best.score) {
+        best = { ...cand, cover, near, wrongSide, score };
       }
     }
 
@@ -611,6 +649,7 @@
         satellites.push(sat);
       }
       sat.hostId = hostId;
+      sat.side = el.dataset.hemisphere === 'left' ? 'left' : 'right';
 
       if (!anchoringEnabled()) {
         // Narrow viewport: the stylesheet's bottom sheet takes over, so drop the inline
