@@ -129,7 +129,7 @@
     place(node, left, top);
   }
 
-  /** Re-measures everything. For resize, wheel rebuilds and content changes. */
+  /** Re-measures everything. For wheel rebuilds, where only the wires need updating. */
   function remeasure() {
     measureWheel();
     for (const node of nodes) measureNode(node);
@@ -712,10 +712,53 @@
       new MutationObserver(remeasure).observe(uiSvg, { childList: true, subtree: true });
     }
 
-    // The welcome carousel changes the bottom panel's text, which can change its width.
-    const welcome = document.getElementById('welcomeText');
-    if (welcome) {
-      new MutationObserver(remeasure).observe(welcome, { childList: true, characterData: true, subtree: true });
+    /*
+     * The welcome panel shrink-wraps its greeting, so its width changes every time the
+     * carousel cycles - and it must stay centred on the wheel's axis through every one
+     * of those changes.
+     *
+     * A ResizeObserver watches the box itself. Watching the TEXT for mutations and
+     * re-measuring in response was subtly wrong: the callback runs as a microtask, and
+     * the size read back could still be the old one, so the panel was positioned using a
+     * width it no longer had and settled off centre - visibly left of the wire still
+     * dropping down the centre line.
+     *
+     * A ResizeObserver cannot have that problem: it fires because the size changed and
+     * hands over the new size. Repositioning does not resize anything, so this cannot
+     * feed back on itself.
+     */
+    if (window.ResizeObserver) {
+      const sizeObserver = new ResizeObserver((entries) => {
+        let changed = false;
+        for (const entry of entries) {
+          const node = nodes.find((n) => n.el === entry.target);
+          if (!node) continue;
+
+          // Border box, to match getBoundingClientRect - contentRect excludes padding and
+          // border, which would under-measure this panel by 36px and shift it off centre.
+          const border = entry.borderBoxSize && entry.borderBoxSize[0];
+          const w = border ? border.inlineSize : node.el.getBoundingClientRect().width;
+          const h = border ? border.blockSize : node.el.getBoundingClientRect().height;
+          if (Math.abs(w - node.w) < 0.5 && Math.abs(h - node.h) < 0.5) continue;
+
+          const cx = node.left + node.w / 2;
+          const cy = node.top + node.h / 2;
+          node.w = w;
+          node.h = h;
+
+          // Untouched nodes return home, which re-centres them. A node the visitor moved
+          // keeps its centre, so it grows evenly either side instead of creeping sideways.
+          if (node.userMoved) {
+            place(node, cx - w / 2, cy - h / 2);
+          } else {
+            const home = homePosition(node);
+            place(node, home.left, home.top);
+          }
+          changed = true;
+        }
+        if (changed) drawWires();
+      });
+      for (const node of nodes) sizeObserver.observe(node.el);
     }
   }
 

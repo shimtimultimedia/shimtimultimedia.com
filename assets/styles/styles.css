@@ -241,7 +241,29 @@ canvas#backgroundCanvas {
   padding: 8px 16px;
   border-radius: 10px;
   border: 2px solid var(--border-color);
-  width: 300px;
+  /*
+   * Sized to the greeting, not to a fixed 300px.
+   *
+   * The carousel cycles through 36 languages whose words differ enormously in width -
+   * "Hi" against "Добро пожаловать" - so a fixed box left most of them swimming in empty
+   * space and risked clipping the longest. width:auto with the panel's flex centring lets
+   * it shrink-wrap the word.
+   *
+   * min-width only stops the very shortest words - "Hi", a two-glyph CJK greeting -
+   * collapsing into something too small to read as a panel or to grab as a drag handle.
+   * Kept low on purpose: at 140px it floored most of the 36 greetings, so "Hi",
+   * "Welcome" and "Bienvenido" all rendered at exactly the same size and the panel never
+   * appeared to respond to its contents at all.
+   *
+   * max-width keeps the longest greeting on screen. Deliberately NOT transitioned: the
+   * wire attaches to this panel's measured edge, so an animating width would leave the
+   * connector chasing a box that has not finished moving - the same lag that was removed
+   * from dragging. The width changes while the text is faded out, so the change is not
+   * visible anyway.
+   */
+  width: auto;
+  min-width: 72px;
+  max-width: min(90vw, 520px);
   min-height: 24px;
   z-index: 40;
   user-select: none;
@@ -263,7 +285,8 @@ canvas#backgroundCanvas {
   transition: opacity 0.5s ease;
   opacity: 1;
   pointer-events: auto;
-  width: 100%; /* Ensure full width for centering */
+  /* No width: the panel now shrink-wraps this text, so a width here would either fight
+     that or resolve circularly against a container it is itself sizing. */
 }
 
 #shimtiPanelBottom #welcomeText.fade-out {
@@ -649,8 +672,7 @@ canvas#backgroundCanvas {
   #shimtiPanelBottom {
     bottom: 12px;
     padding: 6px 12px;
-    width: 300px;
-    height: 20px;
+    max-width: 88vw;
   }
 
   #shimtiPanelBottom #welcomeText {
@@ -680,8 +702,7 @@ canvas#backgroundCanvas {
   #shimtiPanelBottom {
     bottom: 12px;
     padding: 4px 8px;
-    width: 300px;
-    height: 18px;
+    max-width: 92vw;
   }
 
   #shimtiPanelBottom #welcomeText {
