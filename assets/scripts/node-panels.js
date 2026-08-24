@@ -193,17 +193,56 @@
    * on the wheel.
    */
   function routeBetween(from, to) {
+    const fx = from.left + from.width / 2;
     const fy = from.top + from.height / 2;
+    const tx = to.left + to.width / 2;
     const ty = to.top + to.height / 2;
+    const dx = tx - fx;
+    const dy = ty - fy;
 
-    // Side ports only, matching route(). Which side depends on where the satellite ended
-    // up relative to its host, so the wire leaves the facing edge of each box.
-    const right = to.left + to.width / 2 >= from.left + from.width / 2;
-    const start = { x: right ? from.right : from.left, y: fy };
-    const end = { x: right ? to.left : to.right, y: ty };
-    const mid = (start.x + end.x) / 2;
+    /*
+     * Either box can be entered or left on any of its four edges. The edge pair is chosen
+     * by which axis the two boxes are actually SEPARATED on - the size of the gap between
+     * their facing edges, not the distance between their centres.
+     *
+     * Centre distance is the obvious measure and it is wrong. Two boxes can have their
+     * centres far apart horizontally while still overlapping horizontally, which is
+     * common here: the preview is wider than the title node and often starts before the
+     * title ends. Picking the horizontal axis then puts the exit edge past the entry
+     * edge, so the wire leaves the title's right side, doubles back to the left, and
+     * folds a vertical segment straight through the title panel it came from.
+     *
+     * A positive gap means the boxes are clear of each other on that axis, so a wire
+     * crossing it always sets off away from the host and never re-enters it. If neither
+     * axis is clear - the boxes overlap both ways - centre distance is the only thing
+     * left to go on.
+     */
+    const gapX = Math.max(to.left - from.right, from.left - to.right);
+    const gapY = Math.max(to.top - from.bottom, from.top - to.bottom);
+    const horizontal = (gapX >= 0 || gapY >= 0)
+      ? gapX >= gapY
+      : Math.abs(dx) >= Math.abs(dy);
 
-    return { d: `M ${start.x} ${start.y} H ${mid} V ${end.y} H ${end.x}`, start, port: end };
+    if (horizontal) {
+      const right = dx >= 0;
+      const start = { x: right ? from.right : from.left, y: fy };
+      const end = { x: right ? to.left : to.right, y: ty };
+      // Already aligned: one straight segment, with no zero-length steps.
+      if (Math.abs(start.y - end.y) < 0.5) {
+        return { d: `M ${start.x} ${end.y} H ${end.x}`, start: { x: start.x, y: end.y }, port: end };
+      }
+      const mid = (start.x + end.x) / 2;
+      return { d: `M ${start.x} ${start.y} H ${mid} V ${end.y} H ${end.x}`, start, port: end };
+    }
+
+    const below = dy >= 0;
+    const start = { x: fx, y: below ? from.bottom : from.top };
+    const end = { x: tx, y: below ? to.top : to.bottom };
+    if (Math.abs(start.x - end.x) < 0.5) {
+      return { d: `M ${end.x} ${start.y} V ${end.y}`, start: { x: end.x, y: start.y }, port: end };
+    }
+    const mid = (start.y + end.y) / 2;
+    return { d: `M ${start.x} ${start.y} V ${mid} H ${end.x} V ${end.y}`, start, port: end };
   }
 
   /* -------------------------------------------------------------- satellites */
