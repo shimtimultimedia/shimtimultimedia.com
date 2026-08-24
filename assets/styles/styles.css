@@ -125,13 +125,62 @@ canvas#backgroundCanvas {
   background: transparent;
 }
 
+/*
+ * MIDDLE-GROUND RING FIELD
+ *
+ * Geometry is generated, not hand-placed. Radii are a geometric progression (ratio 1.15)
+ * running from just outside the radial menu out past the screen corner, so spacing opens
+ * up with radius the way a slide rule's does - equal gaps would read as a target rather
+ * than an instrument. Stroke widths stay inside the local gap so nothing collides by
+ * accident; the single overlap, the outer wash passing under the ring at r=181, is
+ * deliberate and reads as depth.
+ *
+ * Direction alternates strictly outward, beginning with the wordmark. Period is
+ * proportional to circumference, so every ring travels at the same linear rate and the
+ * outer ones turn slowest. Each element carries its own animation-duration inline.
+ *
+ * Rotation is transform and nothing else. Of all animatable properties only transform
+ * and opacity can be handled by the compositor; anything else - filter above all -
+ * forces a main-thread paint on every frame.
+ *
+ * transform-box:view-box puts the origin in viewBox coordinates, so 100px 100px is the
+ * field's centre. Without it the origin would be each element's own bounding box and the
+ * rings would wobble instead of turning about a common axis.
+ */
+.ring-spin-cw,
+.ring-spin-ccw {
+  transform-box: view-box;
+  transform-origin: 100px 100px;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.ring-spin-cw {
+  animation-name: ringSpinCw;
+}
+
+.ring-spin-ccw {
+  animation-name: ringSpinCcw;
+}
+
+@keyframes ringSpinCw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes ringSpinCcw {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
 .ring-title {
   fill: var(--text-color);
   text-transform: uppercase;
-  /* glowPulse animates the `filter` property, so a static `filter` declaration here
-     would be overridden by the animation and never render. The pulse supplies the
-     glow instead, matching the branding panel and menu icons. */
-  animation: glowPulse 3s ease-in-out infinite;
+  /* Static glow. This element also rotates, and animating a drop-shadow on moving text
+     means re-running the filter over its bounding box every single frame - the most
+     expensive thing that was on the page. The glow is constant now; the motion carries
+     the effect. */
+  filter: drop-shadow(0 0 6px rgba(180, 220, 255, 0.5));
 }
 
 /* ==========================================================================
@@ -228,7 +277,9 @@ canvas#backgroundCanvas {
   color: var(--text-color);
   letter-spacing: 0.1em;
   font-weight: 600;
-  animation: glowPulse 3s ease-in-out infinite;
+  /* Static rather than a pulsing drop-shadow: animating filter repaints on the main
+     thread every frame, and this sits over a field that is already animating. */
+  text-shadow: 0 0 8px rgba(180, 220, 255, 0.45);
 }
 
 /* Welcome Panel - default position: 6 o'clock, mirroring the branding node above. */
@@ -357,8 +408,11 @@ canvas#backgroundCanvas {
   outline: none !important;
 }
 
+/* Six icons, each previously animating its own drop-shadow filter - six main-thread
+   repaints per frame for a glow nobody reads as pulsing. Static now; the hover state
+   still brightens them. */
 #wheelMenu g image {
-  animation: glowPulse 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(180, 220, 255, 0.45));
 }
 
 /*
@@ -381,6 +435,7 @@ canvas#backgroundCanvas {
 #wheelMenu .holo-core {
   transform-box: fill-box;
   transform-origin: center;
+  filter: drop-shadow(0 0 12px rgba(180, 220, 255, 0.65));
   animation: corePulse 6s ease-in-out infinite;
 }
 
@@ -636,16 +691,16 @@ canvas#backgroundCanvas {
 }
 
 /* One cycle: the core swells, brightens and glows harder, then settles. */
+/* Scale and opacity only. The glow is a static filter on .holo-core, so the breathing
+   costs the compositor a transform and nothing else. */
 @keyframes corePulse {
   0%, 100% {
     opacity: 0.7;
     transform: scale(0.92);
-    filter: drop-shadow(0 0 5px rgba(180, 220, 255, 0.4));
   }
   50% {
     opacity: 1;
     transform: scale(1.08);
-    filter: drop-shadow(0 0 20px rgba(180, 220, 255, 0.9));
   }
 }
 
@@ -775,7 +830,10 @@ canvas#backgroundCanvas {
  * So: rotation and scaling stop, glow and opacity continue.
  */
 @media (prefers-reduced-motion: reduce) {
-  /* Everything that actually moves. */
+  /* Everything that actually moves. The ring field rotates, so it stops here - this is
+     also what replaced the SMIL pause script, since none of this is SMIL any more. */
+  .ring-spin-cw,
+  .ring-spin-ccw,
   .rotating-squares,
   .rotating-square,
   .segmented-ring.ring-0,
@@ -812,14 +870,8 @@ canvas#backgroundCanvas {
 
 /* Reduced-motion counterparts: identical rhythm, no transform. */
 @keyframes corePulseStill {
-  0%, 100% {
-    opacity: 0.7;
-    filter: drop-shadow(0 0 5px rgba(180, 220, 255, 0.4));
-  }
-  50% {
-    opacity: 1;
-    filter: drop-shadow(0 0 20px rgba(180, 220, 255, 0.9));
-  }
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
 }
 
 @keyframes coreHaloStill {
