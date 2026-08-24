@@ -136,7 +136,7 @@
     if (node.userMoved) return;
     measureNode(node);
     const { left, top } = homePosition(node);
-    place(node, left, top);
+    place(node, left, top, true);
   }
 
   /** Re-measures everything. For wheel rebuilds, where only the wires need updating. */
@@ -551,14 +551,85 @@
     return Math.max(min, Math.min(value, max));
   }
 
+  /** Rounds one coordinate onto the background lattice. */
+  function snapCoord(value, origin, spacing) {
+    return origin + Math.round((value - origin) / spacing) * spacing;
+  }
+
+  /**
+   * Snaps a node so its PORT lands on a background-grid intersection.
+   *
+   * The port is the small circle on the panel's edge where its wire attaches - that is
+   * the node in the graph sense, and it is what should sit on the lattice. Snapping the
+   * panel's centre instead would leave the port floating between lines, which is the one
+   * point that visibly connects to anything.
+   *
+   * Which edge the port sits on depends on where the panel is relative to the wheel, so
+   * the route is resolved for the tentative position first and the panel is then shifted
+   * by whatever moves that port onto the nearest intersection.
+   *
+   * The lattice comes from background.js, which owns it. If the background has not
+   * initialised, the position passes through untouched rather than being snapped to a
+   * guessed spacing.
+   *
+   * @returns {{left:number, top:number}} the shifted top-left
+   */
+  function snapPortToGrid(node, left, top) {
+    const grid = window.ShimtiGrid;
+    if (!grid) return { left, top };
+
+    const box = {
+      left,
+      top,
+      width: node.w,
+      height: node.h,
+      right: left + node.w,
+      bottom: top + node.h,
+    };
+    const { start } = route(box, wheelGeometry());
+
+    let snappedLeft = left + (snapCoord(start.x, grid.originX, grid.spacing) - start.x);
+    let snappedTop = top + (snapCoord(start.y, grid.originY, grid.spacing) - start.y);
+
+    /*
+     * Nearest intersection first, then step inward by whole cells until the panel fits.
+     *
+     * Clamping alone would defeat the snap: the title's port wants the line above its
+     * resting position, which puts the panel slightly off the top of the screen, and the
+     * clamp then drags it back to the margin - leaving the port a few pixels off the
+     * lattice, which is exactly what this is meant to prevent. Moving by whole cells
+     * keeps it on the grid while bringing it into view.
+     *
+     * The loops are bounded: a panel taller or wider than the viewport would otherwise
+     * never satisfy both edges.
+     */
+    const maxLeft = window.innerWidth - node.w - EDGE_MARGIN;
+    const maxTop = window.innerHeight - node.h - EDGE_MARGIN;
+    for (let i = 0; i < 40 && snappedLeft < EDGE_MARGIN; i += 1) snappedLeft += grid.spacing;
+    for (let i = 0; i < 40 && snappedLeft > maxLeft; i += 1) snappedLeft -= grid.spacing;
+    for (let i = 0; i < 40 && snappedTop < EDGE_MARGIN; i += 1) snappedTop += grid.spacing;
+    for (let i = 0; i < 40 && snappedTop > maxTop; i += 1) snappedTop -= grid.spacing;
+
+    return { left: snappedLeft, top: snappedTop };
+  }
+
   /**
    * Moves a node to an absolute viewport position, never allowing it off screen.
    *
    * Uses the cached size rather than measuring, so this stays a pure write during a
    * drag: no layout is read, and the panel's style and its wire are both derived from
    * node.left/node.top in the same pass.
+   *
+   * Snapping applies to the resting positions too, so a port sits on the lattice from the
+   * moment the page loads rather than only once it has been dragged. Horizontal centring
+   * survives it: at 12 and 6 o'clock the port is at the panel's horizontal centre, the
+   * grid is laid out from the screen centre, so that centre line is itself a grid line.
+   *
+   * Snapping happens before clamping, so a node driven into a screen edge stops at the
+   * edge rather than at a lattice point beyond it.
    */
-  function place(node, left, top) {
+  function place(node, left, top, snap) {
+    if (snap) ({ left, top } = snapPortToGrid(node, left, top));
     const maxLeft = window.innerWidth - node.w - EDGE_MARGIN;
     const maxTop = window.innerHeight - node.h - EDGE_MARGIN;
     node.left = clamp(left, EDGE_MARGIN, maxLeft);
@@ -633,7 +704,7 @@
     const grabX = event.clientX - node.left;
     const grabY = event.clientY - node.top;
 
-    const move = (e) => place(node, e.clientX - grabX, e.clientY - grabY);
+    const move = (e) => place(node, e.clientX - grabX, e.clientY - grabY, true);
 
     const end = (e) => {
       try {
@@ -666,7 +737,7 @@
 
     event.preventDefault();
     node.userMoved = true;
-    place(node, node.left + dx, node.top + dy);
+    place(node, node.left + dx, node.top + dy, true);
   }
 
   /* ---------------------------------------------------------------------- init */
@@ -762,7 +833,7 @@
             place(node, cx - w / 2, cy - h / 2);
           } else {
             const home = homePosition(node);
-            place(node, home.left, home.top);
+            place(node, home.left, home.top, true);
           }
           changed = true;
         }

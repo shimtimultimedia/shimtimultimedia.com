@@ -9,8 +9,8 @@
  * Pulses are power moving through the machine, so they travel ALONG the grid lines
  * rather than drifting freely across them. Free-floating particles read as dust; a pulse
  * confined to a conductor reads as current. They turn only at intersections, the way a
- * signal takes a junction, and only ever forward - a pulse never doubles back along the
- * heading it entered on.
+ * signal takes a junction, and they turn the way a light cycle turns: ninety degrees,
+ * either way, never reversing along the line they are currently on.
  *
  * Every pulse enters from off screen at one of the four edges. Nothing appears in the
  * middle of the grid and nothing emanates from the hole - a pulse that pops into being
@@ -54,15 +54,27 @@ const BACKGROUND_CONFIG = {
      * Two separate falloffs, because they are doing different jobs.
      *
      * GRID_FADE is wide: the grid has to dissolve into the hole with no detectable edge,
-     * so the transition wants to be long and gentle.
-     *
-     * PULSE_FADE is much shorter. A pulse should run at full strength almost to the rim
-     * and then visibly go out as it is drawn in - fading it over 300px would have it
-     * dimming from halfway across the screen, which reads as running out of energy rather
-     * than being consumed.
+     * so the transition wants to be long and gentle. A pulse's own fade is handled
+     * separately, against the capture radii below.
      */
     GRID_FADE: 300,
-    PULSE_FADE: 130,
+
+    /*
+     * The event horizon.
+     *
+     * Inside CAPTURE_RADIUS a pulse stops being a signal on a conductor and becomes
+     * something falling: it leaves the grid, is pulled toward the centre, and accelerates
+     * as it goes. That break is the point - a pulse that kept dutifully following grid
+     * lines until it happened to cross the rim would not read as being captured by
+     * anything.
+     *
+     * DEATH_RADIUS is where it is gone. It fades to nothing on the way in, so it is
+     * already invisible before it is removed.
+     */
+    CAPTURE_RADIUS: 275,
+    DEATH_RADIUS: 26,
+    CAPTURE_ACCEL: 3.2,   // how much faster it falls at the rim than at the horizon
+    CAPTURE_SWIRL: 0.55,  // sideways drift, so it spirals rather than dropping straight
 
     /*
      * Population. Well below the previous 30: pulses read as deliberate signals rather
@@ -72,8 +84,19 @@ const BACKGROUND_CONFIG = {
     SPAWN_INTERVAL_MIN: 260,
     SPAWN_INTERVAL_MAX: 1400,
 
+    /*
+     * Speed. The range is wide and the draw is biased toward the slow end, so most pulses
+     * drift and the occasional one tears across the screen. A flat distribution over this
+     * range would make almost everything mid-speed, and the fast ones only register as
+     * fast when there is something slow to measure them against.
+     *
+     * The top speed is still far below one grid cell per frame, which the junction
+     * detection depends on: at 240px/s and 45fps a step is about 5px against an 80px
+     * cell, so a pulse cannot skip a junction and miss a turn.
+     */
     SPEED_MIN: 26,   // px per second
-    SPEED_MAX: 95,
+    SPEED_MAX: 240,
+    SPEED_BIAS: 2,   // higher = more slow pulses, rarer fast ones
     TURN_CHANCE: 0.28,   // chance of taking a junction rather than running straight
 
     /*
@@ -98,13 +121,19 @@ const BACKGROUND_CONFIG = {
     TRAIL_CHUNK: 34,
 
     /*
-     * A ceiling on how long one pulse may wander. Turning at random is a random walk, and
-     * a random walk on a grid can take a very long time to leave it: in simulation about
-     * 2% were still travelling after a minute. The population is capped, so this is not a
-     * leak - but such a pulse holds a slot indefinitely and starves the field of new
-     * arrivals. Generous enough that a normal crossing is never cut short.
+     * How long a pulse may wander before it burns out.
+     *
+     * A slow pulse turning at random can stay on screen a very long time without ever
+     * reaching an edge or the hole - in simulation about 2% were still going after a
+     * minute. The population is capped so this is not a leak, but such a pulse holds a
+     * slot indefinitely and starves the field of new arrivals.
+     *
+     * It fades over LIFETIME_FADE rather than vanishing at the limit: a pulse blinking
+     * out mid-grid is exactly the thing this whole design avoids at the other end, where
+     * pulses are forbidden from popping into existence. Spent energy dims away.
      */
-    MAX_LIFETIME: 90,    // seconds
+    MAX_LIFETIME: 90,      // seconds
+    LIFETIME_FADE: 8,      // seconds of fade before it goes
 
     /*
      * Annihilation. Two pulses meeting cancel out in a small shockwave.
@@ -121,7 +150,10 @@ const BACKGROUND_CONFIG = {
        glimpsed through it, not as foreground detail competing with the menu. */
     TRAIL_ALPHA: 0.3,
     TRAIL_COLOR: 'rgba(180, 220, 255, ',
-    /* Only the annihilation spark uses this - a pulse itself is a ribbon and nothing else. */
+    /* The pulse itself: one dot at the head of the ribbon, identical on every pulse
+       because it stands for one quantity of energy. Also the annihilation spark. */
+    HEAD_RADIUS: 2.6,
+    HEAD_ALPHA: 0.75,
     HEAD_COLOR: 'rgba(234, 255, 255, ',
     TARGET_FPS: 45
 };
@@ -151,11 +183,26 @@ class Pulse {
         this.speed = speed;
 
         /*
-         * The heading it entered on, held for life. A pulse may turn across this axis but
-         * never travels back along it - see update().
+         * There is no fixed heading. Turning is free, and that is deliberate.
+         *
+         * The rule a pulse obeys is the one a light cycle obeys: it can turn ninety
+         * degrees at a junction, either way, but it can never reverse along the line it
+         * is currently on. A motorcycle does not suddenly drive backwards; it turns.
+         *
+         * That rule is enforced by construction - a turn always changes axis, and
+         * direction is only ever assigned at a turn - so an in-place reversal is not
+         * expressible. Everything else stays random, which is what allows a pulse to take
+         * three turns the same way and trace a square around one cell of the grid.
+         *
+         * An earlier version pinned a direction to each axis for life. That did stop
+         * reversals, but it also made squares impossible and turned every path into a
+         * staircase heading for one corner of the screen.
          */
-        this.mainAxis = axis;
-        this.mainDir = dir;
+
+        // Which way it will spiral if the hole takes it. Fixed, so the fall curves
+        // consistently instead of wobbling.
+        this.swirl = Math.random() < 0.5 ? 1 : -1;
+        this.captured = false;
 
         // This pulse's own ribbon length, fixed for its lifetime.
         this.trailLength = BACKGROUND_CONFIG.TRAIL_LENGTH_MIN +
@@ -178,8 +225,62 @@ class Pulse {
      * @param {number} dt - seconds since the previous frame
      * @param {Object} field - grid origin, bounds and hole geometry
      */
+    /**
+     * Advances one frame: along the grid, or falling if the hole has it.
+     * @param {number} dt - seconds since the previous frame
+     * @param {Object} field - grid origin, bounds and hole geometry
+     */
     update(dt, field) {
-        const { spacing, originX, originY, width, height, cx, cy } = field;
+        const { cx, cy } = field;
+        let dist = Math.hypot(this.x - cx, this.y - cy);
+
+        if (!this.captured && dist < BACKGROUND_CONFIG.CAPTURE_RADIUS) {
+            this.captured = true;
+            // Record the corner where it leaves the grid, so the ribbon shows the moment
+            // it stopped following the line and started falling.
+            this.path.push({ x: this.x, y: this.y });
+        }
+
+        if (this.captured) this.fall(dt, cx, cy, dist);
+        else this.travelGrid(dt, field);
+
+        this.prunePath();
+
+        dist = Math.hypot(this.x - cx, this.y - cy);
+
+        if (dist < BACKGROUND_CONFIG.DEATH_RADIUS) this.dead = true;
+
+        const margin = field.spacing * 2;
+        if (this.x < -margin || this.x > field.width + margin ||
+            this.y < -margin || this.y > field.height + margin) this.dead = true;
+
+        this.age += dt;
+        if (this.age > BACKGROUND_CONFIG.MAX_LIFETIME) this.dead = true;
+
+        // Dimming as the hole draws it in. Full strength right up to the rim, then out
+        // over the fall, so it is already invisible by the time it is removed.
+        const holeFade = dist > BACKGROUND_CONFIG.HOLE_RADIUS
+            ? 1
+            : Math.max(0, (dist - BACKGROUND_CONFIG.DEATH_RADIUS) /
+                (BACKGROUND_CONFIG.HOLE_RADIUS - BACKGROUND_CONFIG.DEATH_RADIUS));
+
+        // Burning out: a pulse that never finds an edge or the hole dims away instead of
+        // being cut off at the limit.
+        const remaining = BACKGROUND_CONFIG.MAX_LIFETIME - this.age;
+        const ageFade = remaining >= BACKGROUND_CONFIG.LIFETIME_FADE
+            ? 1
+            : Math.max(0, remaining / BACKGROUND_CONFIG.LIFETIME_FADE);
+
+        this.alpha = Math.min(holeFade, ageFade);
+    }
+
+    /**
+     * Normal travel: along the current grid line, turning only at junctions.
+     * @param {number} dt
+     * @param {Object} field
+     */
+    travelGrid(dt, field) {
+        const { spacing, originX, originY } = field;
         const step = this.speed * dt;
 
         const along = this.axis === 'h' ? this.x : this.y;
@@ -187,8 +288,8 @@ class Pulse {
         const next = along + this.dir * step;
 
         // A junction is crossed when the index of the containing cell changes. Handling
-        // one per frame is enough: at these speeds a pulse cannot clear a whole cell in a
-        // single frame, and pretending otherwise would let it skip a turn.
+        // one per frame is enough: even at top speed a pulse covers a fraction of a cell
+        // per frame, so it cannot skip a junction and miss a turn.
         const cellBefore = Math.floor((along - origin) / spacing);
         const cellAfter = Math.floor((next - origin) / spacing);
 
@@ -198,50 +299,48 @@ class Pulse {
             const node = Pulse.snap(next, origin, spacing);
             if (this.axis === 'h') this.x = node; else this.y = node;
             // A vertex is recorded only here, at the corner. That is the only place the
-            // path bends, so it is the only place the ribbon needs a point.
+            // path bends while it is on the grid.
             this.path.push({ x: this.x, y: this.y });
 
-            /*
-             * Always forward, never in reverse.
-             *
-             * Flipping the axis already rules out a U-turn in one move, but not over two:
-             * turning the same way at consecutive junctions is a 180, and the pulse heads
-             * back the way it came one cell over. Rejoining its entry axis therefore
-             * always restores the direction it arrived on.
-             *
-             * Turns across that axis stay free in both directions - moving sideways is
-             * not moving backwards, and it is what keeps the paths from being straight
-             * lines.
-             */
+            // Ninety degrees, either way, chosen freely. The axis always changes, so the
+            // new heading is always perpendicular to the old one and the pulse can never
+            // double back along the line it was just on.
             this.axis = this.axis === 'h' ? 'v' : 'h';
-            this.dir = this.axis === this.mainAxis
-                ? this.mainDir
-                : (Math.random() < 0.5 ? 1 : -1);
+            this.dir = Math.random() < 0.5 ? 1 : -1;
         } else if (this.axis === 'h') {
             this.x = next;
         } else {
             this.y = next;
         }
+    }
 
-        this.prunePath();
+    /**
+     * Falling into the hole: off the grid, pulled inward, accelerating, spiralling.
+     * @param {number} dt
+     * @param {number} cx
+     * @param {number} cy
+     * @param {number} dist - current distance from the centre
+     */
+    fall(dt, cx, cy, dist) {
+        if (dist < 0.001) { this.dead = true; return; }
 
-        // Consumed by the hole, or gone off the far side. Those are the only two exits.
-        const dist = Math.hypot(this.x - cx, this.y - cy);
-        if (dist < BACKGROUND_CONFIG.HOLE_RADIUS) this.dead = true;
+        // Accelerates as it closes. Squared, so the pull is gentle at the horizon and
+        // fierce at the rim - which is what makes it read as gravity rather than a tow.
+        const closeness = 1 - dist / BACKGROUND_CONFIG.CAPTURE_RADIUS;
+        const speed = this.speed * (1 + closeness * closeness * BACKGROUND_CONFIG.CAPTURE_ACCEL);
 
-        const margin = spacing * 2;
-        if (this.x < -margin || this.x > width + margin ||
-            this.y < -margin || this.y > height + margin) this.dead = true;
+        const inX = (cx - this.x) / dist;
+        const inY = (cy - this.y) / dist;
+        // Perpendicular component, so it curves in rather than dropping on a straight line.
+        const swirlX = -inY * this.swirl * BACKGROUND_CONFIG.CAPTURE_SWIRL;
+        const swirlY = inX * this.swirl * BACKGROUND_CONFIG.CAPTURE_SWIRL;
 
-        this.age += dt;
-        if (this.age > BACKGROUND_CONFIG.MAX_LIFETIME) this.dead = true;
+        this.x += (inX + swirlX) * speed * dt;
+        this.y += (inY + swirlY) * speed * dt;
 
-        // Fades out as the hole takes it, rather than blinking off at the rim. By the
-        // time it reaches HOLE_RADIUS it is already at zero, so removal is invisible.
-        const reach = BACKGROUND_CONFIG.HOLE_RADIUS + BACKGROUND_CONFIG.PULSE_FADE;
-        this.alpha = dist > reach
-            ? 1
-            : Math.max(0, (dist - BACKGROUND_CONFIG.HOLE_RADIUS) / BACKGROUND_CONFIG.PULSE_FADE);
+        // The fall is a curve, so the ribbon needs points along it - unlike grid travel,
+        // where a straight run between junctions needs none. prunePath keeps this bounded.
+        this.path.push({ x: this.x, y: this.y });
     }
 
     /**
@@ -298,7 +397,15 @@ class Pulse {
         const points = this.ribbon();
 
         ctx.lineWidth = 1.3;
-        ctx.lineCap = 'round';
+        /*
+         * Butt caps, not round.
+         *
+         * The ribbon is stroked in short chunks so each can carry its own alpha. A round
+         * cap adds a half-disc at both ends of EVERY chunk, so each boundary picks up a
+         * rounded blob and the tail reads as a string of little dots rather than one
+         * continuous line. Butt caps let consecutive chunks abut exactly.
+         */
+        ctx.lineCap = 'butt';
 
         // Walk head to tail in short chunks, each stroked at its own alpha. The falloff is
         // squared rather than linear so the ribbon holds its brightness near the head and
@@ -325,9 +432,19 @@ class Pulse {
             travelled += span;
         }
 
-        // No dot at the head. The ribbon is the whole thing: a bright leading end fading
-        // back to nothing, the way a light trail reads. A dot in front turns it into a
-        // particle towing a tail, which is a different and much more ordinary effect.
+        /*
+         * The pulse itself: exactly one dot, at the head, emitting the ribbon behind it.
+         *
+         * The same size on every pulse - it represents one quantity of energy, so it
+         * should not vary. Only its opacity changes, and only as the hole takes it.
+         *
+         * No shadowBlur: canvas shadows are charged per draw call and this is the most
+         * frequently drawn thing on the page.
+         */
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, BACKGROUND_CONFIG.HEAD_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = `${BACKGROUND_CONFIG.HEAD_COLOR}${(BACKGROUND_CONFIG.HEAD_ALPHA * this.alpha).toFixed(3)})`;
+        ctx.fill();
     }
 }
 
@@ -370,6 +487,51 @@ class Flash {
     }
 }
 
+/*
+ * Entry-point selection.
+ *
+ * Picking an edge with Math.random() four ways gives runs: the same edge comes up three
+ * or four times over, and a handful of pulses arrive from the same corner of the screen
+ * looking like a stream from one source. Uniform randomness clusters - that is what
+ * uniform randomness does - and with this few spawns per minute a run of three is very
+ * visible.
+ *
+ * So the edges are drawn from a bag: all four are used, in random order, before any is
+ * used again. Runs become impossible while the order stays unpredictable.
+ *
+ * The line within the edge is then checked against the last several entry points, so the
+ * same line is not reused while it is still fresh. There are dozens of lines per edge;
+ * there is no reason for two consecutive pulses to share one.
+ */
+const edgeBag = [];
+const recentSpawns = [];
+const RECENT_SPAWN_MEMORY = 10;
+const SPAWN_RETRIES = 6;
+
+/** Draws the next edge, refilling and reshuffling the bag when it empties. */
+function takeEdge() {
+    if (edgeBag.length === 0) {
+        edgeBag.push(0, 1, 2, 3);
+        for (let i = edgeBag.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [edgeBag[i], edgeBag[j]] = [edgeBag[j], edgeBag[i]];
+        }
+    }
+    return edgeBag.pop();
+}
+
+/** Picks a line index on an edge, avoiding any used recently. */
+function takeLine(edge, lineCount) {
+    let index = Math.floor(Math.random() * lineCount);
+    for (let attempt = 0; attempt < SPAWN_RETRIES; attempt += 1) {
+        if (!recentSpawns.includes(`${edge}:${index}`)) break;
+        index = Math.floor(Math.random() * lineCount);
+    }
+    recentSpawns.push(`${edge}:${index}`);
+    if (recentSpawns.length > RECENT_SPAWN_MEMORY) recentSpawns.shift();
+    return index;
+}
+
 /**
  * Creates a pulse entering from off screen, on a grid line, heading inward.
  * @returns {Pulse}
@@ -377,22 +539,23 @@ class Flash {
 function spawnPulse(field) {
     const { spacing, originX, originY, width, height } = field;
     const speed = BACKGROUND_CONFIG.SPEED_MIN +
-        Math.random() * (BACKGROUND_CONFIG.SPEED_MAX - BACKGROUND_CONFIG.SPEED_MIN);
+        Math.pow(Math.random(), BACKGROUND_CONFIG.SPEED_BIAS) *
+        (BACKGROUND_CONFIG.SPEED_MAX - BACKGROUND_CONFIG.SPEED_MIN);
     const margin = spacing;
-    const edge = Math.floor(Math.random() * 4);
+    const edge = takeEdge();
 
-    // Choose a line, then start beyond the edge on it, moving in. Starting off screen is
-    // the point: a pulse must arrive from somewhere, never blink into being mid-grid.
+    // Starting beyond the edge is the point: a pulse must arrive from somewhere, never
+    // blink into being mid-grid.
     if (edge === 0 || edge === 1) {
         const lines = Math.floor(height / spacing) + 2;
-        const y = originY + Math.floor(Math.random() * lines) * spacing - spacing;
+        const y = originY + takeLine(edge, lines) * spacing - spacing;
         return edge === 0
             ? new Pulse('h', -margin, y, 1, speed)
             : new Pulse('h', width + margin, y, -1, speed);
     }
 
     const lines = Math.floor(width / spacing) + 2;
-    const x = originX + Math.floor(Math.random() * lines) * spacing - spacing;
+    const x = originX + takeLine(edge, lines) * spacing - spacing;
     return edge === 2
         ? new Pulse('v', x, -margin, 1, speed)
         : new Pulse('v', x, height + margin, -1, speed);
@@ -431,6 +594,16 @@ function initBackground() {
             const originY = cy - Math.ceil(cy / spacing) * spacing;
 
             field = { spacing, originX, originY, width, height, cx, cy };
+
+            /*
+             * Published so the node panels can snap to the same lattice.
+             *
+             * The grid is defined here and nowhere else. Having node-panels.js recompute
+             * the origin from its own copy of the spacing would be two derivations of one
+             * fact, and they would drift apart the moment either changed - the same
+             * duplication that stopped the original connectors from tracking anything.
+             */
+            window.ShimtiGrid = { spacing, originX, originY };
 
             for (const c of [canvas, offscreen]) {
                 c.width = width * dpr;
