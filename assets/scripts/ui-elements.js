@@ -158,9 +158,20 @@ function stopGridBlink() {
  */
 function startGridBlink(points, overlay) {
     const rand = (min, max) => min + Math.random() * (max - min);
-    const reduceMotion = window.matchMedia
-        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    /*
+     * These blink under reduced motion too.
+     *
+     * A lamp changes opacity in place - it does not move, scale or travel - so it is not
+     * what prefers-reduced-motion is protecting against. Freezing them turned the console
+     * into a dead panel for anyone with that setting on, which was the whole effect gone
+     * for no accessibility gain. The separate flashing hazard is WCAG 2.3.1: three
+     * flashes a second across a large area, which a 2.5px dot blinking roughly once a
+     * second does not approach.
+     *
+     * What genuinely moves - the rotating rings, the orbiting squares, the core's scaling
+     * - is stopped instead, in the stylesheet and by pausing the SVG animation clock.
+     */
     points.forEach((point) => {
         const lamp = createSvgElement('circle', {
             cx: point.x,
@@ -169,14 +180,6 @@ function startGridBlink(points, overlay) {
             fill: 'rgba(234, 255, 255, 0.85)'
         }, { opacity: '0', pointerEvents: 'none' });
         overlay.appendChild(lamp);
-
-        if (reduceMotion) {
-            // Blinking is the entire effect here, so with motion reduced the lamps are
-            // shown as a steady dim field rather than removed - the grid still reads as
-            // an instrument panel, it just stops flickering.
-            lamp.style.opacity = '0.35';
-            return;
-        }
 
         const on = () => {
             lamp.style.opacity = '1';
@@ -198,7 +201,7 @@ function startGridBlink(points, overlay) {
         schedule(on, rand(0, UI_CONFIG.BLINK_OFF_MAX));
     });
 
-    uiLogger.log('Grid lamps started', { count: points.length, reduceMotion }, true);
+    uiLogger.log('Grid lamps started', { count: points.length }, true);
 }
 
 /** @function createNavigationSector - Creates SVG sector for radial menu */

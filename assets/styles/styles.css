@@ -758,12 +758,45 @@ canvas#backgroundCanvas {
  * the SVGs ignores CSS entirely and is paused separately via pauseAnimations() in the
  * inline script in index.html. Both halves are required for full coverage.
  */
+/*
+ * Reduced motion.
+ *
+ * This setting is about MOTION - spinning, scaling, drifting, parallax - because that is
+ * what provokes nausea and dizziness in people with vestibular disorders. It is not a
+ * request for a still image. Changes in opacity, colour and glow are explicitly fine, and
+ * the separate hazard of flashing is governed by WCAG 2.3.1, which is about three flashes
+ * a second across a large area - nowhere near a 2.5px lamp blinking about once a second.
+ *
+ * The previous rule here set animation-duration to 0.01ms on every element, which killed
+ * every animation on the page indiscriminately: the core stopped breathing and the
+ * console lamps stopped blinking, even though neither involves any movement. What was
+ * left was a dead interface rather than a calmer one.
+ *
+ * So: rotation and scaling stop, glow and opacity continue.
+ */
 @media (prefers-reduced-motion: reduce) {
+  /* Everything that actually moves. */
+  .rotating-squares,
+  .rotating-square,
+  .segmented-ring.ring-0,
+  .segmented-ring.ring-1,
+  .segmented-ring.ring-2 {
+    animation: none !important;
+  }
+
+  /* The core keeps breathing, but by brightness alone - the scaling is dropped. */
+  #wheelMenu .holo-core {
+    animation-name: corePulseStill !important;
+  }
+
+  #wheelMenu .holo-ring,
+  #wheelMenu .inner-filled-circle {
+    animation-name: coreHaloStill !important;
+  }
+
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
@@ -775,4 +808,21 @@ canvas#backgroundCanvas {
   #shimtiPanelBottom #welcomeText.fade-in {
     opacity: 1;
   }
+}
+
+/* Reduced-motion counterparts: identical rhythm, no transform. */
+@keyframes corePulseStill {
+  0%, 100% {
+    opacity: 0.7;
+    filter: drop-shadow(0 0 5px rgba(180, 220, 255, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 20px rgba(180, 220, 255, 0.9));
+  }
+}
+
+@keyframes coreHaloStill {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.9; }
 }
