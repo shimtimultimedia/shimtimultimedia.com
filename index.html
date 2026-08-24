@@ -230,7 +230,9 @@
   <svg id="nodeWires" aria-hidden="true" focusable="false"></svg>
   <!-- Top branding panel with logo and text -->
   <div id="shimtiPanel">
-    <img src="assets/images/Logo.svg" alt="Shimti Multimedia Logo">
+    <!-- alt="" because the company name is already spelled out in the span beside it.
+         A description here would make a screen reader announce the brand twice over. -->
+    <img src="assets/images/Logo.svg" alt="" width="24" height="24">
     <span>SHIMTI MULTIMEDIA</span>
   </div>
   <!--
@@ -342,7 +344,19 @@
 
   <!-- Bottom panel with welcome text carousel -->
   <div id="shimtiPanelBottom">
-    <span id="welcomeText" role="status">Loading...</span>
+    <!--
+      No role="status" here.
+
+      That role is an implicit aria-live region, and this greeting cycles through 36
+      languages every eight seconds - so a screen reader announced a new word, forever,
+      for as long as the page stayed open. It is decorative multilingual flavour, not a
+      status message: nothing here reports the result of anything the visitor did.
+
+      The text stays in the accessibility tree and is readable on demand; it simply no
+      longer interrupts. The panel's own name comes from the aria-label that
+      node-panels.js applies.
+    -->
+    <span id="welcomeText">Welcome</span>
   </div>
 
   <!--

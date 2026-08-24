@@ -41,10 +41,20 @@
   const KEY_STEP_LARGE = 32;  // With Shift held.
   const PORT_RADIUS = 5;
 
-  // `home` is the node's resting position: 12 o'clock above the wheel, 6 o'clock below.
+  /*
+   * `home` is the node's resting position: 12 o'clock above the wheel, 6 o'clock below.
+   *
+   * `resizes` marks a node whose own content changes its width while the page is open,
+   * and is therefore worth watching with a ResizeObserver. Only the welcome panel does:
+   * it shrink-wraps a greeting that cycles through 36 languages. The title's text is
+   * fixed, so observing it would be watching for something that cannot happen. Its width
+   * still moves once when the webfont loads and again if the viewport crosses the point
+   * where its clamped font-size starts scaling - both already handled, by
+   * document.fonts.ready and by the resize handler.
+   */
   const NODES = [
-    { id: 'shimtiPanel', label: 'Shimti Multimedia panel', home: 'top' },
-    { id: 'shimtiPanelBottom', label: 'Welcome panel', home: 'bottom' },
+    { id: 'shimtiPanel', label: 'Shimti Multimedia panel', home: 'top', resizes: false },
+    { id: 'shimtiPanelBottom', label: 'Welcome panel', home: 'bottom', resizes: true },
   ];
 
   const HOME_MARGIN_TOP = 20;
@@ -666,7 +676,7 @@
       const el = document.getElementById(spec.id);
       if (!el) continue;
 
-      const node = { id: spec.id, home: spec.home, el, wire: makeWire(), originalCss: el.style.cssText };
+      const node = { id: spec.id, home: spec.home, resizes: spec.resizes, el, wire: makeWire(), originalCss: el.style.cssText };
       nodes.push(node);
 
       detach(node);
@@ -758,7 +768,7 @@
         }
         if (changed) drawWires();
       });
-      for (const node of nodes) sizeObserver.observe(node.el);
+      for (const node of nodes) if (node.resizes) sizeObserver.observe(node.el);
     }
   }
 

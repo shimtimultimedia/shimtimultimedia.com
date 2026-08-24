@@ -284,9 +284,10 @@ canvas#backgroundCanvas {
   white-space: nowrap;
   transition: opacity 0.5s ease;
   opacity: 1;
-  pointer-events: auto;
   /* No width: the panel now shrink-wraps this text, so a width here would either fight
-     that or resolve circularly against a container it is itself sizing. */
+     that or resolve circularly against a container it is itself sizing.
+     No pointer-events either - the panel around it is already interactive, and this only
+     ever needed to opt back in when the panel itself was pointer-events:none. */
 }
 
 #shimtiPanelBottom #welcomeText.fade-out {
