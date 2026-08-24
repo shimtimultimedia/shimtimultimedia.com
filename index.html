@@ -205,6 +205,17 @@
     cannot expose a name - the label is on g#wheelMenu, which declares role="navigation".
   -->
   <svg id="uiSvg"></svg>
+
+  <!--
+    Node wires. Owned solely by node-panels.js, which draws the orthogonal connectors
+    between the draggable panels and the radial menu.
+
+    A layer of its own, rather than part of #uiSvg, because ui-elements.js clears and
+    rebuilds that SVG on every resize. The connectors used to be drawn inside it and
+    duplicated across both the build and the rebuild path, which is why they could never
+    follow anything: two copies of the geometry, neither of them owning it.
+  -->
+  <svg id="nodeWires" aria-hidden="true" focusable="false"></svg>
   <!-- Top branding panel with logo and text -->
   <div id="shimtiPanel">
     <img src="assets/images/Logo.svg" alt="Shimti Multimedia Logo">
@@ -352,5 +363,6 @@
   <script src="assets/scripts/title-panel.js"></script>
   <script src="assets/scripts/background.js"></script>
   <script src="assets/scripts/section-panels.js"></script>
+  <script src="assets/scripts/node-panels.js"></script>
 </body>
 </html>

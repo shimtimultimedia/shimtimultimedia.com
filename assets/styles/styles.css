@@ -91,9 +91,61 @@ canvas#backgroundCanvas {
   animation: glowPulse 3s ease-in-out infinite;
 }
 
+/* ==========================================================================
+   Node Wires
+   Orthogonal connectors between the draggable panels and the radial menu, drawn by
+   node-panels.js. Every segment is horizontal or vertical - no curves.
+   ========================================================================== */
+
+#nodeWires {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Above the ring field, below the panels the wires connect to. */
+  z-index: 2;
+  /* Decoration: must never intercept a click meant for the wheel beneath it. */
+  pointer-events: none;
+}
+
+.node-wire {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 2;
+  /* Square joins and caps keep the corners hard. Round joins would soften the right
+     angles into something closer to the curve this deliberately is not. */
+  stroke-linejoin: miter;
+  stroke-linecap: square;
+}
+
+.node-port {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1;
+}
+
+/* Draggable node panels */
+.node-panel {
+  cursor: grab;
+  /* Suppresses the browser's own touch panning and long-press behaviour so a drag on a
+     touch screen moves the node instead of scrolling or selecting it. */
+  touch-action: none;
+}
+
+.node-panel:focus-visible {
+  outline: 3px solid var(--focus-outline);
+  outline-offset: 4px;
+}
+
+.node-panel.is-dragging {
+  cursor: grabbing;
+  border-color: var(--focus-outline);
+}
+
 /* Branding Panel (Top) */
 #shimtiPanel {
-  position: absolute;
+  position: fixed;
   top: 20px;
   left: 20px;
   background: var(--panel-bg);
@@ -103,9 +155,10 @@ canvas#backgroundCanvas {
   display: flex;
   align-items: center;
   gap: 10px;
-  z-index: 5; /* Lowered to ensure below #radialMenu */
+  z-index: 5;
   user-select: none;
-  pointer-events: none; /* Prevent blocking hover events */
+  /* Interactive: this is a draggable node, so it must receive pointer events. */
+  pointer-events: auto;
 }
 
 #shimtiPanel img {
@@ -129,7 +182,7 @@ canvas#backgroundCanvas {
 
 /* Welcome Panel (Bottom) */
 #shimtiPanelBottom {
-  position: absolute;
+  position: fixed;
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
@@ -138,10 +191,11 @@ canvas#backgroundCanvas {
   border-radius: 10px;
   border: 2px solid var(--border-color);
   width: 300px;
-  min-height: 24px; /* Changed to min-height to allow content expansion */
+  min-height: 24px;
   z-index: 5;
   user-select: none;
-  pointer-events: none;
+  /* Interactive: this is a draggable node, so it must receive pointer events. */
+  pointer-events: auto;
   display: flex;
   align-items: center;
   justify-content: center;
