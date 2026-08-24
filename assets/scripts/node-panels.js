@@ -187,62 +187,141 @@
     return { d: `M ${start.x} ${start.y} H ${port.x} V ${port.y}`, start, port };
   }
 
+  /* ------------------------------------------------------- orthogonal routing */
+
+  const OBSTACLE_CLEARANCE = 26;
+
+  /** Does an axis-aligned segment pass through the interior of a box? */
+  function segmentHitsBox(x1, y1, x2, y2, box) {
+    const e = 0.5;
+    if (x1 === x2) {
+      const [a, b] = y1 < y2 ? [y1, y2] : [y2, y1];
+      return x1 > box.left + e && x1 < box.right - e && b > box.top + e && a < box.bottom - e;
+    }
+    const [a, b] = x1 < x2 ? [x1, x2] : [x2, x1];
+    return y1 > box.top + e && y1 < box.bottom - e && b > box.left + e && a < box.right - e;
+  }
+
+  function pathHitsBox(points, box) {
+    for (let i = 1; i < points.length; i += 1) {
+      if (segmentHitsBox(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y, box)) return true;
+    }
+    return false;
+  }
+
+  /** Total length of an orthogonal point run, for preferring the shortest clear route. */
+  function pathLength(points) {
+    let total = 0;
+    for (let i = 1; i < points.length; i += 1) {
+      total += Math.abs(points[i].x - points[i - 1].x) + Math.abs(points[i].y - points[i - 1].y);
+    }
+    return total;
+  }
+
+  /** Collapses repeated and collinear points, then emits H/V commands only. */
+  function toPath(points) {
+    const pts = [points[0]];
+    for (const p of points.slice(1)) {
+      const last = pts[pts.length - 1];
+      if (Math.abs(p.x - last.x) < 0.5 && Math.abs(p.y - last.y) < 0.5) continue;
+      pts.push(p);
+    }
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 1; i < pts.length; i += 1) {
+      d += Math.abs(pts[i].x - pts[i - 1].x) < 0.5 ? ` V ${pts[i].y}` : ` H ${pts[i].x}`;
+    }
+    return d;
+  }
+
   /**
-   * Orthogonal route between two rectangles, for wiring a satellite panel to its host
-   * node. Same right-angled Z as route(), but ending on a box edge rather than a point
-   * on the wheel.
+   * Orthogonal route from a host node to its satellite panel, around the radial menu.
+   *
+   * Both boxes can be entered or left on any of their four edges. The edge pair is chosen
+   * by which axis the boxes are actually SEPARATED on - the gap between their facing
+   * edges, not the distance between their centres. Centre distance is the obvious measure
+   * and it is wrong: two boxes can have their centres far apart horizontally while still
+   * overlapping horizontally, which puts the exit edge past the entry edge and folds the
+   * wire back through the host it came from.
+   *
+   * The direct route is then tested against the menu. A straight run between a host on
+   * one side and a panel on the other passes right through it, so when that happens the
+   * wire detours around - out of the host, along a lane clear of the menu, and back in to
+   * the panel. The shortest candidate that touches nothing wins.
    */
-  function routeBetween(from, to) {
+  function routeBetween(from, to, obstacle) {
     const fx = from.left + from.width / 2;
     const fy = from.top + from.height / 2;
     const tx = to.left + to.width / 2;
     const ty = to.top + to.height / 2;
-    const dx = tx - fx;
-    const dy = ty - fy;
 
-    /*
-     * Either box can be entered or left on any of its four edges. The edge pair is chosen
-     * by which axis the two boxes are actually SEPARATED on - the size of the gap between
-     * their facing edges, not the distance between their centres.
-     *
-     * Centre distance is the obvious measure and it is wrong. Two boxes can have their
-     * centres far apart horizontally while still overlapping horizontally, which is
-     * common here: the preview is wider than the title node and often starts before the
-     * title ends. Picking the horizontal axis then puts the exit edge past the entry
-     * edge, so the wire leaves the title's right side, doubles back to the left, and
-     * folds a vertical segment straight through the title panel it came from.
-     *
-     * A positive gap means the boxes are clear of each other on that axis, so a wire
-     * crossing it always sets off away from the host and never re-enters it. If neither
-     * axis is clear - the boxes overlap both ways - centre distance is the only thing
-     * left to go on.
-     */
     const gapX = Math.max(to.left - from.right, from.left - to.right);
     const gapY = Math.max(to.top - from.bottom, from.top - to.bottom);
     const horizontal = (gapX >= 0 || gapY >= 0)
       ? gapX >= gapY
-      : Math.abs(dx) >= Math.abs(dy);
+      : Math.abs(tx - fx) >= Math.abs(ty - fy);
+
+    const c = OBSTACLE_CLEARANCE;
+    let start;
+    let end;
+    const candidates = [];
 
     if (horizontal) {
-      const right = dx >= 0;
-      const start = { x: right ? from.right : from.left, y: fy };
-      const end = { x: right ? to.left : to.right, y: ty };
-      // Already aligned: one straight segment, with no zero-length steps.
-      if (Math.abs(start.y - end.y) < 0.5) {
-        return { d: `M ${start.x} ${end.y} H ${end.x}`, start: { x: start.x, y: end.y }, port: end };
-      }
+      const right = tx >= fx;
+      start = { x: right ? from.right : from.left, y: fy };
+      end = { x: right ? to.left : to.right, y: ty };
+      const dir = right ? 1 : -1;
       const mid = (start.x + end.x) / 2;
-      return { d: `M ${start.x} ${start.y} H ${mid} V ${end.y} H ${end.x}`, start, port: end };
+
+      // Direct: out, across, in.
+      candidates.push([start, { x: mid, y: start.y }, { x: mid, y: end.y }, end]);
+
+      if (obstacle) {
+        // Around: step clear of the host, run along a lane above or below the menu, then
+        // step back in to the panel. Entering horizontally at both ends keeps the ports
+        // on the edges they belong to.
+        const bx = start.x + dir * c;
+        const ex = end.x - dir * c;
+        for (const lane of [obstacle.top - c, obstacle.bottom + c]) {
+          candidates.push([
+            start,
+            { x: bx, y: start.y },
+            { x: bx, y: lane },
+            { x: ex, y: lane },
+            { x: ex, y: end.y },
+            end,
+          ]);
+        }
+      }
+    } else {
+      const below = ty >= fy;
+      start = { x: fx, y: below ? from.bottom : from.top };
+      end = { x: tx, y: below ? to.top : to.bottom };
+      const dir = below ? 1 : -1;
+      const mid = (start.y + end.y) / 2;
+
+      candidates.push([start, { x: start.x, y: mid }, { x: end.x, y: mid }, end]);
+
+      if (obstacle) {
+        const by = start.y + dir * c;
+        const ey = end.y - dir * c;
+        for (const lane of [obstacle.left - c, obstacle.right + c]) {
+          candidates.push([
+            start,
+            { x: start.x, y: by },
+            { x: lane, y: by },
+            { x: lane, y: ey },
+            { x: end.x, y: ey },
+            end,
+          ]);
+        }
+      }
     }
 
-    const below = dy >= 0;
-    const start = { x: fx, y: below ? from.bottom : from.top };
-    const end = { x: tx, y: below ? to.top : to.bottom };
-    if (Math.abs(start.x - end.x) < 0.5) {
-      return { d: `M ${end.x} ${start.y} V ${end.y}`, start: { x: end.x, y: start.y }, port: end };
-    }
-    const mid = (start.y + end.y) / 2;
-    return { d: `M ${start.x} ${start.y} V ${mid} H ${end.x} V ${end.y}`, start, port: end };
+    const clear = obstacle ? candidates.filter((pts) => !pathHitsBox(pts, obstacle)) : candidates;
+    const chosen = (clear.length ? clear : candidates)
+      .sort((a, b) => pathLength(a) - pathLength(b))[0];
+
+    return { d: toPath(chosen), start, port: end };
   }
 
   /* -------------------------------------------------------------- satellites */
@@ -404,7 +483,15 @@
     sat.el.style.top = `${top}px`;
 
     const satBox = { left, top, width: w, height: h, right: left + w, bottom: top + h };
-    const { d, start, port } = routeBetween(hostBox, satBox);
+    // The menu is the one thing a wire must not cross; the ring field and wordmark are
+    // background and a wire over them is fine.
+    const menuBox = {
+      left: wheel.cx - wheel.r,
+      top: wheel.cy - wheel.r,
+      right: wheel.cx + wheel.r,
+      bottom: wheel.cy + wheel.r,
+    };
+    const { d, start, port } = routeBetween(hostBox, satBox, menuBox);
     sat.wire.path.setAttribute('d', d);
     sat.wire.from.setAttribute('cx', start.x);
     sat.wire.from.setAttribute('cy', start.y);
