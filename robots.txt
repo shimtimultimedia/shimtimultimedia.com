@@ -1,0 +1,17 @@
+# Shimti Multimedia - robots.txt
+
+# Crawling is intentionally ALLOWED even though the site is in alpha.
+#
+# Indexing is suppressed by the <meta name="robots" content="noindex"> tag in
+# index.html, NOT by a Disallow rule here. This is deliberate: a crawler blocked by
+# robots.txt never fetches the page, so it never sees the noindex tag, and the URL can
+# still appear in search results as a bare link. Allowing the fetch is what makes the
+# noindex actually take effect.
+#
+# TO GO LIVE, see LAUNCH.md: remove the noindex meta tag from index.html.
+# This file needs no change at launch.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://shimtimultimedia.github.io/shimtimultimedia.com/sitemap.xml

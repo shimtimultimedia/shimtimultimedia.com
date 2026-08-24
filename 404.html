@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signal Lost | Shimti Multimedia</title>
+  <meta name="description" content="The page you requested could not be found.">
+  <!-- Error pages must never be indexed: they are not content, and letting them into
+       search results creates dead entries pointing at nothing. -->
+  <meta name="robots" content="noindex, follow">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="assets/images/favicon/favicon.svg" type="image/svg+xml">
+  <style>
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('assets/fonts/Orbitron-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    :root {
+      --text-color: #eaffff;
+      --panel-bg: rgba(180, 220, 255, 0.15);
+      --border-color: #fff;
+      --focus-outline: #8cf;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background-color: #000;
+      color: var(--text-color);
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    main {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      padding: 2rem 1.5rem;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(3rem, 18vw, 8rem);
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      line-height: 1;
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+
+    p {
+      margin: 0;
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      letter-spacing: 0.1em;
+      max-width: 32ch;
+      line-height: 1.6;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--panel-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-color);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      transition: background 0.3s ease;
+    }
+
+    a:hover,
+    a:focus-visible {
+      background: rgba(180, 220, 255, 0.35);
+    }
+
+    a:focus-visible {
+      outline: 3px solid var(--focus-outline);
+      outline-offset: 3px;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { text-shadow: 0 0 8px rgba(180, 220, 255, 0.35); }
+      50%      { text-shadow: 0 0 22px rgba(180, 220, 255, 0.7); }
+    }
+
+    /* Honour the OS reduce-motion setting (WCAG 2.1 SC 2.3.3). */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>404</h1>
+    <p>Signal lost. This coordinate does not exist.</p>
+    <a href="./">Return to base</a>
+  </main>
+</body>
+</html>
