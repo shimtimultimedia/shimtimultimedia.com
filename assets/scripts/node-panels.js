@@ -237,26 +237,74 @@
     const h = sat.h;
     const hostBox = nodeBox(host);
 
-    // Candidate placements, in order of preference: right of the host, left of it, below,
-    // then above. The first that fits entirely on screen wins.
-    const candidates = [
+    /*
+     * Placement is scored, not ordered.
+     *
+     * Taking the first candidate that fit on screen meant the panel would happily land
+     * on top of the radial menu, which is the one thing on the page it must not hide.
+     * Every candidate is clamped into the viewport first - so all of them are valid
+     * positions - and then ranked by how much of the menu they cover, with distance from
+     * the host breaking ties. A placement that clears the menu always beats a closer one
+     * that does not, and the panel is never pushed off screen to achieve it.
+     *
+     * Candidates sit on both sides and above and below, so the panel is free to move to
+     * whichever side is actually clear rather than always favouring one.
+     */
+    const midTop = hostBox.top + hostBox.height / 2 - h / 2;
+    const raw = [
       { left: hostBox.right + SATELLITE_GAP, top: hostBox.top },
       { left: hostBox.left - w - SATELLITE_GAP, top: hostBox.top },
+      { left: hostBox.right + SATELLITE_GAP, top: midTop },
+      { left: hostBox.left - w - SATELLITE_GAP, top: midTop },
       { left: hostBox.left, top: hostBox.bottom + SATELLITE_GAP },
       { left: hostBox.left, top: hostBox.top - h - SATELLITE_GAP },
+      { left: hostBox.right + SATELLITE_GAP, top: hostBox.bottom + SATELLITE_GAP },
+      { left: hostBox.left - w - SATELLITE_GAP, top: hostBox.bottom + SATELLITE_GAP },
+      // Screen corners, for when the host is boxed in and nothing beside it is clear.
+      { left: EDGE_MARGIN, top: EDGE_MARGIN },
+      { left: window.innerWidth - w - EDGE_MARGIN, top: EDGE_MARGIN },
+      { left: EDGE_MARGIN, top: window.innerHeight - h - EDGE_MARGIN },
+      { left: window.innerWidth - w - EDGE_MARGIN, top: window.innerHeight - h - EDGE_MARGIN },
     ];
 
-    const fits = (c) =>
-      c.left >= EDGE_MARGIN &&
-      c.top >= EDGE_MARGIN &&
-      c.left + w <= window.innerWidth - EDGE_MARGIN &&
-      c.top + h <= window.innerHeight - EDGE_MARGIN;
+    const maxLeft = Math.max(EDGE_MARGIN, window.innerWidth - w - EDGE_MARGIN);
+    const maxTop = Math.max(EDGE_MARGIN, window.innerHeight - h - EDGE_MARGIN);
 
-    // If none fits outright, clamp the first candidate. Clamping always yields a fully
-    // on-screen box, so the panel is never cut off - it just sits closer to the host.
-    const chosen = candidates.find(fits) || candidates[0];
-    const left = clamp(chosen.left, EDGE_MARGIN, Math.max(EDGE_MARGIN, window.innerWidth - w - EDGE_MARGIN));
-    const top = clamp(chosen.top, EDGE_MARGIN, Math.max(EDGE_MARGIN, window.innerHeight - h - EDGE_MARGIN));
+    // The menu's bounding square. Squarer than the circle it contains, which errs toward
+    // giving the menu a wider berth - the right way to be wrong here.
+    const wheel = wheelGeometry();
+    const menu = {
+      left: wheel.cx - wheel.r,
+      top: wheel.cy - wheel.r,
+      right: wheel.cx + wheel.r,
+      bottom: wheel.cy + wheel.r,
+    };
+
+    const overlapWithMenu = (c) => {
+      const x = Math.max(0, Math.min(c.left + w, menu.right) - Math.max(c.left, menu.left));
+      const y = Math.max(0, Math.min(c.top + h, menu.bottom) - Math.max(c.top, menu.top));
+      return x * y;
+    };
+
+    const hostCx = hostBox.left + hostBox.width / 2;
+    const hostCy = hostBox.top + hostBox.height / 2;
+    const distanceFromHost = (c) =>
+      Math.hypot(c.left + w / 2 - hostCx, c.top + h / 2 - hostCy);
+
+    let best = null;
+    for (const c of raw) {
+      const cand = {
+        left: clamp(c.left, EDGE_MARGIN, maxLeft),
+        top: clamp(c.top, EDGE_MARGIN, maxTop),
+      };
+      const cover = overlapWithMenu(cand);
+      const near = distanceFromHost(cand);
+      if (!best || cover < best.cover - 1 || (Math.abs(cover - best.cover) <= 1 && near < best.near)) {
+        best = { ...cand, cover, near };
+      }
+    }
+
+    const { left, top } = best;
 
     sat.el.style.left = `${left}px`;
     sat.el.style.top = `${top}px`;
