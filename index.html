@@ -16,19 +16,183 @@
   <meta name="description" content="Shimti Multimedia: Cutting-edge music, video, and AI projects with a futuristic sci-fi aesthetic.">
   <meta name="keywords" content="Shimti Multimedia, music, video, AI, sci-fi, portfolio">
   <meta name="author" content="Shimti Multimedia">
+  <meta name="theme-color" content="#000000">
+
+  <!-- ALPHA: keeps the unfinished site out of search results. Crawling stays allowed in
+       robots.txt on purpose, so crawlers can actually fetch this page and honour the tag.
+       REMOVE THIS ONE LINE AT LAUNCH - see LAUNCH.md. -->
+  <meta name="robots" content="noindex, follow">
+
+  <title>Shimti Multimedia</title>
+
+  <!-- Canonical URL: tells search engines which address is authoritative, preventing
+       duplicate-content splits between the bare and trailing-slash forms. -->
+  <link rel="canonical" href="https://shimtimultimedia.github.io/shimtimultimedia.com/">
+
+  <!-- Open Graph: social link previews.
+       og:image must be a raster format - Facebook, LinkedIn, Discord and iMessage all
+       refuse to render SVG, so an SVG here produces a blank preview card. -->
   <meta property="og:title" content="Shimti Multimedia">
   <meta property="og:description" content="Explore music, video, and AI projects with a sci-fi flair.">
-  <meta property="og:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/logo.svg">
+  <meta property="og:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/favicon/web-app-manifest-512x512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Shimti Multimedia logo">
+  <meta property="og:url" content="https://shimtimultimedia.github.io/shimtimultimedia.com/">
+  <meta property="og:site_name" content="Shimti Multimedia">
   <meta property="og:type" content="website">
-  <title>Shimti Multimedia</title>
+
+  <!-- Twitter/X card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shimti Multimedia">
+  <meta name="twitter:description" content="Explore music, video, and AI projects with a sci-fi flair.">
+  <meta name="twitter:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/favicon/web-app-manifest-512x512.png">
+
   <link rel="stylesheet" href="assets/styles/styles.css">
-  <link rel="icon" href="assets/images/favicon/favicon.ico" type="image/x-icon">
-  <!-- Fallback favicon (uncomment if needed): -->
-  <!-- <link rel="icon" href="assets/images/favicon.png" type="image/png"> -->
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="assets/images/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Structured data: lets search engines represent the brand as an organisation
+       rather than an untyped page. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Shimti Multimedia",
+    "alternateName": "Shimti Multimedia - The Creative Multimedia Lab",
+    "url": "https://shimtimultimedia.github.io/shimtimultimedia.com/",
+    "logo": "https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/favicon/web-app-manifest-512x512.png",
+    "description": "Cutting-edge music, video, and AI projects with a futuristic sci-fi aesthetic.",
+    "foundingDate": "2007"
+  }
+  </script>
 </head>
 <body>
   <!-- Background canvas for grid and particle animations -->
   <canvas id="backgroundCanvas" aria-hidden="true"></canvas>
+
+  <!--
+    Background ring field, ported from the earlier home.html build.
+    Purely decorative: aria-hidden and pointer-events:none so it is invisible to
+    assistive technology and never intercepts clicks meant for the radial menu.
+    Sits between the particle canvas and #uiSvg (see z-index rules in styles.css).
+  -->
+  <svg id="backgroundRings" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Arc the title text follows. Radius 52 keeps it clear of the radial menu. -->
+      <path id="textArc" d="M 48 100 A 52 52 0 0 1 152 100" />
+    </defs>
+
+    <!--
+      The earlier home.html applied filter:url(#glow) to this entire SVG. That forced the
+      browser to re-rasterise every animated ring each frame and is dropped here on
+      purpose; the title's glow comes from the animated drop-shadow in .ring-title.
+    -->
+
+    <g>
+      <path d="M 160 100 A 60 60 0 1 0 40 100 A 60 60 0 1 0 160 100 M 150 100 A 50 50 0 1 1 50 100 A 50 50 0 1 1 150 100" fill="rgba(180, 220, 255, 0.1)" stroke="rgba(255, 255, 255, 0.6)" stroke-width="0.4" fill-rule="evenodd"/>
+      <circle cx="100" cy="100" r="191" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="60" stroke-dasharray="90 180" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="20s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="100" r="158" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="2" stroke-dasharray="90 150" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="40s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="100" r="152" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="6" stroke-dasharray="90 100" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="60s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="100" r="124" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="46" stroke-dasharray="4 2" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="80s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="100" r="97" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="1" stroke-dasharray="60 4" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="90s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="8" stroke-dasharray="2 40" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="100s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="100" r="75" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="18" stroke-dasharray="40 6" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="120s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="100" r="47" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="2" stroke-dasharray="6 2" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="160s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="100" r="63" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="2" stroke-dasharray="6 2" stroke-dashoffset="1">
+        <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="180s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Static concentric rings -->
+      <circle cx="100" cy="100" r="158" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="6" />
+      <circle cx="100" cy="100" r="144" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="6" />
+      <circle cx="100" cy="100" r="104" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="6" />
+      <circle cx="100" cy="100" r="75" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="10" />
+      <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(180, 220, 255, 0.1)" stroke-width="1" />
+      <circle cx="100" cy="100" r="147" fill="none" stroke="rgba(255, 255, 255, 0.6)" stroke-width="0.2" />
+      <circle cx="100" cy="100" r="101" fill="none" stroke="rgba(255, 255, 255, 0.6)" stroke-width="0.2" />
+      <circle cx="100" cy="100" r="75" fill="none" stroke="rgba(255, 255, 255, 0.6)" stroke-width="0.2" />
+      <circle cx="100" cy="100" r="44" fill="none" stroke="rgba(255, 255, 255, 0.6)" stroke-width="0.2" />
+
+      <!-- Orbiting squares: the group revolves while each square spins on its own centre -->
+      <g id="rotatingSquares">
+        <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 100 100" to="360 100 100" dur="30s" repeatCount="indefinite" additive="sum"/>
+        <rect x="221.5" y="97.5" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 224.0 100.0" to="360 224.0 100.0" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="212.06" y="144.95" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 214.56 147.45" to="360 214.56 147.45" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="185.18" y="185.18" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 187.68 187.68" to="360 187.68 187.68" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="144.95" y="212.06" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 147.45 214.56" to="360 147.45 214.56" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="97.5" y="221.5" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 100.0 224.0" to="360 100.0 224.0" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="50.05" y="212.06" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 52.55 214.56" to="360 52.55 214.56" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="9.82" y="185.18" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 12.32 187.68" to="360 12.32 187.68" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="-17.06" y="144.95" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 -14.56 147.45" to="360 -14.56 147.45" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="-26.5" y="97.5" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 -24.0 100.0" to="360 -24.0 100.0" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="-17.06" y="50.05" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 -14.56 52.55" to="360 -14.56 52.55" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="9.82" y="9.82" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 12.32 12.32" to="360 12.32 12.32" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="50.05" y="-17.06" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 52.55 -14.56" to="360 52.55 -14.56" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="97.5" y="-26.5" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 100.0 -24.0" to="360 100.0 -24.0" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="144.95" y="-17.06" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 147.45 -14.56" to="360 147.45 -14.56" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="185.18" y="9.82" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 187.68 12.32" to="360 187.68 12.32" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+        <rect x="212.06" y="50.05" width="5" height="5" fill="rgba(180, 220, 255, 0.08)">
+          <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 214.56 52.55" to="360 214.56 52.55" dur="5s" repeatCount="indefinite" additive="sum"/>
+        </rect>
+      </g>
+    </g>
+
+    <!-- Rotating arced wordmark. Slow 160s revolution around the same centre. -->
+    <text class="ring-title" font-family="Orbitron, sans-serif" font-weight="600" font-size="8" letter-spacing="0.1em">
+      <textPath href="#textArc" startOffset="50%" text-anchor="middle">SHIMTI MULTIMEDIA</textPath>
+      <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="160s" repeatCount="indefinite"/>
+    </text>
+  </svg>
+
   <!-- SVG container for UI elements (rings, squares, connection lines, etc.) -->
   <svg id="uiSvg" aria-label="UI Elements"></svg>
   <!-- Top branding panel with logo and text -->
@@ -46,6 +210,32 @@
   <div id="shimtiPanelBottom">
     <span id="welcomeText" role="status">Loading...</span>
   </div>
+
+  <!--
+    Reduced-motion support.
+    CSS @media (prefers-reduced-motion) cannot stop SMIL <animateTransform>, so the
+    SVG animation clock has to be paused through the DOM. Without this, a visitor who
+    has asked their OS to reduce motion still gets every ring spinning, which is a
+    WCAG 2.1 "Animation from Interactions" failure and can trigger vestibular symptoms.
+  -->
+  <script>
+    (function () {
+      var query = window.matchMedia('(prefers-reduced-motion: reduce)');
+      function apply() {
+        var svgs = document.querySelectorAll('svg');
+        for (var i = 0; i < svgs.length; i++) {
+          if (typeof svgs[i].pauseAnimations !== 'function') continue;
+          if (query.matches) { svgs[i].pauseAnimations(); } else { svgs[i].unpauseAnimations(); }
+        }
+      }
+      // Re-apply after the scripts below inject their SVG content, and whenever the
+      // user changes the preference without reloading.
+      document.addEventListener('DOMContentLoaded', apply);
+      window.addEventListener('load', apply);
+      query.addEventListener('change', apply);
+    })();
+  </script>
+
   <!-- Consolidated scripts -->
   <script src="assets/scripts/ui-elements.js"></script>
   <script src="assets/scripts/title-panel.js"></script>

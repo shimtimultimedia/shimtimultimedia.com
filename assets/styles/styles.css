@@ -48,6 +48,44 @@ canvas#backgroundCanvas {
   user-select: none;
 }
 
+/*
+ * Stacking order:
+ *   0    #backgroundCanvas   grid + particles (positioned)
+ *   -    #uiSvg              menu chrome (static, so it paints under positioned layers)
+ *   1    #backgroundRings    decorative ring field and arced wordmark
+ *   5    #shimtiPanel / #shimtiPanelBottom
+ *   1000 #radialMenu         interactive layer, stays on top
+ *
+ * The ring field is deliberately translucent (alpha 0.1) and pointer-events:none, so
+ * layering it over the static #uiSvg chrome tints it rather than hiding it, and never
+ * intercepts a click meant for the radial menu.
+ *
+ * Note: ui-elements.js sets #uiSvg.style.zIndex = '999', which has no effect while the
+ * element is position:static. Left as-is on purpose - giving it a position would lift
+ * it above the branding panels and change the existing composition.
+ */
+
+/* Background Ring Field */
+#backgroundRings {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  background: transparent;
+}
+
+#backgroundRings .ring-title {
+  fill: var(--text-color);
+  text-transform: uppercase;
+  /* glowPulse animates the `filter` property, so a static `filter` declaration here
+     would be overridden by the animation and never render. The pulse supplies the
+     glow instead, matching the branding panel and menu icons. */
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
 /* Branding Panel (Top) */
 #shimtiPanel {
   position: absolute;
@@ -343,5 +381,34 @@ canvas#backgroundCanvas {
   #radialMenu {
     width: 250px;
     height: 250px;
+  }
+}
+
+/*
+ * Reduced Motion
+ * Honours the OS-level "reduce motion" setting (WCAG 2.1 SC 2.3.3). This site animates
+ * continuously - spinning rings, orbiting squares, pulsing glows - which can provoke
+ * nausea and dizziness in people with vestibular disorders.
+ *
+ * This block covers CSS animations and transitions only. SMIL <animateTransform> inside
+ * the SVGs ignores CSS entirely and is paused separately via pauseAnimations() in the
+ * inline script in index.html. Both halves are required for full coverage.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep the carousel readable: it fades text in and out, so with transitions
+     effectively disabled the text must remain fully opaque rather than stuck faded. */
+  #shimtiPanelBottom #welcomeText,
+  #shimtiPanelBottom #welcomeText.fade-out,
+  #shimtiPanelBottom #welcomeText.fade-in {
+    opacity: 1;
   }
 }
