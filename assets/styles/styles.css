@@ -54,29 +54,39 @@ canvas#backgroundCanvas {
 }
 
 /*
- * Stacking order, back to front.
+ * DEPTH MODEL
  *
- * The foreground is the radial menu, the title node and the welcome node. Everything
- * else - the particle grid, the ring field and the arced wordmark - is background.
+ * The page is composed in three tiers. Anything added later belongs to one of them, and
+ * its z-index should come from that tier's band rather than being picked to win an
+ * argument with a neighbour.
  *
- *   0  #backgroundCanvas  particle grid
- *   1  #backgroundRings   decorative ring field
- *   1  #ringTitle         arced SHIMTI MULTIMEDIA wordmark (after the rings in the
- *                         markup, so it paints over them at the same level)
- *   2  #nodeWires         connectors, tucked under the menu they attach to
- *   3  #uiSvg             the radial menu
- *   5  #shimtiPanel, #shimtiPanelBottom   the draggable nodes
- *   6  #sectionPanels     section previews, above everything they overlap
+ *   BACKGROUND (0-9)
+ *     0   #backgroundCanvas   the grid and the drifting dots beneath it
  *
- * #uiSvg previously had no position, and a static element paints beneath every
- * positioned one regardless of z-index - so the menu sat behind the ring field, the
- * wires and the panels, and read as background. It is positioned now so its place in
- * this order is real. ui-elements.js used to set z-index 999 on it inline, which did
- * nothing for the same reason; that assignment has been removed.
+ *   MIDDLE GROUND (10-19)
+ *     10  #backgroundRings    concentric rings, segments, orbiting squares
+ *     11  #ringTitle          curved SHIMTI MULTIMEDIA wordmark, over the rings it orbits
  *
- * Only #uiSvg and the node panels accept pointer events. Every other layer here spans
- * the whole viewport, so any one of them left interactive becomes an invisible lid over
- * the navigation.
+ *   FOREGROUND (20+)
+ *     20  #nodeWires          connectors, tucked beneath the menu they attach to
+ *     30  #uiSvg              the radial menu
+ *     40  #shimtiPanel, #shimtiPanelBottom   the draggable title and welcome nodes
+ *     50  #sectionPanels      section previews, above everything they overlap
+ *
+ * The tiers are also what section previews are placed against: a preview must never
+ * cover the foreground, and is free to pass over the middle ground and background.
+ *
+ * Two traps this layout has already fallen into, both worth not repeating:
+ *
+ *   - #uiSvg had no position. A static element paints beneath every positioned one
+ *     whatever its z-index, so the menu sat behind the rings, the wires and the panels
+ *     and read as background. It also meant the z-index ui-elements.js assigned to it
+ *     inline had never done anything.
+ *
+ *   - Only #uiSvg and the node panels may accept pointer events. Every other layer here
+ *     spans the whole viewport, so any one of them left interactive becomes an invisible
+ *     lid over the navigation - which is exactly what #hitCanvas, #radialMenu and
+ *     #backgroundCanvas each did in turn.
  */
 
 /* Background Ring Field */
@@ -86,7 +96,7 @@ canvas#backgroundCanvas {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 10;
   pointer-events: none;
   background: transparent;
 }
@@ -99,7 +109,7 @@ canvas#backgroundCanvas {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 3;
+  z-index: 30;
 }
 
 /* Arced wordmark. Background, like the ring field it orbits with - the menu and the
@@ -110,7 +120,7 @@ canvas#backgroundCanvas {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 11;
   pointer-events: none;
   background: transparent;
 }
@@ -137,7 +147,7 @@ canvas#backgroundCanvas {
   width: 100%;
   height: 100%;
   /* Above the ring field, below the panels the wires connect to. */
-  z-index: 2;
+  z-index: 20;
   /* Decoration: must never intercept a click meant for the wheel beneath it. */
   pointer-events: none;
 }
@@ -196,7 +206,7 @@ canvas#backgroundCanvas {
   display: flex;
   align-items: center;
   gap: 10px;
-  z-index: 5;
+  z-index: 40;
   user-select: none;
   /* Interactive: this is a draggable node, so it must receive pointer events. */
   pointer-events: auto;
@@ -233,7 +243,7 @@ canvas#backgroundCanvas {
   border: 2px solid var(--border-color);
   width: 300px;
   min-height: 24px;
-  z-index: 5;
+  z-index: 40;
   user-select: none;
   /* Interactive: this is a draggable node, so it must receive pointer events. */
   pointer-events: auto;
@@ -282,17 +292,21 @@ canvas#backgroundCanvas {
   transform: translate(-50%, -50%);
   width: 400px;
   height: 400px;
-  z-index: 1000;
   user-select: none;
   pointer-events: none;
+  /* No z-index: the element is empty and non-interactive, so it paints nothing and
+     receives nothing. It previously claimed 1000, which sat outside the depth model and
+     implied an importance it does not have. */
 }
 
+/* z-index is deliberately absent: this is an SVG group, and SVG children paint in
+   document order rather than by z-index, so the 1000 !important that used to be here
+   was inert. Its position in the stack comes from #uiSvg, which contains it. */
 #wheelMenu {
   width: 100%;
   height: 100%;
   user-select: none;
   pointer-events: all !important;
-  z-index: 1000 !important;
 }
 
 #wheelMenu g {
@@ -345,7 +359,7 @@ canvas#backgroundCanvas {
 #sectionPanels {
   position: fixed;
   inset: 0;
-  z-index: 6;
+  z-index: 50;
   pointer-events: none;
 }
 
