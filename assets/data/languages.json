@@ -1,0 +1,182 @@
+[
+  {
+    "lang": "English",
+    "text": "Welcome",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Spanish",
+    "text": "Bienvenido",
+    "dir": "ltr"
+  },
+  {
+    "lang": "French",
+    "text": "Bienvenue",
+    "dir": "ltr"
+  },
+  {
+    "lang": "German",
+    "text": "Willkommen",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Russian",
+    "text": "Добро пожаловать",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Mandarin",
+    "text": "欢迎",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Japanese",
+    "text": "ようこそ",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Hindi",
+    "text": "स्वागत है",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Swahili",
+    "text": "Karibu",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Arabic",
+    "text": "أهلاً",
+    "dir": "rtl"
+  },
+  {
+    "lang": "Portuguese",
+    "text": "Bem-vindo",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Yoruba",
+    "text": "Kaabọ",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Italian",
+    "text": "Benvenuto",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Turkish",
+    "text": "Hoş Geldiniz",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Indonesian",
+    "text": "Selamat Datang",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Dutch",
+    "text": "Welkom",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Swedish",
+    "text": "Välkommen",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Polish",
+    "text": "Witamy",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Vietnamese",
+    "text": "Chào mừng",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Thai",
+    "text": "ยินดีต้อนรับ",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Filipino",
+    "text": "Maligayang Pagdating",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Hebrew",
+    "text": "ברוך הבא",
+    "dir": "rtl"
+  },
+  {
+    "lang": "Greek",
+    "text": "Καλώς ήρθατε",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Norwegian",
+    "text": "Velkommen",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Danish",
+    "text": "Velkommen",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Finnish",
+    "text": "Tervetuloa",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Czech",
+    "text": "Vítejte",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Hungarian",
+    "text": "Üdvözöljük",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Romanian",
+    "text": "Bine ați venit",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Bulgarian",
+    "text": "Добре дошли",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Croatian",
+    "text": "Dobrodošli",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Slovak",
+    "text": "Vitajte",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Slovenian",
+    "text": "Dobrodošli",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Lithuanian",
+    "text": "Sveiki atvykę",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Latvian",
+    "text": "Laipni lūdzam",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Estonian",
+    "text": "Tere tulemast",
+    "dir": "ltr"
+  }
+]

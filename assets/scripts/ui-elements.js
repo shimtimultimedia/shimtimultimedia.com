@@ -1,7 +1,7 @@
 /**
  * @module UIElements
  * @description Manages SVG-based UI for Shimti Multimedia’s sci-fi interface with radial menu, welcome carousel, rings, and connection lines. Uses canvas-based hit detection for hover to bypass SVG event issues.
- * @requires DOM elements (uiSvg, radialMenu, shimtiPanel, shimtiPanelBottom, welcomeText), assets/data/languages.xml, assets/images/*.svg
+ * @requires DOM elements (uiSvg, radialMenu, shimtiPanel, shimtiPanelBottom, welcomeText), assets/data/languages.json, assets/images/*.svg
  */
 
 /** @namespace ShimtiUtils - Shared utilities for logging */
@@ -47,18 +47,18 @@ const UI_CONFIG = {
     PARTICLE_INTERVAL_MAX: 3000,
     BACKGROUND_RADIUS: 192,
     FALLBACK_LANGUAGES: [
-        { lang: 'English', text: 'Welcome' },
-        { lang: 'Spanish', text: 'Bienvenido' },
-        { lang: 'French', text: 'Bienvenue' },
-        { lang: 'German', text: 'Willkommen' },
-        { lang: 'Russian', text: 'Добро пожаловать' },
-        { lang: 'Mandarin', text: '欢迎' },
-        { lang: 'Japanese', text: 'ようこそ' },
-        { lang: 'Hindi', text: 'स्वागत है' },
-        { lang: 'Swahili', text: 'Karibu' },
-        { lang: 'Arabic', text: 'أهلاً' },
-        { lang: 'Portuguese', text: 'Bem-vindo' },
-        { lang: 'Yoruba', text: 'Kaabọ' }
+        { lang: 'English', text: 'Welcome', dir: 'ltr' },
+        { lang: 'Spanish', text: 'Bienvenido', dir: 'ltr' },
+        { lang: 'French', text: 'Bienvenue', dir: 'ltr' },
+        { lang: 'German', text: 'Willkommen', dir: 'ltr' },
+        { lang: 'Russian', text: 'Добро пожаловать', dir: 'ltr' },
+        { lang: 'Mandarin', text: '欢迎', dir: 'ltr' },
+        { lang: 'Japanese', text: 'ようこそ', dir: 'ltr' },
+        { lang: 'Hindi', text: 'स्वागत है', dir: 'ltr' },
+        { lang: 'Swahili', text: 'Karibu', dir: 'ltr' },
+        { lang: 'Arabic', text: 'أهلاً', dir: 'rtl' },
+        { lang: 'Portuguese', text: 'Bem-vindo', dir: 'ltr' },
+        { lang: 'Yoruba', text: 'Kaabọ', dir: 'ltr' }
     ],
     STATIONARY_RING_OUTER: 245,
     STATIONARY_RING_INNER: 210,
@@ -259,7 +259,9 @@ function setupSectorHover(canvas, ctx, sectorPositions, welcomeText, carouselSta
             try {
                 if (carouselState.timeoutId) clearTimeout(carouselState.timeoutId);
                 carouselState.isHovering = false;
-                welcomeText.textContent = carouselState.languages[carouselState.currentIndex].text || 'Welcome';
+                const currentLang = carouselState.languages[carouselState.currentIndex];
+                welcomeText.textContent = currentLang.text || 'Welcome';
+                welcomeText.setAttribute('dir', currentLang.dir || 'ltr');
                 welcomeText.style.opacity = '1';
                 hoverData.path.style.fill = UI_CONFIG.SECTOR_FILL;
                 hoverData.path.style.stroke = UI_CONFIG.STROKE_COLOR;
@@ -267,8 +269,10 @@ function setupSectorHover(canvas, ctx, sectorPositions, welcomeText, carouselSta
                 menuLogger.log('Sector mouseleave', { label: hoverData.label }, true);
                 carouselState.timeoutId = setTimeout(() => {
                     carouselState.currentIndex = (carouselState.currentIndex + 1) % carouselState.languages.length;
-                    welcomeText.textContent = carouselState.languages[carouselState.currentIndex].text || 'Welcome';
-                    menuLogger.log('Carousel resumed', { text: carouselState.languages[carouselState.currentIndex].text }, true);
+                    const nextLang = carouselState.languages[carouselState.currentIndex];
+                    welcomeText.textContent = nextLang.text || 'Welcome';
+                    welcomeText.setAttribute('dir', nextLang.dir || 'ltr');
+                    menuLogger.log('Carousel resumed', { text: nextLang.text }, true);
                 }, UI_CONFIG.WELCOME_INTERVAL);
             } catch (error) {
                 menuLogger.error('Sector reset failed', error);
@@ -306,24 +310,16 @@ function initWelcomeCarousel(svgElement, menuWheel, canvas, ctx, carouselState, 
         welcomeText.textContent = 'Loading...';
         carouselState.languages = UI_CONFIG.FALLBACK_LANGUAGES;
 
-        fetch('assets/data/languages.xml')
-            .then(response => response.ok ? response.text() : Promise.reject(response.status))
-            .then(text => new DOMParser().parseFromString(text, 'text/xml'))
-            .then(xmlDoc => {
-                const languageNodes = xmlDoc.getElementsByTagName('language');
-                if (languageNodes.length > 0) {
-                    carouselState.languages = Array.from(languageNodes).map(node => ({
-                        lang: node.getAttribute('lang'),
-                        text: node.getAttribute('text') || 'Welcome'
-                    }));
-                    carouselLogger.log('Loaded languages.xml', { count: carouselState.languages.length });
-                } else {
-                    carouselLogger.warn('languages.xml empty, using fallback');
-                }
-                startCarousel();
+        fetch('assets/data/languages.json')
+            .then(response => response.ok ? response.json() : Promise.reject(response.status))
+            .then(json => {
+                carouselState.languages = json;
+                carouselLogger.log('Loaded languages.json', { count: carouselState.languages.length });
             })
             .catch(error => {
-                carouselLogger.warn('Failed to load languages.xml', { error });
+                carouselLogger.warn('Failed to load languages.json', { error });
+            })
+            .finally(() => {
                 startCarousel();
             });
 
@@ -344,10 +340,12 @@ function initWelcomeCarousel(svgElement, menuWheel, canvas, ctx, carouselState, 
                     welcomeText.classList.add('fade-out');
                     setTimeout(() => {
                         carouselState.currentIndex = (carouselState.currentIndex + 1) % carouselState.languages.length;
-                        welcomeText.textContent = carouselState.languages[carouselState.currentIndex].text || 'Welcome';
+                        const currentLang = carouselState.languages[carouselState.currentIndex];
+                        welcomeText.textContent = currentLang.text || 'Welcome';
+                        welcomeText.setAttribute('dir', currentLang.dir || 'ltr');
                         welcomeText.classList.remove('fade-out');
                         welcomeText.classList.add('fade-in');
-                        carouselLogger.log('Cycled text', { text: carouselState.languages[carouselState.currentIndex].text }, true);
+                        carouselLogger.log('Cycled text', { text: currentLang.text }, true);
                         carouselState.timeoutId = setTimeout(cycleText, UI_CONFIG.WELCOME_INTERVAL);
                     }, 500);
                 } catch (error) {
@@ -355,7 +353,9 @@ function initWelcomeCarousel(svgElement, menuWheel, canvas, ctx, carouselState, 
                 }
             };
 
-            welcomeText.textContent = carouselState.languages[0].text || 'Welcome';
+            const initialLang = carouselState.languages[0];
+            welcomeText.textContent = initialLang.text || 'Welcome';
+            welcomeText.setAttribute('dir', initialLang.dir || 'ltr');
             welcomeText.classList.add('fade-in');
             carouselState.timeoutId = setTimeout(cycleText, UI_CONFIG.WELCOME_INTERVAL);
         }
@@ -394,7 +394,7 @@ function initUIElements() {
         }
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true }); // Added willReadFrequently: true to optimize getImageData calls
 
         svgElement.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
         svgElement.style.zIndex = '999';
@@ -1118,7 +1118,7 @@ function initUIElements() {
             } catch (error) {
                 uiLogger.error('Resize failed', error);
             }
-        }, 100);
+        }, 200); // Increased debounce wait to 200ms for better performance on resize
 
         window.addEventListener('resize', updatePositions);
         uiLogger.log('UI elements initialized', { duration: performance.now() - startTime });
