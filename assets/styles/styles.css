@@ -227,6 +227,203 @@ canvas#backgroundCanvas {
   animation: circleGlowPulse 3s ease-in-out infinite, opacityPulse 2s ease-in-out infinite;
 }
 
+/* ==========================================================================
+   Section Preview Panels
+   Shown when a radial sector is hovered or keyboard-focused.
+   ========================================================================== */
+
+#sectionPanels {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.section-panel {
+  position: absolute;
+  top: 50%;
+  width: min(390px, 26vw);
+  margin: 0;
+
+  /* Hidden with opacity, never display:none or visibility:hidden.
+     Each sector link references this panel's paragraph via aria-describedby, and both
+     of those would drop the text out of the accessibility tree and break it. */
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity 0.42s ease,
+    transform 0.72s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.section-panel[data-hemisphere="left"] {
+  left: 2vw;
+  transform: translateY(-50%) translateX(-24px);
+}
+
+.section-panel[data-hemisphere="right"] {
+  right: 2vw;
+  transform: translateY(-50%) translateX(24px);
+}
+
+/* Open state: settle to resting position. */
+.section-panel.is-open {
+  opacity: 1;
+}
+
+.section-panel.is-open[data-hemisphere="left"],
+.section-panel.is-open[data-hemisphere="right"] {
+  transform: translateY(-50%) translateX(0);
+}
+
+.section-panel-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 24px rgba(180, 220, 255, 0.15);
+}
+
+.section-panel-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  /* Reserved by width/height plus aspect-ratio, so swapping the src in on first
+     reveal cannot shift the panel's layout. */
+}
+
+.section-panel-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-color);
+}
+
+.section-panel-copy {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.72rem, 0.95vw, 0.85rem);
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+  color: var(--text-color);
+}
+
+.section-panel-cue {
+  align-self: flex-start;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(180, 220, 255, 0.6);
+  border-radius: 5px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-color);
+}
+
+.section-panel-cue::after {
+  content: ' \2192';
+}
+
+/*
+ * Narrow screens: the side panels become a bottom sheet.
+ *
+ * At 26vw a panel is roughly 100px wide on a phone, which is unreadable, and the wheel
+ * itself already fills most of the width. Anchoring to the bottom edge keeps the copy
+ * legible and clear of the wheel, and matches where a thumb already is.
+ *
+ * 900px rather than the 768px used elsewhere: the squeeze here is caused by the wheel
+ * and two side panels competing for width, which starts well before tablet width.
+ */
+@media (max-width: 900px) {
+  .section-panel,
+  .section-panel[data-hemisphere="left"],
+  .section-panel[data-hemisphere="right"] {
+    top: auto;
+    bottom: 64px;
+    left: 50%;
+    right: auto;
+    width: min(440px, 92vw);
+    max-height: 46vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translateX(-50%) translateY(16px);
+  }
+
+  .section-panel.is-open[data-hemisphere="left"],
+  .section-panel.is-open[data-hemisphere="right"] {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* The image is the first thing to sacrifice when height is tight - the copy is what
+     the visitor needs in order to choose a section. */
+  .section-panel-image {
+    aspect-ratio: 21 / 9;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-panel-image {
+    display: none;
+  }
+
+  .section-panel,
+  .section-panel[data-hemisphere="left"],
+  .section-panel[data-hemisphere="right"] {
+    bottom: 56px;
+    max-height: 40vh;
+  }
+}
+
+/* Focus ring for the radial sectors, which are SVG links. */
+#wheelMenu a:focus-visible {
+  outline: 3px solid var(--focus-outline);
+  outline-offset: 3px;
+}
+
+#wheelMenu a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Navigation shown only when JavaScript is unavailable. The wheel is drawn in JS, so
+   without this there would be no navigation at all. */
+.nav-fallback {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.nav-fallback a {
+  display: block;
+  padding: 0.6rem 1.1rem;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-color);
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+}
+
 /* Connection Lines and Points */
 .connection-line {
   stroke: rgba(255, 255, 255, 0.3);

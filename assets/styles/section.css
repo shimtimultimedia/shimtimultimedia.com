@@ -1,0 +1,235 @@
+/*
+ * Shimti Multimedia: section pages
+ *
+ * Shared stylesheet for about / ai / work / shop / media / contact.
+ *
+ * Separate from styles.css on purpose. That file styles the homepage's fixed, non
+ * scrolling radial interface - it sets overflow:hidden on html and body, which would
+ * make a page of prose impossible to scroll. These pages are ordinary documents and
+ * need ordinary document behaviour.
+ */
+
+@font-face {
+  font-family: 'Orbitron';
+  src: url('../fonts/Orbitron-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --text-color: #eaffff;
+  --muted-color: rgba(234, 255, 255, 0.72);
+  --panel-bg: rgba(180, 220, 255, 0.12);
+  --border-color: rgba(255, 255, 255, 0.65);
+  --accent: #8cf;
+  --focus-outline: #8cf;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #000;
+  color: var(--text-color);
+  font-family: 'Orbitron', sans-serif;
+  line-height: 1.7;
+}
+
+/* Visible only once focused, so keyboard users can jump the header. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: #000;
+  border: 2px solid var(--accent);
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}
+
+a {
+  color: var(--text-color);
+  text-decoration-color: rgba(180, 220, 255, 0.6);
+  text-underline-offset: 0.25em;
+}
+
+a:hover {
+  text-decoration-color: var(--accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-outline);
+  outline-offset: 3px;
+}
+
+/* ---------- Header ---------- */
+
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 4vw, 3rem);
+  border-bottom: 1px solid rgba(180, 220, 255, 0.25);
+}
+
+.section-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: clamp(0.75rem, 1.6vw, 0.95rem);
+  text-decoration: none;
+}
+
+.section-home img {
+  filter: brightness(1.1);
+}
+
+.section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.section-nav a {
+  display: block;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: clamp(0.7rem, 1.4vw, 0.8rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.section-nav a:hover {
+  background: var(--panel-bg);
+  border-color: var(--border-color);
+}
+
+/* The current page is marked for everyone, not colour alone: aria-current carries it
+   to assistive technology, and the border carries it to anyone who cannot distinguish
+   the highlight. */
+.section-nav a[aria-current="page"] {
+  background: var(--panel-bg);
+  border-color: var(--border-color);
+}
+
+/* ---------- Main ---------- */
+
+.section-main {
+  flex: 1;
+  width: 100%;
+  max-width: 72ch;
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 3rem);
+}
+
+.section-eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--muted-color);
+  font-size: clamp(0.72rem, 1.5vw, 0.85rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  margin: 0 0 1.5rem;
+  font-size: clamp(2rem, 7vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.section-hero {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  /* width/height plus aspect-ratio reserve the space before the image arrives, so the
+     text below never jumps once it loads. */
+}
+
+.section-intro {
+  margin: 0 0 2.5rem;
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+}
+
+.section-placeholder {
+  padding: 1.25rem 1.5rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.section-placeholder h2 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(0.85rem, 1.8vw, 1rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.section-placeholder p {
+  margin: 0;
+  font-size: clamp(0.8rem, 1.7vw, 0.92rem);
+  color: var(--muted-color);
+}
+
+/* ---------- Footer ---------- */
+
+.section-footer {
+  padding: 1.5rem clamp(1rem, 4vw, 3rem);
+  border-top: 1px solid rgba(180, 220, 255, 0.25);
+  color: var(--muted-color);
+  font-size: clamp(0.7rem, 1.4vw, 0.8rem);
+  letter-spacing: 0.08em;
+}
+
+.section-footer p {
+  margin: 0;
+}
+
+/* Honours the OS reduce-motion setting (WCAG 2.1 SC 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

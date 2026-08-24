@@ -193,34 +193,130 @@
     </text>
   </svg>
 
-  <!-- SVG container for UI elements (rings, squares, connection lines, etc.).
-       Decoration only, so it is hidden from assistive technology. It previously carried
-       aria-label="UI Elements", which an <svg> with no role cannot expose as a name -
-       screen readers ignored it, and the text conveyed nothing to a user regardless. -->
-  <svg id="uiSvg" aria-hidden="true"></svg>
+  <!--
+    SVG container built by ui-elements.js. It holds two distinct things:
+
+      - a decorative group (rings, squares, connection lines, particles), which the
+        script marks aria-hidden="true"
+      - g#wheelMenu, the real navigation, containing the six sector links
+
+    So this element must NOT be aria-hidden: doing so hides the site's only navigation
+    from screen readers. It carries no aria-label either, because an <svg> with no role
+    cannot expose a name - the label is on g#wheelMenu, which declares role="navigation".
+  -->
+  <svg id="uiSvg"></svg>
   <!-- Top branding panel with logo and text -->
   <div id="shimtiPanel">
     <img src="assets/images/Logo.svg" alt="Shimti Multimedia Logo">
     <span>SHIMTI MULTIMEDIA</span>
   </div>
   <!--
-    Radial menu SVG with interactive sectors.
+    Radial menu. A <nav> landmark, with the accessible name on the landmark rather than
+    on an <svg>, which has no role to attach a name to.
 
-    Now a <nav> landmark so the region is at least discoverable, and the name lives on
-    the landmark rather than on an <svg> that has no role to attach it to.
+    ui-elements.js builds six sectors inside #wheelMenu, each one a real SVG <a>. That
+    means they are reachable by Tab, activate on Enter, are announced as links, and
+    support middle-click and "open in new tab" - none of which the previous click
+    handler provided.
 
-    KNOWN GAP - the menu is still mouse-only. ui-elements.js drives it from a click
-    handler plus a mousemove hit-test canvas: no sector is focusable, none carries a
-    role or accessible name, and there are no key handlers. That is a WCAG 2.1 SC 2.1.1
-    (Keyboard) Level A failure, and it is tracked as the first task of the content
-    build-out, where the sectors also gain real destinations - they currently point at
-    #contact, #ai and similar fragments that do not exist on the page.
+    The <noscript> list below is the same navigation without JavaScript. The wheel is
+    drawn entirely in JS, so without it the site would otherwise have no navigation at
+    all.
   -->
-  <nav id="radialMenu" aria-label="Main navigation">
-    <svg aria-hidden="true">
-      <g id="wheelMenu"></g>
-    </svg>
-  </nav>
+  <div id="radialMenu"></div>
+
+  <!--
+    Navigation for visitors without JavaScript. The wheel is drawn entirely in JS, so
+    without this the site would have no navigation at all.
+  -->
+  <noscript>
+    <nav class="nav-fallback-wrap" aria-label="Main navigation">
+      <ul class="nav-fallback">
+        <li><a href="about.html">About</a></li>
+        <li><a href="ai.html">AI</a></li>
+        <li><a href="work.html">Work</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="media.html">Media</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </nav>
+  </noscript>
+  <!--
+    Section preview panels.
+
+    One per radial sector. Shown when its sector is hovered or keyboard-focused; the
+    sector link itself is what navigates.
+
+    Real HTML rather than the SVG <foreignObject> the earlier build used, so the copy is
+    selectable, indexable by search engines, and reachable by screen readers.
+
+    Deliberately NOT aria-hidden. Each sector link points at its paragraph with
+    aria-describedby, so a screen reader announces the teaser when the link takes focus.
+    That only resolves if the text stays in the accessibility tree, which is also why
+    these are hidden with opacity and pointer-events rather than display:none or
+    visibility:hidden - both of those would remove the text and break the description.
+
+    Images use data-src and are swapped in on first reveal. A native loading="lazy"
+    image inside an opacity-driven subtree never satisfies the browser's visibility
+    heuristic and can stay blank permanently - the same trap already hit and documented
+    in the Bryant Duhart codebase.
+  -->
+  <div id="sectionPanels">
+    <article class="section-panel" id="panel-contact" data-hemisphere="right">
+      <div class="section-panel-surface">
+        <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/contact.webp" alt="" width="640" height="360" decoding="async">
+        <h2 class="section-panel-title">Contact</h2>
+        <p class="section-panel-copy" id="copy-contact">Reach out through our digital conduits for inquiries or collaborations. Discover how Shimti Multimedia can elevate your projects with custom AI and multimedia solutions&mdash;your gateway to innovation awaits just a message away.</p>
+        <span class="section-panel-cue" aria-hidden="true">Open section</span>
+      </div>
+    </article>
+
+    <article class="section-panel" id="panel-ai" data-hemisphere="right">
+      <div class="section-panel-surface">
+        <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/ai.webp" alt="" width="640" height="360" decoding="async">
+        <h2 class="section-panel-title">AI</h2>
+        <p class="section-panel-copy" id="copy-ai">Navigate the AI frontier with Shimti Multimedia&rsquo;s advanced services, symbolized by a landscape of intelligent circuits. Uncover our cutting-edge tools and consultations that empower your creative vision&mdash;prepare to unlock new realms of possibility.</p>
+        <span class="section-panel-cue" aria-hidden="true">Open section</span>
+      </div>
+    </article>
+
+    <article class="section-panel" id="panel-work" data-hemisphere="right">
+      <div class="section-panel-surface">
+        <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/work.webp" alt="" width="640" height="360" decoding="async">
+        <h2 class="section-panel-title">Work</h2>
+        <p class="section-panel-copy" id="copy-work">Traverse the dynamic landscape of our portfolio, showcasing Shimti Multimedia&rsquo;s groundbreaking projects in digital and print assets. Explore how we blend art and technology to create lasting impact&mdash;your inspiration for what&rsquo;s possible starts here.</p>
+        <span class="section-panel-cue" aria-hidden="true">Open section</span>
+      </div>
+    </article>
+
+    <article class="section-panel" id="panel-media" data-hemisphere="left">
+      <div class="section-panel-surface">
+        <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/media.webp" alt="" width="640" height="360" decoding="async">
+        <h2 class="section-panel-title">Media</h2>
+        <p class="section-panel-copy" id="copy-media">Embark on a sonic and visual adventure with Shimti Multimedia&rsquo;s media offerings, where immersive audio and captivating visuals converge. Tease your senses with our collection of soundtracks and effects&mdash;dive deeper to experience the full spectrum of our multimedia mastery.</p>
+        <span class="section-panel-cue" aria-hidden="true">Open section</span>
+      </div>
+    </article>
+
+    <article class="section-panel" id="panel-shop" data-hemisphere="left">
+      <div class="section-panel-surface">
+        <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/shop.webp" alt="" width="640" height="360" decoding="async">
+        <h2 class="section-panel-title">Shop</h2>
+        <p class="section-panel-copy" id="copy-shop">Wander through our storefront landscape, filled with premium digital and print assets ready for your projects. Discover the tools that bring your ideas to life with Shimti Multimedia&mdash;your journey to creative excellence begins with a single purchase.</p>
+        <span class="section-panel-cue" aria-hidden="true">Open section</span>
+      </div>
+    </article>
+
+    <article class="section-panel" id="panel-about" data-hemisphere="left">
+      <div class="section-panel-surface">
+        <img class="section-panel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="assets/images/sections/about.webp" alt="" width="640" height="360" decoding="async">
+        <h2 class="section-panel-title">About</h2>
+        <p class="section-panel-copy" id="copy-about">Journey through the innovative landscape of Shimti Multimedia, where art and technology merge seamlessly. Learn about our commitment to &ldquo;Bringing Art To Life&rdquo; since 2007&mdash;uncover the story behind our digital assets, AI services, and immersive audio.</p>
+        <span class="section-panel-cue" aria-hidden="true">Open section</span>
+      </div>
+    </article>
+  </div>
+
   <!-- Bottom panel with welcome text carousel -->
   <div id="shimtiPanelBottom">
     <span id="welcomeText" role="status">Loading...</span>
@@ -255,5 +351,6 @@
   <script src="assets/scripts/ui-elements.js"></script>
   <script src="assets/scripts/title-panel.js"></script>
   <script src="assets/scripts/background.js"></script>
+  <script src="assets/scripts/section-panels.js"></script>
 </body>
 </html>

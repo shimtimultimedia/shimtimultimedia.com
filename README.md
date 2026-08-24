@@ -16,11 +16,16 @@ the repository is exactly what is served. This mirrors the `bryant-duhart` setup
 ## Running locally
 
 The site fetches `assets/data/languages.json`, which browsers block over `file://`, so it
-must be served over HTTP rather than opened directly:
+must be served over HTTP rather than opened directly.
 
 ```bash
-npx serve .
+node dev-server.js
 ```
+
+Then open <http://localhost:3000>. It reloads the page when a file changes, and swaps
+stylesheets in place without a reload - a full reload would restart the particle canvas,
+the ring animations and the welcome carousel, throwing away whatever visual state you
+were looking at. No dependencies; plain Node.
 
 ## Layout
 
@@ -34,12 +39,19 @@ npx serve .
 ├── sitemap.xml
 ├── favicon.ico         Root copy; browsers request /favicon.ico by convention
 ├── .nojekyll           Serve files as-is instead of running them through Jekyll
+├── dev-server.js       Local dev server with live reload (not used in production)
+├── about.html          Section pages, one per radial sector
+├── ai.html
+├── work.html
+├── shop.html
+├── media.html
+├── contact.html
 └── assets/
     ├── data/           languages.json — welcome carousel strings (36 languages)
     ├── fonts/          Orbitron
     ├── images/         Menu icons, logo, favicons
-    ├── scripts/        ui-elements.js, title-panel.js, background.js
-    └── styles/         styles.css
+    ├── scripts/        ui-elements.js, title-panel.js, background.js, section-panels.js
+    └── styles/         styles.css (homepage), section.css (section pages)
 ```
 
 ## How the homepage is layered
@@ -57,6 +69,25 @@ Four stacked layers, back to front:
 `#backgroundRings` is inline SVG animated with SMIL, ported from an earlier build. It is
 `aria-hidden` and `pointer-events: none`, so it is invisible to screen readers and never
 intercepts a click meant for the menu.
+
+### Where the navigation actually lives
+
+Not where it looks like it does. `#radialMenu` is only a **sizing anchor** - an empty
+div that `ui-elements.js` measures. The real wheel is drawn into `#uiSvg`, a sibling,
+as `g#wheelMenu`.
+
+Two consequences worth knowing before editing either file:
+
+- `g#wheelMenu` is appended directly to `#uiSvg`, **not** into the decorative root
+  group. That group carries `aria-hidden="true"` for the rings and connection lines;
+  nesting the menu inside it hid all six links from screen readers.
+- The wheel is **rebuilt from scratch on every resize**. Anything bound directly to a
+  sector, or to `#wheelMenu` itself, stops working the first time the window is
+  resized. `section-panels.js` therefore delegates from `document` and re-applies its
+  attributes via a `MutationObserver`.
+
+Each sector is a real SVG `<a href>`, so it is focusable, activates on Enter, is
+announced as a link, and supports middle-click and "open in new tab".
 
 ## Accessibility
 

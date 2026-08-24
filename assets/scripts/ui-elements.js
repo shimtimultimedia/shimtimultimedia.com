@@ -168,6 +168,21 @@ function createNavigationSector(position, label, fillColor, fragment, centerX, c
             'Z'
         ].join(' ');
 
+        // Each sector is a real SVG <a>, not a <g> with a click handler.
+        //
+        // This is what makes the menu usable at all without a mouse: a link is
+        // focusable, activates on Enter, is announced by screen readers as a link, and
+        // navigates via the browser. Simulating that with window.location in a click
+        // handler gives none of it, which is why the menu was previously a WCAG 2.1
+        // SC 2.1.1 failure.
+        //
+        // The inner <g> is kept so existing selectors - "#wheelMenu g:hover path",
+        // "g[id^=sector]" - continue to match unchanged.
+        const link = createSvgElement('a', {
+            href: `${label.toLowerCase()}.html`,
+            'aria-label': `${label} - open section`,
+            'data-section': label.toLowerCase()
+        });
         const group = createSvgElement('g', {
             id: `sector-${label.toLowerCase()}`,
             'data-label': label,
@@ -186,13 +201,16 @@ function createNavigationSector(position, label, fillColor, fragment, centerX, c
             y: iconPos.y - 25,
             width: '50',
             height: '50',
-            'aria-label': `${label} Icon`,
+            // The wrapping <a> already carries the accessible name. Naming the icon too
+            // would make a screen reader announce the section twice.
+            'aria-hidden': 'true',
             loading: 'lazy'
         }, { pointerEvents: 'none' });
 
         group.appendChild(path);
         group.appendChild(icon);
-        fragment.appendChild(group);
+        link.appendChild(group);
+        fragment.appendChild(link);
         uiLogger.log('Created navigation sector', { label, id: group.getAttribute('id') }, true);
     } catch (error) {
         uiLogger.error('Failed to create navigation sector', error);
@@ -640,7 +658,15 @@ function initUIElements() {
         rootGroup.appendChild(connectionGroup);
 
         const menuLogger = new window.ShimtiUtils.Logger('RadialMenu');
-        const menuWheel = createSvgElement('g', { id: 'wheelMenu' });
+        // Declared as a navigation landmark. This group holds the six sector links, and
+        // it is appended directly to the <svg> rather than into rootGroup - rootGroup
+        // carries aria-hidden="true" for the decorative chrome, which would otherwise
+        // hide the entire menu from assistive technology along with it.
+        const menuWheel = createSvgElement('g', {
+            id: 'wheelMenu',
+            role: 'navigation',
+            'aria-label': 'Main navigation'
+        });
         const sectorAngle = 360 / UI_CONFIG.NAVIGATION_LINKS.length;
         const sectorPositions = UI_CONFIG.NAVIGATION_LINKS.map((_, i) => {
             const start = 270 + i * sectorAngle;
@@ -669,18 +695,14 @@ function initUIElements() {
         menuWheel.appendChild(fragment);
         menuLogger.log('Appended sectors', { count: sectorPositions.length, sectors: Array.from(menuWheel.querySelectorAll('g')).map(g => g.getAttribute('id')) }, true);
 
-        menuWheel.addEventListener('click', event => {
-            try {
-                const sector = event.target.closest('g');
-                if (sector) {
-                    const label = sector.dataset.label;
-                    window.location.href = `#${label.toLowerCase()}`;
-                    menuLogger.log('Sector clicked', { label }, true);
-                }
-            } catch (error) {
-                menuLogger.error('Sector click failed', error);
-            }
-        });
+        // Navigation is handled by the SVG <a> wrapping each sector, not by JavaScript.
+        //
+        // The handler that used to live here set window.location.href = '#' + label,
+        // which pointed at fragments (#contact, #ai, ...) that do not exist anywhere in
+        // the document - so every sector "worked" while going nowhere. Letting the
+        // browser follow a real link also restores middle-click, ctrl-click, "open in
+        // new tab" and the status-bar URL preview, none of which a click handler
+        // provides.
 
         const gridOverlay = createSvgElement('g', { 'clip-path': 'url(#innerCircleClip)' });
         for (let x = -UI_CONFIG.INNER_RADIUS; x <= UI_CONFIG.INNER_RADIUS; x += UI_CONFIG.GRID_SPACING) {
@@ -762,8 +784,12 @@ function initUIElements() {
             holoCoreGroup.appendChild(ring);
         });
         menuWheel.appendChild(holoCoreGroup);
-        rootGroup.appendChild(menuWheel);
+        // Appended as a sibling of rootGroup, not a child. rootGroup is aria-hidden for
+        // the decorative chrome; nesting the menu inside it hid all six navigation
+        // links from screen readers. Appending after rootGroup keeps the menu painted
+        // on top, exactly as before.
         svgElement.appendChild(rootGroup);
+        svgElement.appendChild(menuWheel);
 
         setTimeout(() => initWelcomeCarousel(svgElement, menuWheel, canvas, ctx, carouselState, sectorPositions, centerX, centerY), 1000);
 
@@ -1009,7 +1035,12 @@ function initUIElements() {
                 }
                 newRootGroup.appendChild(newConnectionGroup);
 
-                const newMenuWheel = createSvgElement('g', { id: 'wheelMenu' });
+                // Same navigation landmark as the initial build; see createNavigationSector.
+                const newMenuWheel = createSvgElement('g', {
+                    id: 'wheelMenu',
+                    role: 'navigation',
+                    'aria-label': 'Main navigation'
+                });
                 const newSectorPositions = UI_CONFIG.NAVIGATION_LINKS.map((_, i) => {
                     const start = 270 + i * sectorAngle;
                     const end = start + sectorAngle;
@@ -1109,9 +1140,10 @@ function initUIElements() {
                     newHoloCoreGroup.appendChild(ring);
                 });
                 newMenuWheel.appendChild(newHoloCoreGroup);
-                newRootGroup.appendChild(newMenuWheel);
 
+                // Sibling of newRootGroup, not a child - newRootGroup is aria-hidden.
                 svgElement.appendChild(newRootGroup);
+                svgElement.appendChild(newMenuWheel);
                 hitAreasDrawn = false;
                 setTimeout(() => initWelcomeCarousel(svgElement, newMenuWheel, canvas, ctx, carouselState, newSectorPositions, newCenterX, newCenterY), 1000);
                 uiLogger.log('Resized UI elements', { duration: performance.now() - startTime });
