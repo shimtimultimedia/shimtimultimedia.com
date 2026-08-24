@@ -89,6 +89,25 @@ Two consequences worth knowing before editing either file:
 Each sector is a real SVG `<a href>`, so it is focusable, activates on Enter, is
 announced as a link, and supports middle-click and "open in new tab".
 
+## The node interface
+
+The branding panel and the welcome panel behave like nodes in a visual scripting editor.
+Each is wired to the radial menu by an orthogonal connector - every segment horizontal or
+vertical, no curves - and both can be dragged anywhere on screen without leaving it.
+
+Their resting positions are 12 and 6 o'clock, centred on the wheel's axis, so each wire
+is a single straight vertical line into the top or bottom of the menu. Dragged off the
+axis a wire turns a right-angled corner instead, routed so it never crosses the menu.
+
+**Layout is not saved.** That composition is part of the design, so every visit opens on
+it and dragging lasts only for the session. Press `Home`, or double-click a panel, to
+restore it without reloading. Dragging also works from the keyboard: focus a panel and
+use the arrow keys, with Shift for larger steps.
+
+All node geometry lives in `assets/scripts/node-panels.js`. Nothing else should compute
+it - the original connectors were built in two places that could disagree, which is why
+they could never follow a panel that moved.
+
 ## Accessibility
 
 The site animates continuously, which can provoke nausea and dizziness in people with

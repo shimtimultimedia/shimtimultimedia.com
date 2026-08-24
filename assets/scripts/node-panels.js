@@ -40,10 +40,6 @@
   const KEY_STEP = 8;         // Pixels moved per arrow-key press.
   const KEY_STEP_LARGE = 32;  // With Shift held.
   const PORT_RADIUS = 5;
-  // Versioned. The resting positions changed to 12 and 6 o'clock, and a stored layout
-  // from before that keeps overriding them - the node looks stuck in its old place with
-  // no obvious cause. Bumping the key retires stale layouts instead of stranding them.
-  const STORAGE_KEY = 'shimti.nodePositions.v2';
 
   // `home` is the node's resting position: 12 o'clock above the wheel, 6 o'clock below.
   const NODES = [
@@ -354,29 +350,18 @@
     node.h = r.height;
   }
 
-  /* -------------------------------------------------------------- persistence */
-
-  function save() {
-    try {
-      const data = {};
-      for (const n of nodes) data[n.id] = { left: n.left, top: n.top };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      // Private browsing or a full quota. Layout is a convenience, not state worth
-      // interrupting anyone over.
-    }
-  }
-
-  function load() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    } catch {
-      return {};
-    }
-  }
+  /*
+   * Layout is deliberately NOT persisted.
+   *
+   * The 12 and 6 o'clock composition is part of the design, so every visit opens on it.
+   * Saving positions meant that once a visitor nudged a panel, every later visit began
+   * with it displaced and nothing on screen explaining why - and a stored layout only
+   * means anything relative to the defaults it was saved against, so changing those
+   * defaults silently stranded it. Dragging is exploration; a reload restores the
+   * intended arrangement.
+   */
 
   function resetAll() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
     for (const node of nodes) {
       node.el.style.cssText = node.originalCss;
       node.userMoved = false;
@@ -422,7 +407,6 @@
       node.el.removeEventListener('pointerup', end);
       node.el.removeEventListener('pointercancel', end);
       node.userMoved = true;
-      save();
     };
 
     node.el.addEventListener('pointermove', move);
@@ -444,14 +428,11 @@
     event.preventDefault();
     node.userMoved = true;
     place(node, node.left + dx, node.top + dy);
-    save();
   }
 
   /* ---------------------------------------------------------------------- init */
 
   function init() {
-    const saved = load();
-
     for (const spec of NODES) {
       const el = document.getElementById(spec.id);
       if (!el) continue;
@@ -460,13 +441,7 @@
       nodes.push(node);
 
       detach(node);
-      const pos = saved[spec.id];
-      if (pos && Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
-        node.userMoved = true;
-        place(node, pos.left, pos.top);
-      } else {
-        applyHome(node);
-      }
+      applyHome(node);
 
       el.classList.add('node-panel');
       el.tabIndex = 0;
