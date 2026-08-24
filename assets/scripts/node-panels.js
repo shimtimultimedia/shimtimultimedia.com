@@ -77,29 +77,6 @@
       ? { cx: box.left + box.width / 2, cy: box.top + box.height / 2, r: box.width / 2 }
       : { cx: window.innerWidth / 2, cy: window.innerHeight / 2, r: 180 };
 
-    /*
-     * The arced wordmark orbits the same centre at a LARGER radius than the wheel, so a
-     * keep-out zone sized to the wheel alone leaves it exposed - which is exactly how a
-     * preview ended up sitting across "SHIMTI MULTIMEDIA".
-     *
-     * Its reach is measured rather than derived from the viewBox numbers, so it stays
-     * correct if the arc radius or font size is ever changed. The text rotates, but it
-     * follows a fixed-radius arc about this centre, so its greatest distance from the
-     * centre is constant and one sample is representative.
-     */
-    const title = document.querySelector('#ringTitle .ring-title');
-    const tb = title && title.getBoundingClientRect();
-    let reach = wheelCache.r;
-    if (tb && tb.width > 0) {
-      const corners = [
-        Math.hypot(tb.left - wheelCache.cx, tb.top - wheelCache.cy),
-        Math.hypot(tb.right - wheelCache.cx, tb.top - wheelCache.cy),
-        Math.hypot(tb.left - wheelCache.cx, tb.bottom - wheelCache.cy),
-        Math.hypot(tb.right - wheelCache.cx, tb.bottom - wheelCache.cy),
-      ];
-      reach = Math.max(reach, ...corners);
-    }
-    wheelCache.keepOut = reach;
 
     return wheelCache;
   }
@@ -296,22 +273,22 @@
     const maxTop = Math.max(EDGE_MARGIN, window.innerHeight - h - EDGE_MARGIN);
 
     /*
-     * Everything a preview must not cover:
+     * The foreground is the radial menu, the title node and the welcome node. Those are
+     * the only things a preview must not cover; the ring field, the particles and the
+     * arced wordmark are background, and a panel passing over them is fine.
      *
-     *  - the radial menu AND the arced wordmark orbiting it, as one square sized to
-     *    whichever reaches further (see measureWheel). A square rather than a circle errs
-     *    toward a wider berth, which is the right way to be wrong.
-     *  - every node panel, including the host it hangs from. Without this a clamped
-     *    candidate could be pushed straight on top of the title it belongs to.
+     * Node boxes are included because every candidate is clamped into the viewport
+     * before scoring, and a clamp can push one straight back on top of the title it
+     * hangs from. The menu is taken as its bounding square rather than its circle, which
+     * errs toward a wider berth - the right way to be wrong here.
      */
     const wheel = wheelGeometry();
-    const reach = wheel.keepOut || wheel.r;
     const avoid = [
       {
-        left: wheel.cx - reach,
-        top: wheel.cy - reach,
-        right: wheel.cx + reach,
-        bottom: wheel.cy + reach,
+        left: wheel.cx - wheel.r,
+        top: wheel.cy - wheel.r,
+        right: wheel.cx + wheel.r,
+        bottom: wheel.cy + wheel.r,
       },
       ...nodes.map(nodeBox),
     ];
