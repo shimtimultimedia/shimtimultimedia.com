@@ -79,3 +79,19 @@ touching any asset path. Only the absolute URLs in the document head change.
 (~30 lines per visit). Useful while building, noise in production.
 
 - [ ] Gate the logging behind a debug flag, or strip it, before launch.
+
+## 8. Tighten the Lighthouse SEO assertion
+
+`.lighthouserc.json` asserts the individual SEO audits (title, meta description, link
+text, canonical, robots.txt and so on) rather than the aggregate `categories:seo` score.
+
+That is deliberate. While the site carries `noindex`, Lighthouse scores the whole SEO
+category at 69 because of the `is-crawlable` audit, so asserting the aggregate would
+have required an alpha-only threshold that someone must remember to raise. Asserting
+the underlying audits avoids that entirely.
+
+Once the `noindex` tag is removed in step 1:
+
+- [ ] Add `"is-crawlable": "error"` to the assertions in `.lighthouserc.json`.
+- [ ] Add `"categories:seo": ["error", { "minScore": 0.95 }]` alongside it.
+- [ ] Run the **Audit** workflow manually to confirm it passes before relying on it.

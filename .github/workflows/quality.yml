@@ -1,0 +1,57 @@
+# Fast, deterministic quality gate.
+#
+# Runs on every push and pull request. Everything here is hermetic: no external network
+# calls, so a failure always means this repository changed, never that someone else's
+# server was down. A gate that fails randomly gets ignored, and an ignored gate protects
+# nothing - so anything flaky lives in audit.yml instead.
+name: Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref: only the newest commit's result matters.
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  html:
+    name: HTML validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      # Rules are configured in .htmlvalidate.json. doctype-style is pinned to this
+      # repository's existing convention rather than disabled, so the rule still
+      # enforces internal consistency.
+      - name: Validate HTML
+        run: npx --yes html-validate@11 *.html
+
+  links:
+    name: Internal links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # --offline resolves links against the checked-out files only, so this catches a
+      # renamed or deleted page immediately without depending on the public internet.
+      # External URLs are checked on a schedule in audit.yml.
+      - name: Check internal links and fragments
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --offline
+            --include-fragments
+            --no-progress
+            .
+          fail: true

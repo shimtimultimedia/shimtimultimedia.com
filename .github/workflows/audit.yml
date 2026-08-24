@@ -1,0 +1,60 @@
+# Deep audit against the LIVE site.
+#
+# Deliberately separate from quality.yml. Everything here either touches the public
+# internet (external link checking) or measures the deployed site, so it can fail for
+# reasons unrelated to a given commit. Keeping it out of the push/PR path means the
+# blocking gate stays trustworthy.
+#
+# Lighthouse runs against the deployed URL rather than a locally served copy on purpose:
+# GitHub Pages serves compressed and CDN-cached responses, so a local run reports
+# failures for uses-text-compression and document-latency that do not exist in
+# production, and would force the thresholds to be set to meaningless values.
+name: Audit
+
+on:
+  schedule:
+    # Mondays 07:00 UTC. Cron on GitHub Actions is best-effort, not exact.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SITE_URL: https://shimtimultimedia.github.io/shimtimultimedia.com/
+
+jobs:
+  links:
+    name: External links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check all links including external
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # Retries absorb transient upstream failures; without them this reports other
+          # people's momentary outages as our defects.
+          args: >-
+            --no-progress
+            --max-retries 3
+            --timeout 20
+            --exclude-mail
+            .
+          fail: true
+
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Audit deployed site
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: ${{ env.SITE_URL }}
+          # Three runs, median reported. A single run on shared CI hardware is noisy
+          # enough to cross a threshold by chance.
+          runs: 3
+          configPath: ./.lighthouserc.json
+          uploadArtifacts: true

@@ -193,19 +193,34 @@
     </text>
   </svg>
 
-  <!-- SVG container for UI elements (rings, squares, connection lines, etc.) -->
-  <svg id="uiSvg" aria-label="UI Elements"></svg>
+  <!-- SVG container for UI elements (rings, squares, connection lines, etc.).
+       Decoration only, so it is hidden from assistive technology. It previously carried
+       aria-label="UI Elements", which an <svg> with no role cannot expose as a name -
+       screen readers ignored it, and the text conveyed nothing to a user regardless. -->
+  <svg id="uiSvg" aria-hidden="true"></svg>
   <!-- Top branding panel with logo and text -->
   <div id="shimtiPanel">
     <img src="assets/images/Logo.svg" alt="Shimti Multimedia Logo">
     <span>SHIMTI MULTIMEDIA</span>
   </div>
-  <!-- Radial menu SVG with interactive sectors -->
-  <div id="radialMenu">
-    <svg aria-label="Radial Navigation Menu">
+  <!--
+    Radial menu SVG with interactive sectors.
+
+    Now a <nav> landmark so the region is at least discoverable, and the name lives on
+    the landmark rather than on an <svg> that has no role to attach it to.
+
+    KNOWN GAP - the menu is still mouse-only. ui-elements.js drives it from a click
+    handler plus a mousemove hit-test canvas: no sector is focusable, none carries a
+    role or accessible name, and there are no key handlers. That is a WCAG 2.1 SC 2.1.1
+    (Keyboard) Level A failure, and it is tracked as the first task of the content
+    build-out, where the sectors also gain real destinations - they currently point at
+    #contact, #ai and similar fragments that do not exist on the page.
+  -->
+  <nav id="radialMenu" aria-label="Main navigation">
+    <svg aria-hidden="true">
       <g id="wheelMenu"></g>
     </svg>
-  </div>
+  </nav>
   <!-- Bottom panel with welcome text carousel -->
   <div id="shimtiPanelBottom">
     <span id="welcomeText" role="status">Loading...</span>
