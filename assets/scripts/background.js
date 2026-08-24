@@ -9,7 +9,8 @@
  * Pulses are power moving through the machine, so they travel ALONG the grid lines
  * rather than drifting freely across them. Free-floating particles read as dust; a pulse
  * confined to a conductor reads as current. They turn only at intersections, the way a
- * signal takes a junction.
+ * signal takes a junction, and only ever forward - a pulse never doubles back along the
+ * heading it entered on.
  *
  * Every pulse enters from off screen at one of the four edges. Nothing appears in the
  * middle of the grid and nothing emanates from the hole - a pulse that pops into being
@@ -83,12 +84,17 @@ const BACKGROUND_CONFIG = {
      * trail a stub and a fast one a streak. A distance means every pulse lays the same
      * ribbon and only its speed differs.
      *
+     * Each pulse draws its own length from a range rather than all sharing one. Identical
+     * ribbons make the field look stamped out; varied ones read as pulses of differing
+     * strength moving through the same circuit.
+     *
      * CHUNK is how finely the fade is stepped. The path only has vertices where the pulse
      * turned - usually two or three - so long straight runs are subdivided to give the
      * gradient somewhere to happen. Smaller values look smoother and cost one more stroke
      * each; at this alpha the steps are not perceptible.
      */
-    TRAIL_LENGTH: 320,
+    TRAIL_LENGTH_MIN: 150,
+    TRAIL_LENGTH_MAX: 420,
     TRAIL_CHUNK: 34,
 
     /*
@@ -143,6 +149,17 @@ class Pulse {
         this.y = y;
         this.dir = dir;
         this.speed = speed;
+
+        /*
+         * The heading it entered on, held for life. A pulse may turn across this axis but
+         * never travels back along it - see update().
+         */
+        this.mainAxis = axis;
+        this.mainDir = dir;
+
+        // This pulse's own ribbon length, fixed for its lifetime.
+        this.trailLength = BACKGROUND_CONFIG.TRAIL_LENGTH_MIN +
+            Math.random() * (BACKGROUND_CONFIG.TRAIL_LENGTH_MAX - BACKGROUND_CONFIG.TRAIL_LENGTH_MIN);
         // Vertices where this pulse has turned, oldest first. Between them it travels in
         // a straight line, so this is the complete path in a handful of points.
         this.path = [{ x, y }];
@@ -184,8 +201,22 @@ class Pulse {
             // path bends, so it is the only place the ribbon needs a point.
             this.path.push({ x: this.x, y: this.y });
 
+            /*
+             * Always forward, never in reverse.
+             *
+             * Flipping the axis already rules out a U-turn in one move, but not over two:
+             * turning the same way at consecutive junctions is a 180, and the pulse heads
+             * back the way it came one cell over. Rejoining its entry axis therefore
+             * always restores the direction it arrived on.
+             *
+             * Turns across that axis stay free in both directions - moving sideways is
+             * not moving backwards, and it is what keeps the paths from being straight
+             * lines.
+             */
             this.axis = this.axis === 'h' ? 'v' : 'h';
-            this.dir = Math.random() < 0.5 ? 1 : -1;
+            this.dir = this.axis === this.mainAxis
+                ? this.mainDir
+                : (Math.random() < 0.5 ? 1 : -1);
         } else if (this.axis === 'h') {
             this.x = next;
         } else {
@@ -226,18 +257,18 @@ class Pulse {
             distance += Math.hypot(this.path[i].x - px, this.path[i].y - py);
             px = this.path[i].x;
             py = this.path[i].y;
-            if (distance > BACKGROUND_CONFIG.TRAIL_LENGTH) { keepFrom = i; break; }
+            if (distance > this.trailLength) { keepFrom = i; break; }
         }
         if (keepFrom > 0) this.path.splice(0, keepFrom);
     }
 
     /**
-     * The ribbon: the last TRAIL_LENGTH pixels of path, from the head backwards.
+     * The ribbon: the last `trailLength` pixels of path, from the head backwards.
      * @returns {Array<{x:number,y:number}>} head first, tail last
      */
     ribbon() {
         const points = [{ x: this.x, y: this.y }];
-        let remaining = BACKGROUND_CONFIG.TRAIL_LENGTH;
+        let remaining = this.trailLength;
         for (let i = this.path.length - 1; i >= 0 && remaining > 0; i -= 1) {
             const last = points[points.length - 1];
             const vertex = this.path[i];
@@ -262,7 +293,8 @@ class Pulse {
     draw(ctx) {
         if (this.alpha <= 0) return;
 
-        const { TRAIL_LENGTH, TRAIL_CHUNK, TRAIL_ALPHA, TRAIL_COLOR } = BACKGROUND_CONFIG;
+        const { TRAIL_CHUNK, TRAIL_ALPHA, TRAIL_COLOR } = BACKGROUND_CONFIG;
+        const trailLength = this.trailLength;
         const points = this.ribbon();
 
         ctx.lineWidth = 1.3;
@@ -280,7 +312,7 @@ class Pulse {
 
             for (let t0 = 0; t0 < span; t0 += TRAIL_CHUNK) {
                 const t1 = Math.min(t0 + TRAIL_CHUNK, span);
-                const fade = Math.max(0, 1 - (travelled + (t0 + t1) / 2) / TRAIL_LENGTH);
+                const fade = Math.max(0, 1 - (travelled + (t0 + t1) / 2) / trailLength);
                 const alpha = TRAIL_ALPHA * fade * fade * this.alpha;
                 if (alpha < 0.004) continue;
 
