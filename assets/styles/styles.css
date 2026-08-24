@@ -46,6 +46,11 @@ canvas#backgroundCanvas {
   left: 0;
   z-index: 0;
   user-select: none;
+  /* Decorative and aria-hidden, so it must never take a pointer event.
+     It is positioned, and #uiSvg is not, so it paints ABOVE the menu regardless of the
+     z-index here. Being almost entirely transparent, it then acted as an invisible lid
+     over the navigation - the wheel looked fine and simply could not be clicked. */
+  pointer-events: none;
 }
 
 /*
@@ -164,7 +169,17 @@ canvas#backgroundCanvas {
   opacity: 1;
 }
 
-/* Radial Menu */
+/*
+ * Radial Menu - sizing anchor only.
+ *
+ * This element is EMPTY. It exists solely so ui-elements.js can measure where and how
+ * large to draw the wheel; the wheel itself is rendered into #uiSvg, a sibling.
+ *
+ * pointer-events MUST stay none. This is a 400x400 box at z-index 1000 positioned
+ * directly over the wheel, so anything else makes it an invisible lid that swallows
+ * every click and hover meant for the sector links underneath, leaving the navigation
+ * completely unusable with a mouse.
+ */
 #radialMenu {
   position: absolute;
   top: 50%;
@@ -172,9 +187,9 @@ canvas#backgroundCanvas {
   transform: translate(-50%, -50%);
   width: 400px;
   height: 400px;
-  z-index: 1000; /* Extremely high to prevent overlap */
+  z-index: 1000;
   user-select: none;
-  pointer-events: auto !important;
+  pointer-events: none;
 }
 
 #wheelMenu {

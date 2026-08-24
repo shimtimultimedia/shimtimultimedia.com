@@ -1,6 +1,6 @@
 /**
  * @module UIElements
- * @description Manages SVG-based UI for Shimti Multimedia’s sci-fi interface with radial menu, welcome carousel, rings, and connection lines. Uses canvas-based hit detection for hover to bypass SVG event issues.
+ * @description Manages SVG-based UI for Shimti Multimedia’s sci-fi interface with radial menu, welcome carousel, rings, and connection lines. Sector hover and activation use ordinary DOM events on real SVG <a> links.
  * @requires DOM elements (uiSvg, radialMenu, shimtiPanel, shimtiPanelBottom, welcomeText), assets/data/languages.json, assets/images/*.svg
  */
 
@@ -217,8 +217,7 @@ function createNavigationSector(position, label, fillColor, fragment, centerX, c
     }
 }
 
-/** @function setupSectorHover - Uses canvas for hit detection */
-let hitAreasDrawn = false;
+/** @function setupSectorHover - Highlights the hovered sector and shows its label */
 function setupSectorHover(canvas, ctx, sectorPositions, welcomeText, carouselState, centerX, centerY) {
     const menuLogger = new window.ShimtiUtils.Logger('RadialMenu');
     try {
@@ -228,50 +227,45 @@ function setupSectorHover(canvas, ctx, sectorPositions, welcomeText, carouselSta
 
         let currentHoverSector = null;
 
-        const drawHitAreas = () => {
-            if (hitAreasDrawn) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            sectorPositions.forEach((pos, i) => {
-                const label = UI_CONFIG.NAVIGATION_LINKS[i];
-                ctx.fillStyle = `rgb(${i + 1}, 0, 0)`;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, UI_CONFIG.OUTER_RADIUS, (pos.start * Math.PI) / 180, (pos.end * Math.PI) / 180);
-                ctx.arc(centerX, centerY, UI_CONFIG.INNER_RADIUS, (pos.end * Math.PI) / 180, (pos.start * Math.PI) / 180, true);
-                ctx.closePath();
-                ctx.fill();
-            });
-            hitAreasDrawn = true;
-            menuLogger.log('Hit areas drawn', { sectorCount: sectorPositions.length }, true);
-        };
-
-        const checkHover = (mouseX, mouseY) => {
+        // Hover is resolved from the event target, not by reading a pixel colour.
+        //
+        // The previous approach painted an invisible hit map onto a full-screen canvas
+        // and sampled it with getImageData on every mousemove. To receive those events
+        // the canvas needed pointer-events:auto at z-index 1000 - which meant it sat on
+        // top of the entire interface and swallowed every click and hover intended for
+        // the menu beneath it. Once the sectors became real <a> elements, that made them
+        // unclickable by mouse and stopped any hover reaching them.
+        //
+        // The sectors are ordinary elements with real geometry, so the browser can hit
+        // test them directly. This also drops a getImageData call per mouse move.
+        const applyHover = (label) => {
             try {
-                const pixel = ctx.getImageData(mouseX, mouseY, 1, 1).data;
-                const sectorIndex = pixel[0] - 1;
-                if (sectorIndex >= 0 && sectorIndex < sectorPositions.length) {
-                    const label = UI_CONFIG.NAVIGATION_LINKS[sectorIndex];
-                    const sector = document.getElementById(`sector-${label.toLowerCase()}`);
-                    if (sector && (!currentHoverSector || currentHoverSector.label !== label)) {
-                        if (currentHoverSector) resetSector(currentHoverSector);
-                        if (carouselState.timeoutId) clearTimeout(carouselState.timeoutId);
-                        carouselState.isHovering = true;
-                        welcomeText.textContent = label;
-                        welcomeText.style.opacity = '1';
-                        const path = sector.querySelector('path');
-                        path.style.fill = 'rgba(180, 220, 255, 0.4)';
-                        path.style.stroke = '#8cf';
-                        path.style.strokeWidth = '3';
-                        currentHoverSector = { label, sector, path };
-                        menuLogger.log('Sector hover', { label }, true);
-                    }
-                } else if (currentHoverSector) {
-                    resetSector(currentHoverSector);
-                    currentHoverSector = null;
-                }
+                const sector = document.getElementById(`sector-${label.toLowerCase()}`);
+                if (!sector || (currentHoverSector && currentHoverSector.label === label)) return;
+                if (currentHoverSector) resetSector(currentHoverSector);
+                if (carouselState.timeoutId) clearTimeout(carouselState.timeoutId);
+                carouselState.isHovering = true;
+                welcomeText.textContent = label;
+                welcomeText.style.opacity = '1';
+                const path = sector.querySelector('path');
+                path.style.fill = 'rgba(180, 220, 255, 0.4)';
+                path.style.stroke = '#8cf';
+                path.style.strokeWidth = '3';
+                currentHoverSector = { label, sector, path };
+                menuLogger.log('Sector hover', { label }, true);
             } catch (error) {
                 menuLogger.error('Hover detection failed', error);
             }
         };
+
+        const clearHover = () => {
+            if (!currentHoverSector) return;
+            resetSector(currentHoverSector);
+            currentHoverSector = null;
+        };
+
+        const labelFor = (link) =>
+            UI_CONFIG.NAVIGATION_LINKS.find((l) => l.toLowerCase() === link.dataset.section);
 
         const resetSector = (hoverData) => {
             try {
@@ -297,20 +291,29 @@ function setupSectorHover(canvas, ctx, sectorPositions, welcomeText, carouselSta
             }
         };
 
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            checkHover(e.clientX - rect.left, e.clientY - rect.top);
+        // Delegated from the <svg>, which persists, rather than from #wheelMenu or the
+        // sectors themselves - the wheel is rebuilt from scratch on every resize, so
+        // anything bound to those elements would stop working after the first resize.
+        // mouseover/mouseout are used because, unlike mouseenter/mouseleave, they bubble.
+        const svgRoot = document.getElementById('uiSvg');
+
+        svgRoot.addEventListener('mouseover', (event) => {
+            const link = event.target.closest?.('a[data-section]');
+            if (!link) return;
+            const label = labelFor(link);
+            if (label) applyHover(label);
         });
 
-        canvas.addEventListener('mouseleave', () => {
-            if (currentHoverSector) {
-                resetSector(currentHoverSector);
-                currentHoverSector = null;
-            }
+        svgRoot.addEventListener('mouseout', (event) => {
+            const link = event.target.closest?.('a[data-section]');
+            if (!link) return;
+            // Moving within the same sector - from its path onto its icon - is not a
+            // departure, and must not reset the highlight.
+            if (event.relatedTarget?.closest?.('a[data-section]') === link) return;
+            clearHover();
         });
 
-        drawHitAreas();
-        menuLogger.log('Canvas hover setup complete', { sectorCount: sectorPositions.length }, true);
+        menuLogger.log('Sector hover setup complete', { sectorCount: sectorPositions.length }, true);
     } catch (error) {
         menuLogger.error('Failed to setup canvas hover', error);
     }
@@ -406,7 +409,14 @@ function initUIElements() {
             canvas.style.top = '0';
             canvas.style.left = '0';
             canvas.style.zIndex = '1000';
-            canvas.style.pointerEvents = 'auto';
+            // MUST stay 'none'. This canvas is a full-viewport overlay at z-index 1000;
+            // with pointer-events:auto it sits on top of the entire interface and
+            // swallows every click and hover meant for the radial menu underneath,
+            // making the navigation completely unusable with a mouse.
+            //
+            // It needed to be interactive only for the old getImageData hit-testing,
+            // which has been replaced by ordinary DOM hit-testing on the sector links.
+            canvas.style.pointerEvents = 'none';
             canvas.style.opacity = '0';
             document.body.appendChild(canvas);
         }
@@ -1144,7 +1154,6 @@ function initUIElements() {
                 // Sibling of newRootGroup, not a child - newRootGroup is aria-hidden.
                 svgElement.appendChild(newRootGroup);
                 svgElement.appendChild(newMenuWheel);
-                hitAreasDrawn = false;
                 setTimeout(() => initWelcomeCarousel(svgElement, newMenuWheel, canvas, ctx, carouselState, newSectorPositions, newCenterX, newCenterY), 1000);
                 uiLogger.log('Resized UI elements', { duration: performance.now() - startTime });
             } catch (error) {
