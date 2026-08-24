@@ -76,6 +76,31 @@
     wheelCache = (box && box.width > 0)
       ? { cx: box.left + box.width / 2, cy: box.top + box.height / 2, r: box.width / 2 }
       : { cx: window.innerWidth / 2, cy: window.innerHeight / 2, r: 180 };
+
+    /*
+     * The arced wordmark orbits the same centre at a LARGER radius than the wheel, so a
+     * keep-out zone sized to the wheel alone leaves it exposed - which is exactly how a
+     * preview ended up sitting across "SHIMTI MULTIMEDIA".
+     *
+     * Its reach is measured rather than derived from the viewBox numbers, so it stays
+     * correct if the arc radius or font size is ever changed. The text rotates, but it
+     * follows a fixed-radius arc about this centre, so its greatest distance from the
+     * centre is constant and one sample is representative.
+     */
+    const title = document.querySelector('#ringTitle .ring-title');
+    const tb = title && title.getBoundingClientRect();
+    let reach = wheelCache.r;
+    if (tb && tb.width > 0) {
+      const corners = [
+        Math.hypot(tb.left - wheelCache.cx, tb.top - wheelCache.cy),
+        Math.hypot(tb.right - wheelCache.cx, tb.top - wheelCache.cy),
+        Math.hypot(tb.left - wheelCache.cx, tb.bottom - wheelCache.cy),
+        Math.hypot(tb.right - wheelCache.cx, tb.bottom - wheelCache.cy),
+      ];
+      reach = Math.max(reach, ...corners);
+    }
+    wheelCache.keepOut = reach;
+
     return wheelCache;
   }
 
@@ -270,20 +295,35 @@
     const maxLeft = Math.max(EDGE_MARGIN, window.innerWidth - w - EDGE_MARGIN);
     const maxTop = Math.max(EDGE_MARGIN, window.innerHeight - h - EDGE_MARGIN);
 
-    // The menu's bounding square. Squarer than the circle it contains, which errs toward
-    // giving the menu a wider berth - the right way to be wrong here.
+    /*
+     * Everything a preview must not cover:
+     *
+     *  - the radial menu AND the arced wordmark orbiting it, as one square sized to
+     *    whichever reaches further (see measureWheel). A square rather than a circle errs
+     *    toward a wider berth, which is the right way to be wrong.
+     *  - every node panel, including the host it hangs from. Without this a clamped
+     *    candidate could be pushed straight on top of the title it belongs to.
+     */
     const wheel = wheelGeometry();
-    const menu = {
-      left: wheel.cx - wheel.r,
-      top: wheel.cy - wheel.r,
-      right: wheel.cx + wheel.r,
-      bottom: wheel.cy + wheel.r,
-    };
+    const reach = wheel.keepOut || wheel.r;
+    const avoid = [
+      {
+        left: wheel.cx - reach,
+        top: wheel.cy - reach,
+        right: wheel.cx + reach,
+        bottom: wheel.cy + reach,
+      },
+      ...nodes.map(nodeBox),
+    ];
 
-    const overlapWithMenu = (c) => {
-      const x = Math.max(0, Math.min(c.left + w, menu.right) - Math.max(c.left, menu.left));
-      const y = Math.max(0, Math.min(c.top + h, menu.bottom) - Math.max(c.top, menu.top));
-      return x * y;
+    const coverage = (c) => {
+      let total = 0;
+      for (const a of avoid) {
+        const x = Math.max(0, Math.min(c.left + w, a.right) - Math.max(c.left, a.left));
+        const y = Math.max(0, Math.min(c.top + h, a.bottom) - Math.max(c.top, a.top));
+        total += x * y;
+      }
+      return total;
     };
 
     const hostCx = hostBox.left + hostBox.width / 2;
@@ -297,7 +337,7 @@
         left: clamp(c.left, EDGE_MARGIN, maxLeft),
         top: clamp(c.top, EDGE_MARGIN, maxTop),
       };
-      const cover = overlapWithMenu(cand);
+      const cover = coverage(cand);
       const near = distanceFromHost(cand);
       if (!best || cover < best.cover - 1 || (Math.abs(cover - best.cover) <= 1 && near < best.near)) {
         best = { ...cand, cover, near };
