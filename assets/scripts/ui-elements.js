@@ -33,8 +33,8 @@ const UI_CONFIG = {
     OUTER_RADIUS: 180,
     INNER_RADIUS: 70,
     GRID_SPACING: 20,
-    PARTICLE_COUNT_MIN: 4,
-    PARTICLE_COUNT_MAX: 12,
+    // Every intersection inside the clip circle gets a lamp - see startGridBlink.
+    PARTICLE_RADIUS: 2.5,
     SECTOR_FILL: 'rgba(180, 220, 255, 0.08)',
     STROKE_COLOR: '#fff',
     INNER_CIRCLE_RADIUS: 58,
@@ -43,8 +43,12 @@ const UI_CONFIG = {
     RING_RADII: [25, 30, 35],
     NAVIGATION_LINKS: ['Contact', 'AI', 'Work', 'Media', 'Shop', 'About'],
     WELCOME_INTERVAL: 8000,
-    PARTICLE_INTERVAL_MIN: 1000,
-    PARTICLE_INTERVAL_MAX: 3000,
+    // How long a lamp stays lit, and how long it waits before lighting again. The wide
+    // off-range is what stops the field falling into a visible rhythm.
+    BLINK_ON_MIN: 140,
+    BLINK_ON_MAX: 900,
+    BLINK_OFF_MIN: 500,
+    BLINK_OFF_MAX: 5200,
     BACKGROUND_RADIUS: 192,
     FALLBACK_LANGUAGES: [
         { lang: 'English', text: 'Welcome', dir: 'ltr' },
@@ -119,40 +123,82 @@ function generateSegments(config) {
     }
 }
 
-/** @class GridParticle - Manages particle at grid intersections */
-class GridParticle {
-    constructor(x, y, gridOverlay) {
-        this.x = x;
-        this.y = y;
-        this.gridOverlay = gridOverlay;
-        try {
-            this.element = createSvgElement('circle', {
-                cx: this.x,
-                cy: this.y,
-                r: '3',
-                fill: 'rgba(234, 255, 255, 0.8)'
-            }, { opacity: '0', pointerEvents: 'none' });
-            this.gridOverlay.appendChild(this.element);
-            uiLogger.log('GridParticle initialized', { x, y }, true);
-        } catch (error) {
-            uiLogger.error('Failed to initialize GridParticle', error);
-        }
-    }
+/*
+ * Grid lamps - the blinking dots on the console panel behind the core.
+ *
+ * Three things were wrong with the previous version, and all three worked against the
+ * console-panel effect it was going for:
+ *
+ *   1. Only 4 to 11 of the 24 intersections ever received a dot, chosen once at load, so
+ *      most of the grid stayed permanently dark and the same handful of points blinked
+ *      for the entire session. Every intersection now has a lamp.
+ *
+ *   2. A single shared timer toggled every dot at the same instant, so the field flashed
+ *      in unison. A console reads as alive precisely because its lights are independent
+ *      of one another, so each lamp now runs its own schedule with its own random on and
+ *      off durations.
+ *
+ *   3. Nothing ever cancelled those timers. The wheel is rebuilt on resize, so each
+ *      rebuild left the previous chain running forever against detached elements, and
+ *      they accumulated for the life of the page.
+ */
+
+const gridBlinkTimers = new Set();
+
+/** Cancels every scheduled blink. Called before the wheel is rebuilt. */
+function stopGridBlink() {
+    for (const id of gridBlinkTimers) clearTimeout(id);
+    gridBlinkTimers.clear();
 }
 
-/** @function animateParticles - Manages animation for all particles */
-function animateParticles(particles) {
-    const animate = () => {
-        particles.forEach(particle => {
-            try {
-                particle.element.style.opacity = particle.element.style.opacity === '1' ? '0' : '1';
-            } catch (error) {
-                uiLogger.error('Particle animation failed', error);
-            }
-        });
-        setTimeout(animate, UI_CONFIG.PARTICLE_INTERVAL_MIN + Math.random() * (UI_CONFIG.PARTICLE_INTERVAL_MAX - UI_CONFIG.PARTICLE_INTERVAL_MIN));
-    };
-    setTimeout(animate, Math.random() * UI_CONFIG.PARTICLE_INTERVAL_MAX);
+/**
+ * Puts a lamp on every grid intersection and starts them blinking independently.
+ * @param {Array<{x:number,y:number}>} points - intersections inside the clip circle
+ * @param {SVGElement} overlay - clipped group the lamps are drawn into
+ */
+function startGridBlink(points, overlay) {
+    const rand = (min, max) => min + Math.random() * (max - min);
+    const reduceMotion = window.matchMedia
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    points.forEach((point) => {
+        const lamp = createSvgElement('circle', {
+            cx: point.x,
+            cy: point.y,
+            r: UI_CONFIG.PARTICLE_RADIUS,
+            fill: 'rgba(234, 255, 255, 0.85)'
+        }, { opacity: '0', pointerEvents: 'none' });
+        overlay.appendChild(lamp);
+
+        if (reduceMotion) {
+            // Blinking is the entire effect here, so with motion reduced the lamps are
+            // shown as a steady dim field rather than removed - the grid still reads as
+            // an instrument panel, it just stops flickering.
+            lamp.style.opacity = '0.35';
+            return;
+        }
+
+        const on = () => {
+            lamp.style.opacity = '1';
+            schedule(off, rand(UI_CONFIG.BLINK_ON_MIN, UI_CONFIG.BLINK_ON_MAX));
+        };
+        const off = () => {
+            lamp.style.opacity = '0';
+            schedule(on, rand(UI_CONFIG.BLINK_OFF_MIN, UI_CONFIG.BLINK_OFF_MAX));
+        };
+        const schedule = (fn, delay) => {
+            const id = setTimeout(() => {
+                gridBlinkTimers.delete(id);
+                fn();
+            }, delay);
+            gridBlinkTimers.add(id);
+        };
+
+        // Staggered first light, so the field does not switch on all at once.
+        schedule(on, rand(0, UI_CONFIG.BLINK_OFF_MAX));
+    });
+
+    uiLogger.log('Grid lamps started', { count: points.length, reduceMotion }, true);
 }
 
 /** @function createNavigationSector - Creates SVG sector for radial menu */
@@ -669,12 +715,10 @@ function initUIElements() {
                 }
             }
         }
-        const particleCount = UI_CONFIG.PARTICLE_COUNT_MIN + Math.floor(Math.random() * (UI_CONFIG.PARTICLE_COUNT_MAX - UI_CONFIG.PARTICLE_COUNT_MIN));
-        const selectedCenters = gridCenters.sort(() => Math.random() - 0.5).slice(0, particleCount);
-        const particles = selectedCenters.map(center => new GridParticle(center.x, center.y, gridOverlay));
-        animateParticles(particles);
+        // Every intersection, not a random handful chosen once at load.
+        startGridBlink(gridCenters, gridOverlay);
         menuWheel.appendChild(gridOverlay);
-        menuLogger.log('Grid and particles appended', { particleCount });
+        menuLogger.log('Grid and lamps appended', { lampCount: gridCenters.length });
 
         const centerCircle = createSvgElement('circle', {
             cx: centerX,
@@ -765,6 +809,9 @@ function initUIElements() {
                 newDefs.appendChild(newHoloCoreGradient);
                 newDefs.appendChild(newClipPath);
                 svgElement.appendChild(newDefs);
+
+                // The wheel about to be replaced still has blink timers pending against it.
+                stopGridBlink();
 
                 const newRootGroup = createSvgElement('g', { 'aria-hidden': 'true' });
 
@@ -934,9 +981,7 @@ function initUIElements() {
                         }
                     }
                 }
-                const newSelectedCenters = newGridCenters.sort(() => Math.random() - 0.5).slice(0, particleCount);
-                const newParticles = newSelectedCenters.map(center => new GridParticle(center.x, center.y, newGridOverlay));
-                animateParticles(newParticles);
+                startGridBlink(newGridCenters, newGridOverlay);
                 newMenuWheel.appendChild(newGridOverlay);
 
                 const newCenterCircle = createSvgElement('circle', {

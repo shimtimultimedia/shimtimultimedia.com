@@ -361,19 +361,41 @@ canvas#backgroundCanvas {
   animation: glowPulse 3s ease-in-out infinite;
 }
 
+/*
+ * The core: a ball of light breathing slowly at the centre of the menu.
+ *
+ * It used to run two animations at once on different periods - a 3s glow against a 2s
+ * opacity fade - which never lined up, so instead of breathing it shimmered at a beat
+ * frequency neither animation intended. One slow cycle drives everything now: scale,
+ * opacity and glow rise and fall together, which is what reads as a light source rather
+ * than a flickering element.
+ *
+ * transform-box:fill-box is required for scaling an SVG shape: without it the transform
+ * origin is the SVG viewport's origin, not the circle's own centre, so the core would
+ * swing around the middle of the screen instead of swelling in place.
+ */
 #wheelMenu .inner-filled-circle {
-  animation: circleGlowPulse 3s ease-in-out infinite;
+  animation: coreHalo 9s ease-in-out infinite;
 }
 
 #wheelMenu .holo-core {
-  animation: circleGlowPulse 3s ease-in-out infinite, opacityPulse 2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: corePulse 6s ease-in-out infinite;
 }
 
-#wheelMenu .holo-ring.ring-0,
-#wheelMenu .holo-ring.ring-1,
-#wheelMenu .holo-ring.ring-2 {
-  animation: circleGlowPulse 3s ease-in-out infinite, opacityPulse 2s ease-in-out infinite;
+/* The halo rings breathe on the same slow cycle, each offset by a negative delay so the
+   pulse reads as travelling outward from the core rather than the whole stack throbbing
+   as one. */
+#wheelMenu .holo-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: coreHalo 6s ease-in-out infinite;
 }
+
+#wheelMenu .holo-ring.ring-0 { animation-delay: -0.4s; }
+#wheelMenu .holo-ring.ring-1 { animation-delay: -0.8s; }
+#wheelMenu .holo-ring.ring-2 { animation-delay: -1.2s; }
 
 /* ==========================================================================
    Section Preview Panels
@@ -611,6 +633,32 @@ canvas#backgroundCanvas {
   0% { filter: drop-shadow(0 0 2px rgba(180, 220, 255, 0.3)); }
   50% { filter: drop-shadow(0 0 8px rgba(180, 220, 255, 0.6)); }
   100% { filter: drop-shadow(0 0 2px rgba(180, 220, 255, 0.3)); }
+}
+
+/* One cycle: the core swells, brightens and glows harder, then settles. */
+@keyframes corePulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(0.92);
+    filter: drop-shadow(0 0 5px rgba(180, 220, 255, 0.4));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 20px rgba(180, 220, 255, 0.9));
+  }
+}
+
+/* The surrounding halo, on the same rhythm but wider and fainter. */
+@keyframes coreHalo {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
 }
 
 @keyframes circleGlowPulse {
