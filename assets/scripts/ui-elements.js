@@ -280,6 +280,9 @@ function setupSectorHover(canvas, ctx, sectorPositions, welcomeText, carouselSta
                 hoverData.path.style.strokeWidth = '1';
                 menuLogger.log('Sector mouseleave', { label: hoverData.label }, true);
                 carouselState.timeoutId = setTimeout(() => {
+                    // The visitor may be hovering a different sector by the time this
+                    // resumption timer fires; leave their label alone if so.
+                    if (carouselState.isHovering) return;
                     carouselState.currentIndex = (carouselState.currentIndex + 1) % carouselState.languages.length;
                     const nextLang = carouselState.languages[carouselState.currentIndex];
                     welcomeText.textContent = nextLang.text || 'Welcome';
@@ -360,6 +363,17 @@ function initWelcomeCarousel(svgElement, menuWheel, canvas, ctx, carouselState, 
                     welcomeText.classList.remove('fade-in');
                     welcomeText.classList.add('fade-out');
                     setTimeout(() => {
+                        // Re-check hover. cycleText tested isHovering before starting the
+                        // fade, but a hover can begin during it, and this inner timeout is
+                        // not tracked in carouselState.timeoutId so nothing can cancel it.
+                        // Without this guard it lands a moment later and overwrites the
+                        // sector label the visitor is currently reading.
+                        if (carouselState.isHovering) {
+                            welcomeText.classList.remove('fade-out');
+                            welcomeText.classList.add('fade-in');
+                            carouselState.timeoutId = setTimeout(cycleText, UI_CONFIG.WELCOME_INTERVAL);
+                            return;
+                        }
                         carouselState.currentIndex = (carouselState.currentIndex + 1) % carouselState.languages.length;
                         const currentLang = carouselState.languages[carouselState.currentIndex];
                         welcomeText.textContent = currentLang.text || 'Welcome';
