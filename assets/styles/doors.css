@@ -1,0 +1,235 @@
+/*
+ * Shimti Multimedia - the sliding doors
+ *
+ * THE IDEA
+ *
+ * The homepage is the machinery inside the site. The doors are what stands in front of it,
+ * and they are also the surface every other page is printed on. So:
+ *
+ *   home     = doors apart, machinery visible
+ *   section  = doors shut, that page's content on them
+ *
+ * Which makes navigation physical rather than decorative. Going into a section shuts the
+ * doors over the machinery; coming home pulls them apart again.
+ *
+ * HOW IT WORKS, AND WHY THERE ARE ALMOST NO KEYFRAMES
+ *
+ * Every page carries the same two door elements, under the same view-transition-names. The
+ * only difference between pages is where the doors rest: off screen on the homepage,
+ * meeting in the middle everywhere else.
+ *
+ * A cross-document view transition animates a named element from wherever it was on the
+ * old page to wherever it is on the new one. That single fact gives all three journeys
+ * their correct behaviour without a line of animation code:
+ *
+ *   home -> section     off screen -> centre    the doors slide shut over the machinery
+ *   section -> home     centre -> off screen    the doors slide apart, revealing it
+ *   section -> section  centre -> centre        the doors do not move; only content swaps
+ *
+ * The third case is the one that would have needed special handling in any hand-written
+ * approach, and here it falls out of the model for free - which is the sign the model is
+ * the right one. Nothing anywhere asks "which page am I coming from".
+ *
+ * WHAT THIS IS NOT
+ *
+ * Not a single-page app. The pages stay separate documents with ordinary links, so the
+ * back button, bookmarking, view-source and search crawling all behave normally, and the
+ * speculation rules already in place mean the incoming page is usually rendered before the
+ * doors start moving.
+ *
+ * Without view transition support the navigation is simply a normal navigation. The doors
+ * are still drawn in their resting positions, so no page ever looks broken - it just does
+ * not animate.
+ *
+ * @requires markup: .doors > .door.door-left + .door.door-right, and data-doors on <html>
+ */
+
+/*
+ * Both documents in a navigation have to opt in, which is why this file is linked by every
+ * page rather than only the ones that animate.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+:root {
+  --door-duration: 700ms;
+  /* Weighted so the doors leave slowly and arrive fast - machinery under load, rather
+     than a panel easing politely into place. */
+  --door-ease: cubic-bezier(0.72, 0, 0.24, 1);
+  --door-seam: rgba(180, 220, 255, 0.55);
+}
+
+.doors {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.door {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  /* Slightly over half, so no hairline of the page shows between them when shut. Rounding
+     at fractional device pixel ratios is otherwise visible as a flickering seam. */
+  width: 50.4vw;
+  background:
+    linear-gradient(180deg, rgba(180, 220, 255, 0.05), rgba(0, 0, 0, 0) 38%),
+    #05070b;
+}
+
+.door-left {
+  left: 0;
+  view-transition-name: door-left;
+  border-right: 1px solid var(--door-seam);
+}
+
+.door-right {
+  right: 0;
+  view-transition-name: door-right;
+  border-left: 1px solid var(--door-seam);
+}
+
+/* --------------------------------------------------------------- resting positions */
+
+/*
+ * The homepage. The doors sit just off screen on either side - present, named, and
+ * capturable, which is what lets a transition animate them back in.
+ */
+html[data-doors="open"] .doors {
+  /* Above the whole interface: when these are moving they are in front of everything. The
+     homepage's own layers occupy 0-50, documented in styles.css. */
+  z-index: 100;
+}
+
+html[data-doors="open"] .door-left {
+  transform: translateX(-100%);
+}
+
+html[data-doors="open"] .door-right {
+  transform: translateX(100%);
+}
+
+/*
+ * Every other page. The doors are shut, and they are the surface the content sits on, so
+ * they belong behind it rather than over it.
+ */
+html[data-doors="closed"] .doors {
+  z-index: 0;
+}
+
+html[data-doors="closed"] body > *:not(.doors) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ------------------------------------------------------------------ arriving home */
+
+/*
+ * Opening on a cold load.
+ *
+ * Landing on the homepage from a section is a view transition, and the doors are already
+ * being animated apart by it. Landing on it directly - a typed URL, a bookmark, the first
+ * arrival at the site - is not, and would otherwise show the machinery already exposed,
+ * which skips the reveal that the whole idea is built around.
+ *
+ * So the doors also open under their own power, and doors.js suppresses that when a
+ * transition is doing it instead. Running both would animate the same element twice.
+ */
+@keyframes door-open-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes door-open-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+/*
+ * forwards, deliberately not both.
+ *
+ * `both` also applies the FROM keyframe before the animation runs, which means shut. On
+ * any machine where the animation never actually runs - animations disabled, an engine
+ * that ignores it, a frame that never composites - the homepage would then sit behind two
+ * opaque panels forever and read as a completely blank site. That is the worst available
+ * failure for the sake of the first frame of an animation.
+ *
+ * With forwards, the resting style is open. The animation still starts from shut and plays
+ * identically when it runs, and when it cannot run the machinery is simply already
+ * visible. The failure direction is the whole point: never hide the site.
+ */
+html[data-doors="open"]:not([data-vt-arriving]) .door-left {
+  animation: door-open-left var(--door-duration) var(--door-ease) forwards;
+}
+
+html[data-doors="open"]:not([data-vt-arriving]) .door-right {
+  animation: door-open-right var(--door-duration) var(--door-ease) forwards;
+}
+
+/*
+ * The safety net, set by doors.js when the opening animation demonstrably never ran.
+ *
+ * An animation can be applied and "running" and still never advance, and because the first
+ * keyframe is shut, that state hides the entire site behind two opaque panels. This puts
+ * the doors where they should have ended up. Losing the reveal is a disappointment; losing
+ * the page is a broken site.
+ */
+/*
+ * Deliberately over-specified, and it has to be.
+ *
+ * A running animation outranks any normal declaration in the cascade, so the transform
+ * here is worthless unless the animation itself is cancelled - and the rule that applies
+ * the animation carries html + two attribute selectors + a class, because :not() lends its
+ * argument's specificity. A plainer selector loses, silently, and the safety net does
+ * nothing at all while appearing to be in place. It did exactly that when first written.
+ */
+html[data-doors-stuck][data-doors="open"] .door.door-left {
+  animation: none;
+  transform: translateX(-100%);
+}
+
+html[data-doors-stuck][data-doors="open"] .door.door-right {
+  animation: none;
+  transform: translateX(100%);
+}
+
+/* ------------------------------------------------------------------- the transition */
+
+/*
+ * Only timing is set here. The movement itself is the browser interpolating each door
+ * between its old and new resting position, which is why there is nothing else to say.
+ */
+::view-transition-group(door-left),
+::view-transition-group(door-right) {
+  animation-duration: var(--door-duration);
+  animation-timing-function: var(--door-ease);
+}
+
+/*
+ * The page behind the doors crosses over faster than the doors move, so it has settled by
+ * the time they finish and there is no content visibly sliding around underneath them.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: calc(var(--door-duration) * 0.55);
+}
+
+/* ----------------------------------------------------------------- reduced motion */
+
+/*
+ * A pair of full-height panels sweeping across the viewport is exactly the large-area
+ * motion prefers-reduced-motion exists to prevent, so the movement goes - but nothing else
+ * does. The doors still rest where they belong, every page still looks correct, and
+ * navigation still works. This turns the animation off, not the design.
+ */
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+
+  html[data-doors="open"] .door-left,
+  html[data-doors="open"] .door-right {
+    animation: none;
+  }
+}

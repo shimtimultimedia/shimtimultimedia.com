@@ -37,6 +37,28 @@ jobs:
       - name: Validate HTML
         run: npx --yes html-validate@11 *.html
 
+
+      # A view transition needs BOTH documents to carry the same named elements. A page
+      # added later without them does not error - it just loses the doors in one direction
+      # and keeps them in the other, which reads as a glitch rather than a missing feature.
+      # The contract is four things, so it is checked as four things.
+      - name: Every page carries the door contract
+        run: |
+          fail=0
+          for f in index.html about.html ai.html contact.html media.html shop.html work.html; do
+            grep -q 'data-doors="' "$f"            || { echo "::error file=$f::missing data-doors state on <html>"; fail=1; }
+            grep -q 'class="door door-left"' "$f"  || { echo "::error file=$f::missing left door"; fail=1; }
+            grep -q 'class="door door-right"' "$f" || { echo "::error file=$f::missing right door"; fail=1; }
+            grep -q 'styles/doors.css' "$f"        || { echo "::error file=$f::doors.css not linked"; fail=1; }
+            grep -q 'scripts/doors.js' "$f"        || { echo "::error file=$f::doors.js not linked"; fail=1; }
+          done
+          # Exactly one page may rest with the doors open: the homepage is what they reveal.
+          opened=$(grep -l 'data-doors="open"' *.html | wc -l)
+          test "$opened" -eq 1 || { echo "::error::exactly one page may have doors=open, found $opened"; fail=1; }
+          grep -q 'data-doors="open"' index.html || { echo "::error::index.html must be the page with doors=open"; fail=1; }
+          test "$fail" -eq 0 || exit 1
+          echo "All pages carry the door contract."
+
   links:
     name: Internal links
     runs-on: ubuntu-latest
