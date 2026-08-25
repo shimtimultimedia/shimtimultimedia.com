@@ -382,7 +382,7 @@ a:hover {
 /* ---------- Footer ---------- */
 
 .section-footer {
-  padding: 1.5rem clamp(1rem, 4vw, 3rem);
+  padding: 0.85rem clamp(1rem, 4vw, 3rem);
   border-top: 1px solid rgba(180, 220, 255, 0.25);
   color: var(--muted-color);
   font-size: clamp(0.7rem, 1.4vw, 0.8rem);
@@ -392,6 +392,34 @@ a:hover {
 
 .section-footer p {
   margin: 0;
+}
+
+/*
+ * The channels, on every page.
+ *
+ * A single wrapping row rather than a list: this is a footer in a layout where the window
+ * does not scroll, so every pixel it takes comes straight out of the reading area. Small,
+ * quiet, and out of the way until wanted.
+ */
+.section-social {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 1.1rem;
+  margin: 0 0 0.6rem;
+}
+
+.section-social a {
+  color: var(--muted-color);
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.section-social a:hover,
+.section-social a:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 /* Honours the OS reduce-motion setting (WCAG 2.1 SC 2.3.3). */

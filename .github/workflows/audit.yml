@@ -35,11 +35,23 @@ jobs:
         with:
           # Retries absorb transient upstream failures; without them this reports other
           # people's momentary outages as our defects.
+          #
+          # 403 and 999 are accepted because the storefronts and social platforms this site
+          # links to refuse any client that is not a browser. Checked from CI, LinkedIn
+          # answers 999 and Fab, Redbubble, Threadless, Fiverr and Reddit answer 403 - none
+          # of which means the page is missing, only that a robot asked. Treating those as
+          # failures would break this run every week for a reason nobody can fix, and a gate
+          # that fails for unfixable reasons is one people learn to ignore. 429 is rate
+          # limiting, which is the same situation wearing a different number.
+          #
+          # The trade is explicit: a genuinely dead link on one of those hosts will not be
+          # caught here. Everything self-hosted still is, and that is where our mistakes go.
           args: >-
             --no-progress
             --max-retries 3
             --timeout 20
             --exclude-mail
+            --accept 200,206,301,302,403,429,999
             .
           fail: true
 
