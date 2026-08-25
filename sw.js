@@ -1,9 +1,9 @@
 /*
  * Shimti Multimedia - Service Worker
  *
- * NOT REGISTERED YET. Registering this is a launch step (see LAUNCH.md); until then
- * this file is inert. It is kept correct rather than deleted so enabling it later is
- * a one-line change instead of a rewrite.
+ * Registered by assets/scripts/register-sw.js. Bump CACHE_VERSION below on any deploy
+ * that changes a precached asset, or returning visitors keep the old copy until the
+ * cache happens to be evicted.
  *
  * Three things here differ from the naive version and each fixes a real failure mode:
  *
@@ -26,7 +26,7 @@
 
 // Bump this on every deploy that changes precached assets. The activate handler below
 // then removes the previous cache automatically.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `shimti-${CACHE_VERSION}`;
 
 // Resolved against the worker's scope, so these work on any base path.
@@ -35,13 +35,27 @@ const PRECACHE_PATHS = [
   'index.html',
   '404.html',
   'manifest.json',
+  'favicon.ico',
+  'about.html',
+  'ai.html',
+  'contact.html',
+  'media.html',
+  'shop.html',
+  'work.html',
   'assets/styles/styles.css',
+  'assets/styles/section.css',
   'assets/scripts/ui-elements.js',
+  'assets/scripts/section-panels.js',
+  'assets/scripts/node-panels.js',
   'assets/scripts/title-panel.js',
   'assets/scripts/background.js',
+  'assets/scripts/register-sw.js',
+  'assets/scripts/background-render.js',
+  'assets/scripts/background-worker.js',
   'assets/data/languages.json',
-  'assets/fonts/Orbitron-Regular.ttf',
-  'assets/images/Logo.svg',
+  'assets/fonts/Orbitron-Variable.woff2',
+  'assets/images/logo.png',
+  'assets/images/og-card.jpg',
 ];
 
 self.addEventListener('install', (event) => {

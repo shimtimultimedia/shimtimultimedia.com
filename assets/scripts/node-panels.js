@@ -199,139 +199,262 @@
 
   /* ------------------------------------------------------- orthogonal routing */
 
-  const OBSTACLE_CLEARANCE = 26;
+  /*
+   * Orthogonal connector routing, after Wybrow, Marriott and Stuckey (2009).
+   *
+   * WHY THIS, AND NOT A CHOSEN SHAPE
+   *
+   * Every earlier version of this picked a route SHAPE from the geometry - out the side,
+   * jog to a lane, across, step back in - with a special case for each situation. The
+   * literature calls that ad-hoc heuristic routing, and it failed here exactly the way it
+   * is documented to fail: a shape that reads well in one arrangement produces a zig-zag
+   * beside the node in another, a run laid along a panel's own border in a third, and a
+   * line straight through the menu in a fourth. Adding a case per bad picture never
+   * converges, because the cases were never the problem - choosing by shape was.
+   *
+   * WHAT NODE EDITORS ACTUALLY DO
+   *
+   *   1. Ports are FIXED at the centres of a node's four sides. They never slide along an
+   *      edge to suit a route. Two nodes whose centres line up therefore always get one
+   *      straight line - the property that kept breaking when ports were free to move.
+   *   2. A wire leaves a port along that port's outward normal, so a wire out of the top
+   *      goes up before it goes anywhere else, and the port always sits on the edge the
+   *      wire actually departs from.
+   *   3. Build an orthogonal visibility graph - the rows and columns through every port
+   *      and every obstacle's cleared edges - and search it for the cheapest route, where
+   *      cost is length PLUS a heavy penalty per bend.
+   *
+   * The bend penalty is what makes the result look designed rather than computed: offered
+   * any choice, the router takes the straighter one, and it only turns when the turn buys
+   * more than BEND_COST pixels of length or is the sole way past an obstacle. Which side a
+   * wire leaves from is an OUTPUT of that search, not an input - it comes out of the right
+   * of the title when the panel is to the right, and out of the top when the panel is
+   * above, without either case being written down.
+   */
 
-  /** Does an axis-aligned segment pass through the interior of a box? */
-  function segmentHitsBox(x1, y1, x2, y2, box) {
-    const e = 0.5;
-    if (x1 === x2) {
-      const [a, b] = y1 < y2 ? [y1, y2] : [y2, y1];
-      return x1 > box.left + e && x1 < box.right - e && b > box.top + e && a < box.bottom - e;
-    }
-    const [a, b] = x1 < x2 ? [x1, x2] : [x2, x1];
-    return y1 > box.top + e && y1 < box.bottom - e && b > box.left + e && a < box.right - e;
+  const CLEARANCE = 24;   // Stub off a port, and the berth kept around every obstacle.
+  const BEND_COST = 260;  // A corner must save this many px of length to be worth taking.
+  const EPS = 0.5;
+
+  /** The four ports of a box: side centres, with the direction a wire must leave along. */
+  function portsOf(box) {
+    const cx = box.left + box.width / 2;
+    const cy = box.top + box.height / 2;
+    return [
+      { x: cx, y: box.top, dx: 0, dy: -1 },
+      { x: cx, y: box.bottom, dx: 0, dy: 1 },
+      { x: box.left, y: cy, dx: -1, dy: 0 },
+      { x: box.right, y: cy, dx: 1, dy: 0 },
+    ];
   }
 
-  function pathHitsBox(points, box) {
-    for (let i = 1; i < points.length; i += 1) {
-      if (segmentHitsBox(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y, box)) return true;
+  /** True when the open segment passes through any obstacle's interior. */
+  function segmentBlocked(x1, y1, x2, y2, obstacles) {
+    const lox = Math.min(x1, x2);
+    const hix = Math.max(x1, x2);
+    const loy = Math.min(y1, y2);
+    const hiy = Math.max(y1, y2);
+    for (const o of obstacles) {
+      if (hix - lox > EPS) {
+        // Horizontal run: blocked when its row cuts the box and the spans overlap.
+        if (y1 > o.top + EPS && y1 < o.bottom - EPS &&
+            lox < o.right - EPS && hix > o.left + EPS) return true;
+      } else if (hiy - loy > EPS) {
+        if (x1 > o.left + EPS && x1 < o.right - EPS &&
+            loy < o.bottom - EPS && hiy > o.top + EPS) return true;
+      }
     }
     return false;
   }
 
-  /** Total length of an orthogonal point run, for preferring the shortest clear route. */
-  function pathLength(points) {
-    let total = 0;
-    for (let i = 1; i < points.length; i += 1) {
-      total += Math.abs(points[i].x - points[i - 1].x) + Math.abs(points[i].y - points[i - 1].y);
-    }
-    return total;
-  }
-
-  /** Collapses repeated and collinear points, then emits H/V commands only. */
+  /** Serialises a point list, merging collinear runs so no redundant command is emitted. */
   function toPath(points) {
     const pts = [points[0]];
-    for (const p of points.slice(1)) {
-      const last = pts[pts.length - 1];
-      if (Math.abs(p.x - last.x) < 0.5 && Math.abs(p.y - last.y) < 0.5) continue;
+    for (let i = 1; i < points.length; i += 1) {
+      const p = points[i];
+      const q = pts[pts.length - 1];
+      if (Math.abs(p.x - q.x) < EPS && Math.abs(p.y - q.y) < EPS) continue;
+      if (pts.length >= 2) {
+        const r = pts[pts.length - 2];
+        const sameCol = Math.abs(r.x - q.x) < EPS && Math.abs(q.x - p.x) < EPS;
+        const sameRow = Math.abs(r.y - q.y) < EPS && Math.abs(q.y - p.y) < EPS;
+        if (sameCol || sameRow) pts.pop();
+      }
       pts.push(p);
     }
     let d = `M ${pts[0].x} ${pts[0].y}`;
     for (let i = 1; i < pts.length; i += 1) {
-      d += Math.abs(pts[i].x - pts[i - 1].x) < 0.5 ? ` V ${pts[i].y}` : ` H ${pts[i].x}`;
+      d += Math.abs(pts[i].y - pts[i - 1].y) < EPS ? ` H ${pts[i].x}` : ` V ${pts[i].y}`;
     }
     return d;
   }
 
   /**
-   * Orthogonal route from a host node to its satellite panel, around the radial menu.
+   * Cheapest orthogonal route between two boxes, keeping clear of `obstacles`.
    *
-   * Both boxes can be entered or left on any of their four edges. The edge pair is chosen
-   * by which axis the boxes are actually SEPARATED on - the gap between their facing
-   * edges, not the distance between their centres. Centre distance is the obvious measure
-   * and it is wrong: two boxes can have their centres far apart horizontally while still
-   * overlapping horizontally, which puts the exit edge past the entry edge and folds the
-   * wire back through the host it came from.
-   *
-   * The direct route is then tested against the menu. A straight run between a host on
-   * one side and a panel on the other passes right through it, so when that happens the
-   * wire detours around - out of the host, along a lane clear of the menu, and back in to
-   * the panel. The shortest candidate that touches nothing wins.
+   * @returns {{d:string, start:{x:number,y:number}, port:{x:number,y:number}}}
    */
-  function routeBetween(from, to, obstacle) {
-    const fx = from.left + from.width / 2;
-    const fy = from.top + from.height / 2;
-    const tx = to.left + to.width / 2;
-    const ty = to.top + to.height / 2;
+  function routeOrthogonal(fromBox, toBox, obstacles) {
+    const fromPorts = portsOf(fromBox);
+    const toPorts = portsOf(toBox);
 
-    const gapX = Math.max(to.left - from.right, from.left - to.right);
-    const gapY = Math.max(to.top - from.bottom, from.top - to.bottom);
-    const horizontal = (gapX >= 0 || gapY >= 0)
-      ? gapX >= gapY
-      : Math.abs(tx - fx) >= Math.abs(ty - fy);
+    // The two endpoints' own bodies are obstacles as well, so a wire never cuts across
+    // the panel it is attached to on its way somewhere else.
+    const solid = [fromBox, toBox, ...obstacles];
 
-    const c = OBSTACLE_CLEARANCE;
-    let start;
-    let end;
-    const candidates = [];
+    /*
+     * The graph's candidate lines: every port's own row and column, so a straight
+     * port-to-port shot always exists to be found, plus a cleared lane either side of
+     * every obstacle, which is the only way around one.
+     */
+    const xs = new Set();
+    const ys = new Set();
+    for (const p of [...fromPorts, ...toPorts]) {
+      xs.add(p.x);
+      ys.add(p.y);
+      xs.add(p.x + p.dx * CLEARANCE);
+      ys.add(p.y + p.dy * CLEARANCE);
+    }
+    for (const o of solid) {
+      xs.add(o.left - CLEARANCE);
+      xs.add(o.right + CLEARANCE);
+      ys.add(o.top - CLEARANCE);
+      ys.add(o.bottom + CLEARANCE);
+    }
+    const X = [...xs].sort((a, b) => a - b);
+    const Y = [...ys].sort((a, b) => a - b);
 
-    if (horizontal) {
-      const right = tx >= fx;
-      start = { x: right ? from.right : from.left, y: fy };
-      end = { x: right ? to.left : to.right, y: ty };
-      const dir = right ? 1 : -1;
-      const mid = (start.x + end.x) / 2;
+    const idx = (i, j) => j * X.length + i;
+    const inside = (x, y) => solid.some((o) =>
+      x > o.left + EPS && x < o.right - EPS && y > o.top + EPS && y < o.bottom - EPS);
 
-      // Direct: out, across, in.
-      candidates.push([start, { x: mid, y: start.y }, { x: mid, y: end.y }, end]);
+    const usable = new Uint8Array(X.length * Y.length);
+    for (let j = 0; j < Y.length; j += 1) {
+      for (let i = 0; i < X.length; i += 1) usable[idx(i, j)] = inside(X[i], Y[j]) ? 0 : 1;
+    }
 
-      if (obstacle) {
-        // Around: step clear of the host, run along a lane above or below the menu, then
-        // step back in to the panel. Entering horizontally at both ends keeps the ports
-        // on the edges they belong to.
-        const bx = start.x + dir * c;
-        const ex = end.x - dir * c;
-        for (const lane of [obstacle.top - c, obstacle.bottom + c]) {
-          candidates.push([
-            start,
-            { x: bx, y: start.y },
-            { x: bx, y: lane },
-            { x: ex, y: lane },
-            { x: ex, y: end.y },
-            end,
-          ]);
-        }
-      }
-    } else {
-      const below = ty >= fy;
-      start = { x: fx, y: below ? from.bottom : from.top };
-      end = { x: tx, y: below ? to.top : to.bottom };
-      const dir = below ? 1 : -1;
-      const mid = (start.y + end.y) / 2;
+    // State is (grid point, axis of travel). The axis has to be part of the state, or a
+    // bend cannot be charged for.
+    const H = 0;
+    const V = 1;
+    const cost = new Float64Array(X.length * Y.length * 2).fill(Infinity);
+    const prev = new Int32Array(X.length * Y.length * 2).fill(-1);
+    const key = (i, j, a) => idx(i, j) * 2 + a;
 
-      candidates.push([start, { x: start.x, y: mid }, { x: end.x, y: mid }, end]);
+    const touched = [];
+    const relax = (k, c, from) => {
+      if (c >= cost[k] - EPS) return;
+      if (!Number.isFinite(cost[k])) touched.push(k);
+      cost[k] = c;
+      prev[k] = from;
+    };
 
-      if (obstacle) {
-        const by = start.y + dir * c;
-        const ey = end.y - dir * c;
-        for (const lane of [obstacle.left - c, obstacle.right + c]) {
-          candidates.push([
-            start,
-            { x: start.x, y: by },
-            { x: lane, y: by },
-            { x: lane, y: ey },
-            { x: end.x, y: ey },
-            end,
-          ]);
-        }
+    // Seed: one entry per port of the source, already stepped out along its normal. That
+    // step is what forces a wire to leave along the edge it is attached to.
+    const seeds = new Map();
+    for (const p of fromPorts) {
+      const sx = p.x + p.dx * CLEARANCE;
+      const sy = p.y + p.dy * CLEARANCE;
+      const i = X.indexOf(sx);
+      const j = Y.indexOf(sy);
+      if (i < 0 || j < 0 || !usable[idx(i, j)]) continue;
+      if (segmentBlocked(p.x, p.y, sx, sy, obstacles)) continue;
+      const k = key(i, j, p.dx !== 0 ? H : V);
+      relax(k, CLEARANCE, -1);
+      seeds.set(k, p);
+    }
+
+    /*
+     * Dijkstra over a few hundred states. A linear scan for the cheapest open state costs
+     * less here than the bookkeeping a binary heap needs, and this runs on every frame of
+     * a drag, so the constant matters more than the asymptotics.
+     */
+    const done = new Uint8Array(cost.length);
+    for (;;) {
+      let best = -1;
+      for (const k of touched) if (!done[k] && (best < 0 || cost[k] < cost[best])) best = k;
+      if (best < 0) break;
+      done[best] = 1;
+
+      const at = best >> 1;
+      const axis = best & 1;
+      const i = at % X.length;
+      const j = (at - i) / X.length;
+
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ni = i + di;
+        const nj = j + dj;
+        if (ni < 0 || nj < 0 || ni >= X.length || nj >= Y.length) continue;
+        if (!usable[idx(ni, nj)]) continue;
+        if (segmentBlocked(X[i], Y[j], X[ni], Y[nj], solid)) continue;
+        const na = di !== 0 ? H : V;
+        const step = di !== 0 ? Math.abs(X[ni] - X[i]) : Math.abs(Y[nj] - Y[j]);
+        relax(key(ni, nj, na), cost[best] + step + (na === axis ? 0 : BEND_COST), best);
       }
     }
 
-    const clear = obstacle ? candidates.filter((pts) => !pathHitsBox(pts, obstacle)) : candidates;
-    const chosen = (clear.length ? clear : candidates)
-      .sort((a, b) => pathLength(a) - pathLength(b))[0];
+    // Goal: any port of the target, arrived at through its own stub along its own normal.
+    let goal = -1;
+    let goalPort = null;
+    let goalCost = Infinity;
+    for (const p of toPorts) {
+      const sx = p.x + p.dx * CLEARANCE;
+      const sy = p.y + p.dy * CLEARANCE;
+      const i = X.indexOf(sx);
+      const j = Y.indexOf(sy);
+      if (i < 0 || j < 0) continue;
+      if (segmentBlocked(p.x, p.y, sx, sy, obstacles)) continue;
+      const k = key(i, j, p.dx !== 0 ? H : V);
+      const c = cost[k] + CLEARANCE;
+      if (c < goalCost) { goalCost = c; goal = k; goalPort = p; }
+    }
 
-    return { d: toPath(chosen), start, port: end };
+    if (goal < 0 || !Number.isFinite(goalCost)) {
+      /*
+       * No orthogonal route exists. This is only reachable if a port is buried inside an
+       * obstacle - a panel dragged onto the wheel, say. A plain elbow is the wrong
+       * picture, but a missing wire is worse: it reads as the connection not existing.
+       */
+      const s = fromPorts[1];
+      const e = toPorts[0];
+      return { d: `M ${s.x} ${s.y} V ${e.y} H ${e.x}`, start: s, port: e };
+    }
+
+    const points = [];
+    for (let k = goal; k >= 0; k = prev[k]) {
+      const at = k >> 1;
+      const i = at % X.length;
+      points.push({ x: X[i], y: Y[(at - i) / X.length] });
+      if (seeds.has(k)) { const p = seeds.get(k); points.push({ x: p.x, y: p.y }); break; }
+    }
+    points.reverse();
+    points.push({ x: goalPort.x, y: goalPort.y });
+
+    return { d: toPath(points), start: points[0], port: points[points.length - 1] };
+  }
+
+  /**
+   * Node to wheel.
+   *
+   * The wheel's four ports are the top, bottom, left and right of its circle - the small
+   * circles already drawn there, which the design calls its origin nodes - so it routes as
+   * the square that touches the circle at exactly those four points.
+   */
+  function route(nodeRect, wheel) {
+    const box = {
+      left: wheel.cx - wheel.r,
+      top: wheel.cy - wheel.r,
+      right: wheel.cx + wheel.r,
+      bottom: wheel.cy + wheel.r,
+      width: wheel.r * 2,
+      height: wheel.r * 2,
+    };
+    return routeOrthogonal(nodeRect, box, []);
+  }
+
+  /** Node to preview panel, keeping clear of the wheel. */
+  function routeBetween(from, to, obstacle) {
+    return routeOrthogonal(from, to, obstacle ? [obstacle] : []);
   }
 
   /* -------------------------------------------------------------- satellites */
@@ -347,18 +470,17 @@
    */
   const satellites = [];
   /*
-   * How far a preview stands off from its host.
+   * How much clear space a preview must leave around the wheel and around the nodes.
    *
-   * Generous on purpose. At a small gap the preview crowds the title panel, and the
-   * connector between them collapses to a stub that reads as the two boxes being stuck
-   * together rather than wired. Standing it well clear gives the wire room to be legible
-   * as a connection, which is the whole point of the node metaphor.
+   * Generous on purpose. Crowded up against the title, the connector between them
+   * collapses to a stub and the two boxes read as stuck together rather than wired. This
+   * margin is the room the wire needs to be legible as a connection, which is the whole
+   * point of the node metaphor.
    *
-   * It is a preference, not a guarantee: candidates are clamped into the viewport before
-   * they are scored, so on a narrow window the gap simply closes up rather than pushing
-   * the panel off screen.
+   * It is enforced, not preferred: a placement this close to the foreground is rejected
+   * outright by the search rather than merely scoring badly.
    */
-  const SATELLITE_GAP = 140;
+  const BREATHING_ROOM = 48;
   // Below this width the stylesheet turns the previews into a bottom sheet, which is far
   // more usable on a phone than a panel tethered to a node. Anchoring is skipped there.
   const ANCHOR_MIN_WIDTH = 901;
@@ -373,134 +495,135 @@
 
     // Cached size, never measured here. positionSatellite runs on every drag frame via
     // drawWires, so a getBoundingClientRect in this function would reintroduce exactly
-    // the per-move synchronous reflow that made the wires lag in the first place.
-    // A panel's size is fixed once it is open, so measuring at anchor time is enough.
+    // the per-move synchronous reflow that made the wires lag in the first place. The
+    // cache is kept honest by the ResizeObserver in observeSatellite, which re-runs this
+    // function whenever the panel's real size turns out to differ.
     const w = sat.w;
     const h = sat.h;
     const hostBox = nodeBox(host);
 
     /*
-     * Placement is scored, not ordered.
+     * Placement is a search for the nearest free spot, not a pick from a list.
      *
-     * Taking the first candidate that fit on screen meant the panel would happily land
-     * on top of the radial menu, which is the one thing on the page it must not hide.
-     * Every candidate is clamped into the viewport first - so all of them are valid
-     * positions - and then ranked by how much of the menu they cover, with distance from
-     * the host breaking ties. A placement that clears the menu always beats a closer one
-     * that does not, and the panel is never pushed off screen to achieve it.
+     * Every earlier version chose from hand-written candidates - beside the host, on the
+     * wheel's shoulder, in a screen corner - and a fixed list always has arrangements
+     * nobody anticipated. Drag the title somewhere the list did not imagine and the best
+     * available spot simply is not in it, so the panel lands somewhere silly. That is the
+     * same mistake as choosing a route by its shape, one layer up.
      *
-     * Candidates sit on both sides and above and below, so the panel is free to move to
-     * whichever side is actually clear rather than always favouring one.
-     */
-    const midTop = hostBox.top + hostBox.height / 2 - h / 2;
-
-    // Each preview belongs to a hemisphere of the wheel - About, Shop and Media sit on
-    // the left, Contact, AI and Work on the right - and opens on that side, so the panel
-    // appears on the same side as the sector that summoned it. Carried on the markup as
-    // data-hemisphere.
-    const wantRight = sat.side !== 'left';
-
-    const raw = [
-      { left: hostBox.right + SATELLITE_GAP, top: hostBox.top },
-      { left: hostBox.left - w - SATELLITE_GAP, top: hostBox.top },
-      { left: hostBox.right + SATELLITE_GAP, top: midTop },
-      { left: hostBox.left - w - SATELLITE_GAP, top: midTop },
-      { left: hostBox.left, top: hostBox.bottom + SATELLITE_GAP },
-      { left: hostBox.left, top: hostBox.top - h - SATELLITE_GAP },
-      { left: hostBox.right + SATELLITE_GAP, top: hostBox.bottom + SATELLITE_GAP },
-      { left: hostBox.left - w - SATELLITE_GAP, top: hostBox.bottom + SATELLITE_GAP },
-      // Screen edges on the preferred side, so a boxed-in host still yields a placement
-      // on the correct hemisphere rather than falling to whichever corner scores first.
-      { left: EDGE_MARGIN, top: midTop },
-      { left: window.innerWidth - w - EDGE_MARGIN, top: midTop },
-      { left: EDGE_MARGIN, top: EDGE_MARGIN },
-      { left: window.innerWidth - w - EDGE_MARGIN, top: EDGE_MARGIN },
-      { left: EDGE_MARGIN, top: window.innerHeight - h - EDGE_MARGIN },
-      { left: window.innerWidth - w - EDGE_MARGIN, top: window.innerHeight - h - EDGE_MARGIN },
-    ];
-
-    const maxLeft = Math.max(EDGE_MARGIN, window.innerWidth - w - EDGE_MARGIN);
-    const maxTop = Math.max(EDGE_MARGIN, window.innerHeight - h - EDGE_MARGIN);
-
-    /*
-     * The foreground is the radial menu, the title node and the welcome node. Those are
-     * the only things a preview must not cover; the ring field, the particles and the
-     * arced wordmark are background, and a panel passing over them is fine.
+     * So: rings of increasing radius around the host, sampled all the way round, and the
+     * first position that is wholly on screen and clear of everything it must not cover
+     * wins. Because the rings grow outward, the first fit found IS the nearest fit, for
+     * any host position - there is nothing left to anticipate.
      *
-     * Node boxes are included because every candidate is clamped into the viewport
-     * before scoring, and a clamp can push one straight back on top of the title it
-     * hangs from. The menu is taken as its bounding square rather than its circle, which
-     * errs toward a wider berth - the right way to be wrong here.
+     * The old rule that a sector opened on its own side of the wheel is gone. The only
+     * requirements now are: near the title, fully on screen, and not covering the title,
+     * the welcome panel or the menu.
      */
     const wheel = wheelGeometry();
-    const avoid = [
-      {
-        left: wheel.cx - wheel.r,
-        top: wheel.cy - wheel.r,
-        right: wheel.cx + wheel.r,
-        bottom: wheel.cy + wheel.r,
-      },
-      ...nodes.map(nodeBox),
-    ];
 
-    const coverage = (c) => {
-      let total = 0;
-      for (const a of avoid) {
-        const x = Math.max(0, Math.min(c.left + w, a.right) - Math.max(c.left, a.left));
-        const y = Math.max(0, Math.min(c.top + h, a.bottom) - Math.max(c.top, a.top));
-        total += x * y;
-      }
-      return total;
-    };
-
-    const hostCx = hostBox.left + hostBox.width / 2;
-    const hostCy = hostBox.top + hostBox.height / 2;
-    const distanceFromHost = (c) =>
-      Math.hypot(c.left + w / 2 - hostCx, c.top + h / 2 - hostCy);
-
-    /*
-     * Ranking, in strict order of importance:
-     *
-     *   1. covers none of the foreground
-     *   2. lands on the preview's own hemisphere
-     *   3. sits closest to the host
-     *
-     * Combined into one number so the comparison cannot drift out of that order: the
-     * weights are far enough apart that no amount of distance can outvote a side, and no
-     * side can outvote covering the menu. Sorting by side before coverage would put a
-     * panel on the correct side and on top of the menu, which is the worse failure.
-     */
-    const midX = window.innerWidth / 2;
-    let best = null;
-    for (const c of raw) {
-      const cand = {
-        left: clamp(c.left, EDGE_MARGIN, maxLeft),
-        top: clamp(c.top, EDGE_MARGIN, maxTop),
-      };
-      const cover = coverage(cand);
-      const near = distanceFromHost(cand);
-      const onRight = cand.left + w / 2 >= midX;
-      const wrongSide = onRight === wantRight ? 0 : 1;
-      const score = cover * 1e7 + wrongSide * 1e4 + near;
-      if (!best || score < best.score) {
-        best = { ...cand, cover, near, wrongSide, score };
-      }
-    }
-
-    const { left, top } = best;
-
-    sat.el.style.left = `${left}px`;
-    sat.el.style.top = `${top}px`;
-
-    const satBox = { left, top, width: w, height: h, right: left + w, bottom: top + h };
-    // The menu is the one thing a wire must not cross; the ring field and wordmark are
-    // background and a wire over them is fine.
+    // The menu is the one thing a wire must not cross and a preview must not cover. Taken
+    // as its bounding square rather than its circle, which errs toward a wider berth - the
+    // right way to be wrong here.
     const menuBox = {
       left: wheel.cx - wheel.r,
       top: wheel.cy - wheel.r,
       right: wheel.cx + wheel.r,
       bottom: wheel.cy + wheel.r,
     };
+
+    /*
+     * Everything a preview must not cover, each grown by a breathing margin.
+     *
+     * Bare overlap made "touching" free, so a preview could come to rest flush against the
+     * title with no room for the wire between them - reading as stuck to it rather than
+     * connected to it. The margin is what the wire's stub and ports live in.
+     *
+     * The ring field, the particles and the arced wordmark are background; a panel over
+     * those is fine and they are deliberately absent from this list.
+     */
+    const grow = (box, by) => ({
+      left: box.left - by,
+      top: box.top - by,
+      right: box.right + by,
+      bottom: box.bottom + by,
+    });
+
+    const blocked = [
+      grow(menuBox, BREATHING_ROOM),
+      ...nodes.map((n) => grow(nodeBox(n), BREATHING_ROOM)),
+    ];
+
+    const overlap = (left, top) => {
+      let total = 0;
+      for (const b of blocked) {
+        const x = Math.max(0, Math.min(left + w, b.right) - Math.max(left, b.left));
+        const y = Math.max(0, Math.min(top + h, b.bottom) - Math.max(top, b.top));
+        total += x * y;
+      }
+      return total;
+    };
+
+    const onScreen = (left, top) =>
+      left >= EDGE_MARGIN && top >= EDGE_MARGIN &&
+      left + w <= window.innerWidth - EDGE_MARGIN &&
+      top + h <= window.innerHeight - EDGE_MARGIN;
+
+    /*
+     * Snapping the panel's CENTRE onto a lattice intersection puts all four of its ports
+     * on grid lines at once, because a port is now the midpoint of a side. The old code
+     * had to resolve a route first to find out which port would be used and snap that one;
+     * with fixed ports there is nothing to resolve and no port left unsnapped.
+     */
+    const grid = window.ShimtiGrid;
+    const place = (cx, cy) => (grid
+      ? { left: snapCoord(cx, grid.originX, grid.spacing) - w / 2,
+          top: snapCoord(cy, grid.originY, grid.spacing) - h / 2 }
+      : { left: cx - w / 2, top: cy - h / 2 });
+
+    const hostCx = hostBox.left + hostBox.width / 2;
+    const hostCy = hostBox.top + hostBox.height / 2;
+
+    // Sweep outward from the closest the two boxes could ever sit to the far corner of the
+    // screen, in half-cell steps, sampling the full circle at each radius.
+    const ANGLES = 32;
+    const ringStep = grid ? grid.spacing / 2 : 24;
+    const first = (Math.min(hostBox.width, hostBox.height) + Math.min(w, h)) / 2;
+    const last = Math.hypot(window.innerWidth, window.innerHeight);
+
+    let best = null;      // the first fit found: nearest, by construction
+    let fallback = null;  // least-bad, for a viewport with no fit at all
+
+    for (let r = first; r <= last && !best; r += ringStep) {
+      for (let a = 0; a < ANGLES; a += 1) {
+        const angle = (a / ANGLES) * Math.PI * 2;
+        const cand = place(hostCx + Math.cos(angle) * r, hostCy + Math.sin(angle) * r);
+        const off = overlap(cand.left, cand.top);
+        const fits = onScreen(cand.left, cand.top);
+
+        if (fits && off === 0) {
+          // Within one ring every angle is equally near, so the tie goes to whichever sits
+          // furthest from the wheel - the panel drifts outward into open space instead of
+          // hugging the menu it was just told to keep off.
+          const openness = Math.hypot(
+            cand.left + w / 2 - wheel.cx,
+            cand.top + h / 2 - wheel.cy
+          );
+          if (!best || openness > best.openness) best = { ...cand, openness };
+          continue;
+        }
+
+        const penalty = off + (fits ? 0 : 1e9);
+        if (!fallback || penalty < fallback.penalty) fallback = { ...cand, penalty };
+      }
+    }
+
+    const { left, top } = best || fallback || place(hostCx, hostCy);
+
+    sat.el.style.left = `${left}px`;
+    sat.el.style.top = `${top}px`;
+
+    const satBox = { left, top, width: w, height: h, right: left + w, bottom: top + h };
     const { d, start, port } = routeBetween(hostBox, satBox, menuBox);
     sat.wire.path.setAttribute('d', d);
     sat.wire.from.setAttribute('cx', start.x);
@@ -509,8 +632,65 @@
     sat.wire.to.setAttribute('cy', port.y);
   }
 
+  /*
+   * One observer for every preview, so a panel is repositioned from its true size rather
+   * than from whatever it measured as on the frame it was opened.
+   *
+   * Border box, to match getBoundingClientRect - contentRect excludes padding and border,
+   * which would under-measure these panels by the surface's 1rem padding and 2px frame.
+   */
+  let satelliteObserver = null;
+
+  function observeSatellite(sat) {
+    if (!window.ResizeObserver || sat.observed) return;
+    if (!satelliteObserver) {
+      satelliteObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const s = satellites.find((x) => x.el === entry.target);
+          if (!s) continue;
+          const box = entry.borderBoxSize && entry.borderBoxSize[0];
+          const w = box ? box.inlineSize : entry.target.getBoundingClientRect().width;
+          const h = box ? box.blockSize : entry.target.getBoundingClientRect().height;
+          if (w === s.w && h === s.h) continue;
+          s.w = w;
+          s.h = h;
+          if (s.active) positionSatellite(s);
+        }
+      });
+    }
+    satelliteObserver.observe(sat.el);
+    sat.observed = true;
+  }
+
   function updateSatellites() {
     for (const sat of satellites) if (sat.active) positionSatellite(sat);
+  }
+
+  /*
+   * Re-applies the anchored/bottom-sheet decision to previews that are already open.
+   *
+   * Which mode a preview uses depends on the viewport width, and that was decided once,
+   * when it was opened. Crossing the breakpoint with a preview on screen left it in the
+   * mode for a viewport that no longer exists - an inline-positioned panel fighting the
+   * stylesheet's bottom sheet on a narrowed window, or a sheet with no wire on a widened
+   * one. Re-deciding on every resize means the mode always matches the viewport that is
+   * actually there.
+   */
+  function syncSatelliteMode() {
+    const anchored = anchoringEnabled();
+    for (const sat of satellites) {
+      if (!sat.open) continue;
+      if (anchored) {
+        window.ShimtiNodes.anchorTo(sat.hostId, sat.el);
+      } else if (sat.active) {
+        sat.el.style.left = '';
+        sat.el.style.top = '';
+        sat.wire.path.setAttribute('d', '');
+        sat.wire.from.setAttribute('cx', -9999);
+        sat.wire.to.setAttribute('cx', -9999);
+        sat.active = false;
+      }
+    }
   }
 
   /* ------------------------------------------------------------------ wires */
@@ -557,19 +737,20 @@
   }
 
   /**
-   * Snaps a node so its PORT lands on a background-grid intersection.
+   * Snaps a node so its PORTS land on background-grid intersections.
    *
-   * The port is the small circle on the panel's edge where its wire attaches - that is
-   * the node in the graph sense, and it is what should sit on the lattice. Snapping the
-   * panel's centre instead would leave the port floating between lines, which is the one
-   * point that visibly connects to anything.
+   * A port is the midpoint of one of the node's four sides, so snapping the node's CENTRE
+   * onto an intersection puts the top and bottom ports on a grid column and the left and
+   * right ports on a grid row - all four at once, in one step.
    *
-   * Which edge the port sits on depends on where the panel is relative to the wheel, so
-   * the route is resolved for the tentative position first and the panel is then shifted
-   * by whatever moves that port onto the nearest intersection.
+   * The previous version had to resolve a route first, to discover which single port the
+   * wire would use, and snapped that one. That was only ever correct for the port it
+   * guessed: the moment a second wire left the node through a different side, that port
+   * was off the lattice. With fixed ports there is nothing to resolve and none left
+   * unsnapped.
    *
-   * The lattice comes from background.js, which owns it. If the background has not
-   * initialised, the position passes through untouched rather than being snapped to a
+   * The lattice comes from background.js, which owns it. With no background there is no
+   * lattice, and the position passes through untouched rather than being snapped to a
    * guessed spacing.
    *
    * @returns {{left:number, top:number}} the shifted top-left
@@ -578,30 +759,19 @@
     const grid = window.ShimtiGrid;
     if (!grid) return { left, top };
 
-    const box = {
-      left,
-      top,
-      width: node.w,
-      height: node.h,
-      right: left + node.w,
-      bottom: top + node.h,
-    };
-    const { start } = route(box, wheelGeometry());
-
-    let snappedLeft = left + (snapCoord(start.x, grid.originX, grid.spacing) - start.x);
-    let snappedTop = top + (snapCoord(start.y, grid.originY, grid.spacing) - start.y);
+    let snappedLeft = snapCoord(left + node.w / 2, grid.originX, grid.spacing) - node.w / 2;
+    let snappedTop = snapCoord(top + node.h / 2, grid.originY, grid.spacing) - node.h / 2;
 
     /*
-     * Nearest intersection first, then step inward by whole cells until the panel fits.
+     * Nearest intersection first, then step inward by whole cells until the node fits.
      *
-     * Clamping alone would defeat the snap: the title's port wants the line above its
-     * resting position, which puts the panel slightly off the top of the screen, and the
-     * clamp then drags it back to the margin - leaving the port a few pixels off the
-     * lattice, which is exactly what this is meant to prevent. Moving by whole cells
-     * keeps it on the grid while bringing it into view.
+     * Clamping alone would defeat the snap: the nearest intersection can sit just off the
+     * edge of the screen, and a clamp then drags the node back to the margin - leaving its
+     * ports a few pixels off the lattice, which is exactly what this exists to prevent.
+     * Moving by whole cells brings it into view without ever leaving the grid.
      *
-     * The loops are bounded: a panel taller or wider than the viewport would otherwise
-     * never satisfy both edges.
+     * The loops are bounded: a node larger than the viewport would otherwise never
+     * satisfy both edges.
      */
     const maxLeft = window.innerWidth - node.w - EDGE_MARGIN;
     const maxTop = window.innerHeight - node.h - EDGE_MARGIN;
@@ -611,6 +781,64 @@
     for (let i = 0; i < 40 && snappedTop > maxTop; i += 1) snappedTop -= grid.spacing;
 
     return { left: snappedLeft, top: snappedTop };
+  }
+
+  /**
+   * Pushes a node off the wheel, by whole grid cells, along the shortest way out.
+   *
+   * The foreground never overlaps itself - the same rule the previews already obey.
+   *
+   * Two things go wrong when a node is parked on the wheel. It hides the one control the
+   * page exists for. And because a port is the midpoint of a side, sitting on the wheel
+   * buries all four of this node's ports inside the obstacle, so no orthogonal route out
+   * of it exists at all and its wire has nowhere left to go but straight through
+   * everything - which is exactly what it did.
+   *
+   * Whole cells, so a node that arrived on the lattice leaves still on it.
+   *
+   * @returns {{left:number, top:number}}
+   */
+  function clearOfWheel(node, left, top, maxLeft, maxTop) {
+    const wheel = wheelGeometry();
+    const menu = {
+      left: wheel.cx - wheel.r,
+      top: wheel.cy - wheel.r,
+      right: wheel.cx + wheel.r,
+      bottom: wheel.cy + wheel.r,
+    };
+
+    const overlaps = (l, t) =>
+      l < menu.right && l + node.w > menu.left && t < menu.bottom && t + node.h > menu.top;
+
+    if (!overlaps(left, top)) return { left, top };
+
+    const grid = window.ShimtiGrid;
+    const step = grid ? grid.spacing : 20;
+
+    // The four ways out: past each side of the wheel, moving on one axis only.
+    const escapes = [
+      { l: menu.left - node.w, t: top },
+      { l: menu.right, t: top },
+      { l: left, t: menu.top - node.h },
+      { l: left, t: menu.bottom },
+    ];
+
+    let best = null;
+    for (const e of escapes) {
+      const dl = e.l - left;
+      const dt = e.t - top;
+      // Rounded out to a whole number of cells, away from the wheel - never short of it.
+      const l = left + Math.sign(dl) * Math.ceil(Math.abs(dl) / step) * step;
+      const t = top + Math.sign(dt) * Math.ceil(Math.abs(dt) / step) * step;
+      if (l < EDGE_MARGIN || l > maxLeft || t < EDGE_MARGIN || t > maxTop) continue;
+      if (overlaps(l, t)) continue;
+      const cost = Math.hypot(l - left, t - top);
+      if (!best || cost < best.cost) best = { left: l, top: t, cost };
+    }
+
+    // On a viewport with no room beside the wheel at all, the node stays where it is: a
+    // node the user cannot see or reach would be the worse outcome.
+    return best || { left, top };
   }
 
   /**
@@ -632,8 +860,15 @@
     if (snap) ({ left, top } = snapPortToGrid(node, left, top));
     const maxLeft = window.innerWidth - node.w - EDGE_MARGIN;
     const maxTop = window.innerHeight - node.h - EDGE_MARGIN;
-    node.left = clamp(left, EDGE_MARGIN, maxLeft);
-    node.top = clamp(top, EDGE_MARGIN, maxTop);
+    const clear = clearOfWheel(
+      node,
+      clamp(left, EDGE_MARGIN, maxLeft),
+      clamp(top, EDGE_MARGIN, maxTop),
+      maxLeft,
+      maxTop
+    );
+    node.left = clear.left;
+    node.top = clear.top;
     node.el.style.left = `${node.left}px`;
     node.el.style.top = `${node.top}px`;
     drawWires();
@@ -774,16 +1009,74 @@
       });
     }
 
-    // Re-clamp on resize: a node parked against the right edge would otherwise end up
-    // outside a narrowed window, unreachable and unrecoverable.
-    window.addEventListener('resize', () => {
-      // The wheel re-centres and the panels can reflow, so the caches are stale here.
+    /*
+     * Resize rebuilds every derived position, because on resize nothing is still valid.
+     *
+     * The wheel re-centres, the panels reflow, the background recomputes the lattice from
+     * the new viewport, and a node parked against an edge ends up outside a narrowed
+     * window - unreachable and unrecoverable. So the caches are dropped and each node is
+     * re-homed or re-placed from scratch, re-snapped to the lattice as it now stands
+     * rather than to the one it was snapped to before. drawWires then repositions every
+     * open preview off the new geometry.
+     *
+     * Coalesced onto one animation frame. Dragging a window edge fires resize
+     * continuously, and measuring plus writing layout on each event is exactly the
+     * synchronous-reflow storm the rest of this module is built to avoid; doing the work
+     * once per frame keeps a live drag-resize smooth.
+     */
+    /** Re-derives every position from the viewport as it is right now. */
+    function settle() {
       measureWheel();
       for (const node of nodes) {
         measureNode(node);
-        if (node.userMoved) place(node, node.left, node.top);
+        if (node.userMoved) place(node, node.left, node.top, true);
         else applyHome(node);
       }
+      syncSatelliteMode();
+    }
+
+    let resizeFrame = 0;
+    window.addEventListener('resize', () => {
+      if (resizeFrame) return;
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = 0;
+        settle();
+      });
+    });
+
+    /*
+     * Laying out against a viewport with no area, and recovering from it.
+     *
+     * A page opened into a background tab - ctrl-clicked, restored with the session, one
+     * of a folder of bookmarks - can run this before it is ever given a size. Every
+     * position here is derived from window.innerWidth/innerHeight, and at zero the
+     * available range collapses so far that clamp() pins both panels into the top-left
+     * margin, one on top of the other. They then stay there for the life of the page:
+     * requestAnimationFrame does not run in a hidden tab, so the resize handler above
+     * cannot fix it, and no resize EVENT fires anyway because the window was never
+     * resized.
+     *
+     * So this retries until the viewport has an area, on a timer rather than a frame -
+     * timers still run in a background tab, merely throttled - and settles again on
+     * becoming visible, which is both a likely size change and the moment throttling
+     * stops. The same shape as the background's own recovery, for the same reason.
+     */
+    let healTimer = 0;
+    function healWhenSized() {
+      if (window.innerWidth > 0 && window.innerHeight > 0) {
+        healTimer = 0;
+        settle();
+        return;
+      }
+      healTimer = setTimeout(healWhenSized, 250);
+    }
+
+    if (window.innerWidth < 1 || window.innerHeight < 1) healWhenSized();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      if (healTimer) { clearTimeout(healTimer); healTimer = 0; }
+      settle();
     });
 
     // The wheel is built about a second after DOMContentLoaded and rebuilt on resize.
@@ -860,7 +1153,11 @@
         satellites.push(sat);
       }
       sat.hostId = hostId;
-      sat.side = el.dataset.hemisphere === 'left' ? 'left' : 'right';
+      // `open` is whether the user is looking at this preview; `active` is whether it is
+      // being positioned by this module. They differ below the anchoring breakpoint,
+      // where an open preview is laid out entirely by the stylesheet - and keeping them
+      // apart is what lets a resize put an already-open preview into the other mode.
+      sat.open = true;
 
       if (!anchoringEnabled()) {
         // Narrow viewport: the stylesheet's bottom sheet takes over, so drop the inline
@@ -874,11 +1171,25 @@
         return;
       }
 
-      // Measure once, here, while it is safe to touch layout.
+      /*
+       * Measure now, and keep measuring.
+       *
+       * A single measurement here is whatever the panel happened to be at this instant,
+       * and placement then believes it forever. It was catching the panel at 390x59 -
+       * before the preview image and copy had contributed their height - so scoring
+       * judged a 59px sliver against the wheel, found it barely overlapped, and parked
+       * a 423px panel straight across the menu. On a wide viewport the same wrong height
+       * sent it to the far corner instead.
+       *
+       * The observer makes a stale size structurally impossible: the moment the panel
+       * settles at its real height the placement is recomputed with it. Repositioning
+       * does not resize the panel, so this cannot feed back on itself.
+       */
       const r = el.getBoundingClientRect();
       sat.w = r.width;
       sat.h = r.height;
       sat.active = true;
+      observeSatellite(sat);
       positionSatellite(sat);
     },
 
@@ -886,6 +1197,7 @@
     release(el) {
       const sat = satellites.find((s) => s.el === el);
       if (!sat) return;
+      sat.open = false;
       sat.active = false;
       sat.wire.path.setAttribute('d', '');
       sat.wire.from.setAttribute('cx', -9999);

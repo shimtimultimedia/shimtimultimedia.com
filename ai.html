@@ -2,14 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
+  <!-- Content Security Policy.
+       Delivered as a meta element because GitHub Pages cannot set response headers. That
+       is weaker than the header form on purpose-of-record: the policy only takes effect
+       once the parser reaches this tag, and frame-ancestors, report-uri and sandbox are
+       ignored entirely in meta form. It is placed immediately after charset - which must
+       come first for the parser to decode the document correctly - and before anything
+       that fetches, so every resource this page loads is covered. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'inline-speculation-rules'; worker-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="AI services from Shimti Multimedia - tools and consultation that empower creative work.">
   <meta name="author" content="Shimti Multimedia">
   <meta name="theme-color" content="#000000">
 
-  <!-- ALPHA: keeps the unfinished site out of search results.
-       Removed at launch - see LAUNCH.md. -->
-  <meta name="robots" content="noindex, follow">
 
   <title>AI | Shimti Multimedia</title>
 
@@ -17,7 +23,10 @@
 
   <meta property="og:title" content="AI | Shimti Multimedia">
   <meta property="og:description" content="AI services from Shimti Multimedia - tools and consultation that empower creative work.">
-  <meta property="og:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/sections/ai.webp">
+  <meta property="og:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/og-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:url" content="https://shimtimultimedia.github.io/shimtimultimedia.com/ai.html">
   <meta property="og:site_name" content="Shimti Multimedia">
   <meta property="og:type" content="website">
@@ -25,8 +34,15 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="AI | Shimti Multimedia">
   <meta name="twitter:description" content="AI services from Shimti Multimedia - tools and consultation that empower creative work.">
-  <meta name="twitter:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/sections/ai.webp">
+  <meta name="twitter:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/og-card.jpg">
 
+  <!-- The only font the page loads, and it is needed for first paint, so it is worth
+       fetching in parallel with the stylesheet instead of after it. crossorigin is
+       required even same-origin: fonts are fetched in CORS mode, and without it the
+       preload is discarded and the file downloaded a second time.
+       Preloading exactly one face on purpose - preloading every weight would compete
+       with the page's own images for bandwidth. -->
+  <link rel="preload" href="assets/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/styles/section.css">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/images/favicon/favicon.svg" type="image/svg+xml">
@@ -38,7 +54,7 @@
 
   <header class="section-header">
     <a class="section-home" href="./" aria-label="Shimti Multimedia - return to home">
-      <img src="assets/images/Logo.svg" alt="" width="32" height="32">
+      <img src="assets/images/logo.png" alt="" width="32" height="32">
       <span>Shimti Multimedia</span>
     </a>
     <nav aria-label="Sections">

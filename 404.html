@@ -2,6 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
+  <!-- Content Security Policy.
+       Delivered as a meta element because GitHub Pages cannot set response headers. That
+       is weaker than the header form on purpose-of-record: the policy only takes effect
+       once the parser reaches this tag, and frame-ancestors, report-uri and sandbox are
+       ignored entirely in meta form. It is placed immediately after charset - which must
+       come first for the parser to decode the document correctly - and before anything
+       that fetches, so every resource this page loads is covered. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Signal Lost | Shimti Multimedia</title>
   <meta name="description" content="The page you requested could not be found.">
@@ -12,10 +21,13 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/images/favicon/favicon.svg" type="image/svg+xml">
   <style>
+    /* The same variable WOFF2 the rest of the site uses. Declared inline because this
+       page is deliberately self-contained: an error page that depends on another
+       request to render is an error page that fails when that request is what broke. */
     @font-face {
       font-family: 'Orbitron';
-      src: url('assets/fonts/Orbitron-Regular.ttf') format('truetype');
-      font-weight: 400;
+      src: url('assets/fonts/Orbitron-Variable.woff2') format('woff2');
+      font-weight: 400 900;
       font-display: swap;
     }
 

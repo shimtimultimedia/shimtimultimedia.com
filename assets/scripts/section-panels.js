@@ -56,11 +56,44 @@
     delete img.dataset.src;
   }
 
+  /*
+   * Prerenders the page the visitor is pointing at.
+   *
+   * The declarative document rule in index.html cannot do this. Speculation rules match
+   * HTML <a> and <area> elements, and the radial menu is built from SVG <a> - a different
+   * element, and not an eligible link - so the wheel, which is the site's main
+   * navigation, would get no speculative loading at all from markup alone. Hover on a
+   * sector is already tracked here in order to open its preview, and that hover is the
+   * strongest possible signal of intent, so the rule is injected at that moment for that
+   * one URL. This is the "target high-intent links" pattern, with the intent measured
+   * rather than guessed.
+   *
+   * Only the current sector is ever speculated, and the previous rule set is removed
+   * first. Prerendering is expensive on both ends, browsers cap how many can run at once,
+   * and leaving old rules in place would have the browser holding pages for sectors the
+   * visitor has already moved away from.
+   *
+   * Silently skipped where the API is missing: this is a speed-up, never a dependency.
+   */
+  let speculation = null;
+
+  function speculate(section) {
+    if (!HTMLScriptElement.supports || !HTMLScriptElement.supports('speculationrules')) return;
+    speculation?.remove();
+    speculation = document.createElement('script');
+    speculation.type = 'speculationrules';
+    speculation.textContent = JSON.stringify({
+      prerender: [{ urls: [`${section}.html`], eagerness: 'immediate' }],
+    });
+    document.body.appendChild(speculation);
+  }
+
   function open(section) {
     if (openSection === section) return;
     close();
     const panel = panels.get(section);
     if (!panel) return;
+    speculate(section);
     revealImage(panel);
     panel.classList.add('is-open');
     // Hang the preview off the branding node and wire it there. node-panels.js owns all

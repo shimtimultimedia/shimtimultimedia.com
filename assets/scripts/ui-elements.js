@@ -6,8 +6,22 @@
 
 /** @namespace ShimtiUtils - Shared utilities for logging */
 window.ShimtiUtils = window.ShimtiUtils || {};
-window.ShimtiUtils.DEBUG_MODE = true;
-window.ShimtiUtils.VERBOSE_LOGGING = true;
+/*
+ * Debug output is decided by where the page is served from, not by a flag someone has to
+ * remember to flip.
+ *
+ * These were both hard-coded true, so every visitor got the full log stream in their
+ * console. Setting them to false instead would only move the problem: the next person to
+ * debug locally turns them on, and whether production is quiet then depends on nobody
+ * forgetting to turn them back off before pushing. Deriving them from the hostname makes
+ * production quiet by construction and local development verbose by construction, with
+ * nothing to remember in either direction.
+ *
+ * Errors and warnings are NOT gated by this - those are for real faults and must surface
+ * wherever they happen.
+ */
+window.ShimtiUtils.DEBUG_MODE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
+window.ShimtiUtils.VERBOSE_LOGGING = window.ShimtiUtils.DEBUG_MODE;
 
 /** @class ShimtiUtils.Logger - Centralized logging */
 window.ShimtiUtils.Logger = class {

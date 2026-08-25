@@ -3,25 +3,30 @@
  * Sets up the canvas, SVG, and panels for rendering UI elements, carousel, and animations.
  * References consolidated scripts and styles, with meta tags for SEO and accessibility.
  * @requires assets/styles/styles.css
- * @requires assets/scripts/ui-elements.js, assets/scripts/background.js, assets/scripts/title-panel.js
- * @requires assets/images/logo.svg, assets/images/*.svg for menu icons
- * @requires assets/data/languages.xml for carousel
- * @requires assets/images/favicon/favicon.ico for favicon
+ * @requires assets/scripts/ui-elements.js, title-panel.js, background.js,
+ *           section-panels.js, node-panels.js
+ * @requires assets/images/logo.png, assets/images/*.svg for menu icons
+ * @requires assets/data/languages.json for the greeting carousel
+ * @requires favicon.ico, assets/images/favicon/* for icons
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
+  <!-- Content Security Policy.
+       Delivered as a meta element because GitHub Pages cannot set response headers. That
+       is weaker than the header form on purpose-of-record: the policy only takes effect
+       once the parser reaches this tag, and frame-ancestors, report-uri and sandbox are
+       ignored entirely in meta form. It is placed immediately after charset - which must
+       come first for the parser to decode the document correctly - and before anything
+       that fetches, so every resource this page loads is covered. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'inline-speculation-rules'; worker-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Shimti Multimedia: Cutting-edge music, video, and AI projects with a futuristic sci-fi aesthetic.">
-  <meta name="keywords" content="Shimti Multimedia, music, video, AI, sci-fi, portfolio">
   <meta name="author" content="Shimti Multimedia">
   <meta name="theme-color" content="#000000">
 
-  <!-- ALPHA: keeps the unfinished site out of search results. Crawling stays allowed in
-       robots.txt on purpose, so crawlers can actually fetch this page and honour the tag.
-       REMOVE THIS ONE LINE AT LAUNCH - see LAUNCH.md. -->
-  <meta name="robots" content="noindex, follow">
 
   <title>Shimti Multimedia</title>
 
@@ -34,10 +39,11 @@
        refuse to render SVG, so an SVG here produces a blank preview card. -->
   <meta property="og:title" content="Shimti Multimedia">
   <meta property="og:description" content="Explore music, video, and AI projects with a sci-fi flair.">
-  <meta property="og:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/favicon/web-app-manifest-512x512.png">
-  <meta property="og:image:width" content="512">
-  <meta property="og:image:height" content="512">
-  <meta property="og:image:alt" content="Shimti Multimedia logo">
+  <meta property="og:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/og-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The Shimti Multimedia wordmark beside a glowing sci-fi radial interface">
   <meta property="og:url" content="https://shimtimultimedia.github.io/shimtimultimedia.com/">
   <meta property="og:site_name" content="Shimti Multimedia">
   <meta property="og:type" content="website">
@@ -46,8 +52,15 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Shimti Multimedia">
   <meta name="twitter:description" content="Explore music, video, and AI projects with a sci-fi flair.">
-  <meta name="twitter:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/favicon/web-app-manifest-512x512.png">
+  <meta name="twitter:image" content="https://shimtimultimedia.github.io/shimtimultimedia.com/assets/images/og-card.jpg">
 
+  <!-- The only font the page loads, and it is needed for first paint, so it is worth
+       fetching in parallel with the stylesheet instead of after it. crossorigin is
+       required even same-origin: fonts are fetched in CORS mode, and without it the
+       preload is discarded and the file downloaded a second time.
+       Preloading exactly one face on purpose - preloading every weight would compete
+       with the page's own images for bandwidth. -->
+  <link rel="preload" href="assets/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/styles/styles.css">
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/images/favicon/favicon.svg" type="image/svg+xml">
@@ -182,7 +195,7 @@
   <div id="shimtiPanel">
     <!-- alt="" because the company name is already spelled out in the span beside it.
          A description here would make a screen reader announce the brand twice over. -->
-    <img src="assets/images/Logo.svg" alt="" width="24" height="24">
+    <img src="assets/images/logo.png" alt="" width="24" height="24">
     <span>SHIMTI MULTIMEDIA</span>
   </div>
   <!--
@@ -319,5 +332,42 @@
   <script src="assets/scripts/background.js"></script>
   <script src="assets/scripts/section-panels.js"></script>
   <script src="assets/scripts/node-panels.js"></script>
+
+  <!-- Speculative loading for the fallback navigation.
+       Document rules are matched against HTML <a> and <area> elements only. The radial
+       menu is built from SVG <a>, which is a different element and is NOT eligible, so
+       this rule alone would cover almost nobody - the wheel is handled from script, in
+       section-panels.js, off the hover it already tracks. This covers the plain-HTML nav
+       used by keyboard and no-JS visitors.
+       "moderate" starts on hover rather than immediately, so nothing is fetched for the
+       four sections a visitor never points at. -->
+  <script type="speculationrules">
+  {
+    "prerender": [
+      {
+        "where": { "or": [
+        { "href_matches": "about.html" },
+        { "href_matches": "ai.html" },
+        { "href_matches": "contact.html" },
+        { "href_matches": "media.html" },
+        { "href_matches": "shop.html" },
+        { "href_matches": "work.html" }
+        ] },
+        "eagerness": "moderate"
+      }
+    ]
+  }
+  </script>
+
+  <!-- Service worker.
+       Registered after load so it never competes with the page's own first paint for
+       bandwidth, and guarded because it is an enhancement: the site works identically
+       without it, just without offline support or the warm cache on a repeat visit.
+       Errors are swallowed on purpose - a registration that fails must not surface as a
+       broken page, because nothing about the page is actually broken.
+       The scope is deliberately relative: on a project Pages site this app lives under
+       /shimtimultimedia.com/, and an absolute '/sw.js' would point at the user-site root.
+       Bump CACHE_VERSION in sw.js on any deploy that changes a precached asset. -->
+  <script src="assets/scripts/register-sw.js" defer></script>
 </body>
 </html>

@@ -11,8 +11,25 @@
 
 @font-face {
   font-family: 'Orbitron';
-  src: url('../fonts/Orbitron-Regular.ttf') format('truetype');
-  font-weight: 400;
+
+  /*
+   * One variable WOFF2, covering the whole weight axis.
+   *
+   * This replaces a static Orbitron-Regular.ttf, and fixes two things at once.
+   *
+   * SIZE. WOFF2 is Brotli-compressed and is the universally supported web font format;
+   * raw TrueType is not a web delivery format at all. The variable file is 16KB against
+   * the single static weight's 24KB - smaller while carrying every weight rather than one.
+   *
+   * WEIGHT. Only weight 400 used to be declared, yet the stylesheet asks for 600 in
+   * several places and so does the rotating wordmark. With no 600 to load, the browser
+   * synthesised one by smearing the regular weight sideways - faux bold, visibly coarser
+   * than the real thing, on the brand's own wordmark. The real weights were sitting
+   * unused on disk the whole time. Declaring the axis range means 600 now resolves to
+   * actual 600.
+   */
+  src: url('../fonts/Orbitron-Variable.woff2') format('woff2');
+  font-weight: 400 900;
   font-style: normal;
   font-display: swap;
 }
