@@ -211,10 +211,22 @@
                 settled = true;
                 clearTimeout(timer);
 
-                // Errors after this point can no longer be answered by falling back: the
-                // canvas is about to become the worker's and cannot be handed back.
-                worker.onerror = (e) => bgLogger.error('Background worker failed after transfer',
-                    new Error(e.message || 'unknown'));
+                /*
+                 * Errors after this point can no longer be answered by falling back: the
+                 * canvas is about to become the worker's and cannot be handed back.
+                 *
+                 * Reported once, not once per occurrence. A renderer fault tends to
+                 * repeat every frame, and logging each one turns a broken background into
+                 * a machine that gets slower the longer the page stays open - the console
+                 * retains every entry. One report says everything the hundredth would.
+                 */
+                let reported = false;
+                worker.onerror = (e) => {
+                    if (reported) return;
+                    reported = true;
+                    bgLogger.error('Background worker failed after transfer',
+                        new Error(e.message || 'unknown'));
+                };
 
                 const sizing = lastSizing || measure();
                 const offscreen = canvas.transferControlToOffscreen();

@@ -735,8 +735,33 @@ function createBackgroundField(canvas) {
 
     const frameInterval = 1000 / BACKGROUND_CONFIG.TARGET_FPS;
 
+    /*
+     * A frame that throws stops the loop. It does not keep trying.
+     *
+     * requestAnimationFrame is re-armed at the top of this function, before any drawing
+     * happens, so a throw further down still leaves the next frame scheduled. That turns
+     * a single mistake into an exception storm: 45 throws a second, each allocating an
+     * error and a stack, each reported to the host, for as long as the page is open. A
+     * typo in one drawImage argument did exactly that here, and left overnight it grew
+     * heavy enough to bog down the whole machine - while the static grid, painted once by
+     * resize(), made it look like the background was merely idle.
+     *
+     * Stopping on the first throw makes a broken renderer cost one error instead of
+     * millions, and the difference between "background is missing" and "machine is
+     * struggling" stops being a matter of how long the tab was left open.
+     */
     function frame(now) {
         if (!running) return;
+        try {
+            render(now);
+        } catch (error) {
+            running = false;
+            rafId = 0;
+            throw error;
+        }
+    }
+
+    function render(now) {
         rafId = requestAnimationFrame(frame);
 
         // Nothing to draw until the host has sent a size. The loop keeps turning so
@@ -751,7 +776,7 @@ function createBackgroundField(canvas) {
         lastTime = now;
 
         ctx.clearRect(0, 0, field.width, field.height);
-        ctx.drawImage(offscreen, 0, 0, field.width, field.height);
+        ctx.drawImage(buffer, 0, 0, field.width, field.height);
 
         if (reduceMotion) {
             // Pulses travel across the screen, which is motion in the sense the

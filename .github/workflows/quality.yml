@@ -56,3 +56,23 @@ jobs:
             .
           fail: true
 
+  frame-loop:
+    name: Background frame loop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      # The frame loop is the one part of the site nothing else exercises. A browser check
+      # can report the canvas sized, the grid drawn and the lattice published while the
+      # loop throws on every frame, because resize() paints once by itself - which is
+      # exactly how a renamed drawImage argument shipped, threw 45 times a second, and
+      # loaded a machine heavily enough to be noticed overnight.
+      #
+      # This drives the real renderer through real frames against a stub canvas: it fails
+      # if any frame throws, and fails if eight simulated hours grow the heap.
+      - name: Frame loop runs clean and does not leak
+        run: node --expose-gc tests/background-frame-loop.test.mjs
