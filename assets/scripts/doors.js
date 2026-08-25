@@ -189,7 +189,25 @@
      * Marking <html> before <body> exists means the first frame the browser paints already
      * has the doors shut. Nothing is ever seen before the doors decide to reveal it.
      */
-    openOnArrival();
+    /*
+     * A prerendered document has not arrived anywhere yet.
+     *
+     * Prerendering runs a page in full - scripts included - before the visitor has
+     * clicked anything. This code would decide it had arrived, play the whole
+     * shut-pause-open sequence invisibly, and be finished by the time the page was
+     * actually activated, so the visitor would see it appear with the doors already open.
+     * That is precisely what the speculation rules used to cause, and why the site's own
+     * rules now prefetch rather than prerender.
+     *
+     * They are not the only way a page can be prerendered, though, so the decision is
+     * deferred to activation whenever this document is running ahead of the visitor.
+     * activation.from is only meaningful at that point anyway.
+     */
+    if (document.prerendering) {
+        document.addEventListener('prerenderingchange', openOnArrival, { once: true });
+    } else {
+        openOnArrival();
+    }
 
     /*
      * The rest needs elements, so it waits. The guard measures a door and the click handler

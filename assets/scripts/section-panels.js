@@ -57,7 +57,7 @@
   }
 
   /*
-   * Prerenders the page the visitor is pointing at.
+   * Fetches the page the visitor is pointing at, ahead of the click.
    *
    * The declarative document rule in index.html cannot do this. Speculation rules match
    * HTML <a> and <area> elements, and the radial menu is built from SVG <a> - a different
@@ -69,9 +69,8 @@
    * rather than guessed.
    *
    * Only the current sector is ever speculated, and the previous rule set is removed
-   * first. Prerendering is expensive on both ends, browsers cap how many can run at once,
-   * and leaving old rules in place would have the browser holding pages for sectors the
-   * visitor has already moved away from.
+   * first, so the browser is never left holding pages for sectors the visitor has already
+   * moved away from.
    *
    * Silently skipped where the API is missing: this is a speed-up, never a dependency.
    */
@@ -82,8 +81,24 @@
     speculation?.remove();
     speculation = document.createElement('script');
     speculation.type = 'speculationrules';
+    /*
+     * Prefetch, not prerender - and that distinction is load-bearing.
+     *
+     * Prerendering runs the destination in the background, scripts and all. The doors
+     * script therefore decided it had arrived, and played its shut-pause-open animation
+     * invisibly, finishing long before the visitor clicked. Activating that page showed
+     * doors already open, so entering a section closed the doors and then simply snapped
+     * the page up with no arrival at all.
+     *
+     * The homepage is not speculated, which is why the same journey worked perfectly in
+     * the other direction and looked like a one-way bug rather than this.
+     *
+     * Nothing is lost by dropping to prefetch. The airlock deliberately covers the screen
+     * for the best part of a second, so an instant first paint is a benefit no one can
+     * see; the HTML is still fetched ahead of the click, which is the part that mattered.
+     */
     speculation.textContent = JSON.stringify({
-      prerender: [{ urls: [`${section}.html`], eagerness: 'immediate' }],
+      prefetch: [{ urls: [`${section}.html`], eagerness: 'immediate' }],
     });
     document.body.appendChild(speculation);
   }

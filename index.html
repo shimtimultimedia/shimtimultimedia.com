@@ -357,11 +357,15 @@
        this rule alone would cover almost nobody - the wheel is handled from script, in
        section-panels.js, off the hover it already tracks. This covers the plain-HTML nav
        used by keyboard and no-JS visitors.
+       Prefetch rather than prerender: every link here crosses the airlock, and prerendering
+       runs the destination early enough that its arrival animation plays out invisibly
+       before the visitor ever clicks. The fetch is the useful half; the render is the half
+       that breaks it.
        "moderate" starts on hover rather than immediately, so nothing is fetched for the
        four sections a visitor never points at. -->
   <script type="speculationrules">
   {
-    "prerender": [
+    "prefetch": [
       {
         "where": { "or": [
         { "href_matches": "about.html" },
