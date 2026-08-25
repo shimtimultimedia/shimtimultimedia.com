@@ -389,6 +389,52 @@ a:hover {
   background: var(--accent);
 }
 
+/*
+ * The practices.
+ *
+ * Auto-fitting columns rather than a fixed count, so the grouping survives every width
+ * without a breakpoint per screen size. Each group is a section with a real heading, which
+ * is what lets a screen reader move between practices instead of wading through one
+ * undifferentiated list of eighteen items.
+ */
+.craft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1.25rem 1.75rem;
+  margin: 0 0 1.75rem;
+}
+
+.craft h3 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(0.78rem, 1.6vw, 0.88rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.craft ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.craft li {
+  position: relative;
+  padding-left: 0.9rem;
+  font-size: clamp(0.85rem, 1.7vw, 0.95rem);
+}
+
+.craft li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.3rem;
+  height: 0.3rem;
+  background: var(--accent);
+}
+
 .section-intro {
   margin: 0 0 2.5rem;
   font-size: clamp(0.9rem, 2vw, 1.05rem);
