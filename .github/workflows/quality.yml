@@ -45,7 +45,10 @@ jobs:
       - name: Every page carries the door contract
         run: |
           fail=0
-          for f in index.html about.html ai.html contact.html media.html shop.html work.html; do
+          # Every page except the error page, found rather than listed. A hand-written list
+          # silently stops covering the site the moment a page is added - which is exactly
+          # when the contract most needs checking.
+          for f in $(ls *.html | grep -v '^404.html$'); do
             grep -q 'data-page="' "$f"             || { echo "::error file=$f::missing data-page on <html>"; fail=1; }
             grep -q 'class="door door-left"' "$f"  || { echo "::error file=$f::missing left door"; fail=1; }
             grep -q 'class="door door-right"' "$f" || { echo "::error file=$f::missing right door"; fail=1; }

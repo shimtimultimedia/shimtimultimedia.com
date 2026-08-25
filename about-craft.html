@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-page="section">
+<head>
+  <meta charset="UTF-8">
+
+  <!-- Content Security Policy.
+       Delivered as a meta element because GitHub Pages cannot set response headers. That
+       is weaker than the header form on purpose-of-record: the policy only takes effect
+       once the parser reaches this tag, and frame-ancestors, report-uri and sandbox are
+       ignored entirely in meta form. It is placed immediately after charset - which must
+       come first for the parser to decode the document correctly - and before anything
+       that fetches, so every resource this page loads is covered. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'inline-speculation-rules'; worker-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Five practices and seventeen disciplines under one roof, and why AI is the reason one studio can carry them.">
+  <meta name="author" content="Shimti Multimedia">
+  <meta name="theme-color" content="#000000">
+
+
+  <title>What we make | About | Shimti Multimedia</title>
+
+  <link rel="canonical" href="https://shimtimultimedia.com/about-craft.html">
+
+  <meta property="og:title" content="What we make | Shimti Multimedia">
+  <meta property="og:description" content="Five practices and seventeen disciplines under one roof, and why AI is the reason one studio can carry them.">
+  <meta property="og:image" content="https://shimtimultimedia.com/assets/images/og-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://shimtimultimedia.com/about-craft.html">
+  <meta property="og:site_name" content="Shimti Multimedia">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="What we make | Shimti Multimedia">
+  <meta name="twitter:description" content="Five practices and seventeen disciplines under one roof, and why AI is the reason one studio can carry them.">
+  <meta name="twitter:image" content="https://shimtimultimedia.com/assets/images/og-card.jpg">
+
+  <!-- The only font the page loads, and it is needed for first paint, so it is worth
+       fetching in parallel with the stylesheet instead of after it. crossorigin is
+       required even same-origin: fonts are fetched in CORS mode, and without it the
+       preload is discarded and the file downloaded a second time.
+       Preloading exactly one face on purpose - preloading every weight would compete
+       with the page's own images for bandwidth. -->
+  <link rel="preload" href="assets/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/styles/section.css">
+  <link rel="stylesheet" href="assets/styles/doors.css">
+  <!-- In <head>, and deliberately NOT deferred.
+       This decides whether the incoming navigation is a level change and marks <html>
+       before <body> exists, so the very first painted frame already has the doors shut.
+       Deferred, it ran after the document had parsed: the page painted with the doors
+       open, then they snapped shut and reopened, so arriving home showed the machinery
+       first and the airlock second - which reads as no airlock at all. -->
+  <script src="assets/scripts/doors.js"></script>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" href="assets/images/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+  <!-- The sliding doors.
+       Present on every page, in the same two named elements, resting open on every page. Crossing between the
+       machinery and a page shuts them, holds for a beat and opens them again; moving
+       between two pages leaves them alone. aria-hidden because they are scenery; nothing here is content.
+       See assets/styles/doors.css. -->
+  <div class="doors" aria-hidden="true">
+    <div class="door door-left"></div>
+    <div class="door door-right"></div>
+  </div>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="section-header">
+    <div class="section-brand">
+      <a class="section-home" href="./" aria-label="Shimti Multimedia - return to home">
+        <img src="assets/images/logo.png" alt="" width="72" height="72">
+        <span>Shimti Multimedia</span>
+      </a>
+
+      <!-- Subtitle, not a sibling. The wordmark and this line are one lockup, so
+           they are grouped and spaced as one. -->
+      <p class="section-tagline">Bringing Art To Life since 2007.</p>
+    </div>
+    <nav aria-label="Sections">
+      <ul class="section-nav">
+        <li><a class="section-nav-home" href="./">Home</a></li>
+        <li><a href="about.html" aria-current="true">About</a></li>
+        <li><a href="ai.html">AI</a></li>
+        <li><a href="work.html">Work</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="media.html">Media</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="section-main">
+    <article>
+
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="./">Home</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><span aria-current="page">What we make</span></li>
+        </ol>
+      </nav>
+
+      <h1 class="section-title">What we make</h1>
+
+      <p class="section-intro">Five practices, seventeen disciplines, one roof. The range is not
+        a boast about versatility &mdash; it is what removes the handoffs from a project.</p>
+
+      <h2>Design &amp; identity</h2>
+
+      <p>Logo design, graphic design, illustration, and print &amp; apparel. The mark, the system
+        it lives in, and the physical objects it ends up on. Drawing by hand sits here too, which
+        is what keeps an identity from looking assembled out of the same shapes everyone else is
+        using.</p>
+
+      <h2>3D &amp; interactive</h2>
+
+      <p>3D modelling, game development, and software prototyping. Models published across six
+        marketplaces, and the engineering to put them somewhere a person can move around in.
+        Prototyping belongs in this group rather than with the web work: the point of it is to
+        find out whether an idea holds up while it is still cheap to change.</p>
+
+      <h2>Film &amp; photography</h2>
+
+      <p>Videography, video editing, animation, and photography. Shooting it, cutting it, grading
+        it, and animating what could not be shot. One practice rather than four, because in
+        practice they are one job that happens to use four sets of tools.</p>
+
+      <h2>Sound</h2>
+
+      <p>Music production and sound design. The half of a moving picture that audiences feel
+        without noticing, and the half that is usually bought last and rushed.</p>
+
+      <h2>Digital &amp; AI</h2>
+
+      <p>Web design, digital publishing, social media management, and AI workflows. Building the
+        thing, publishing it, and keeping the presence around it alive afterwards &mdash;
+        including running pages on behalf of other people, which is its own discipline and not a
+        by-product of design.</p>
+
+      <h2>Why one studio can carry this</h2>
+
+      <p>All of it is AI-assisted now, and that is precisely why the range is possible at a
+        professional standard rather than an amateur one. The tooling has collapsed the distance
+        between disciplines: work that used to need a department, a pipeline and a schedule to
+        match can be done properly by someone who understands the craft underneath it.</p>
+
+      <p>The judgement is still human. The speed is not.</p>
+
+      <p>How that turns into a project is in <a href="about-process.html">How we work</a>.</p>
+
+      <nav class="pager" aria-label="More about the studio">
+        <a class="pager-prev" href="about-name.html"><span>Previous</span>The name</a>
+        <a class="pager-next" href="about-process.html"><span>Next</span>How we work</a>
+      </nav>
+    </article>
+  </main>
+  <footer class="section-footer">
+    <p>&copy; 2026 Shimti Multimedia.</p>
+  </footer>
+</body>
+</html>

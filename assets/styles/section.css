@@ -198,7 +198,8 @@ a:hover {
 /* The current page is marked for everyone, not colour alone: aria-current carries it
    to assistive technology, and the border carries it to anyone who cannot distinguish
    the highlight. */
-.section-nav a[aria-current="page"] {
+.section-nav a[aria-current="page"],
+.section-nav a[aria-current="true"] {
   background: var(--panel-bg);
   border-color: var(--border-color);
 }
@@ -387,6 +388,113 @@ a:hover {
   width: 0.45rem;
   height: 0.45rem;
   background: var(--accent);
+}
+
+/*
+ * Breadcrumbs.
+ *
+ * The separators are drawn here rather than typed into the markup, because a screen
+ * reader announcing "Home slash About slash The name" is reading punctuation aloud. They
+ * are decoration; the list structure is the actual information.
+ */
+.crumbs {
+  margin: 0 0 1.25rem;
+  font-size: clamp(0.72rem, 1.5vw, 0.82rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crumbs li + li::before {
+  content: '/';
+  margin-right: 0.6rem;
+  opacity: 0.5;
+}
+
+.crumbs a {
+  color: inherit;
+}
+
+/*
+ * The hub: four summaries that hand over to their own pages.
+ */
+.hub {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1.25rem 1.75rem;
+  margin: 0 0 2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.hub h3 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.hub h3 a {
+  text-decoration: none;
+}
+
+.hub h3 a:hover,
+.hub h3 a:focus-visible {
+  text-decoration: underline;
+}
+
+.hub p {
+  margin: 0;
+  font-size: clamp(0.85rem, 1.7vw, 0.95rem);
+  color: var(--muted-color);
+}
+
+/*
+ * Onward navigation at the foot of each sub-page.
+ *
+ * space-between with an empty span holding the first slot, so "Next" stays hard right on
+ * the first page instead of sliding left where "Previous" would have been.
+ */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.pager a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-decoration: none;
+  font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+}
+
+.pager-next {
+  text-align: right;
+}
+
+.pager a span {
+  font-size: clamp(0.68rem, 1.4vw, 0.75rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+
+.pager a:hover,
+.pager a:focus-visible {
+  text-decoration: underline;
 }
 
 /*
