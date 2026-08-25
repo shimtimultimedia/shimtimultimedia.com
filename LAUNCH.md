@@ -67,8 +67,16 @@ site's CSP is `script-src 'self'`, and inlining would mean either opening it up 
 `'unsafe-inline'` — defeating most of the point of the policy — or pinning a hash that
 silently breaks the registration the next time anyone edits the snippet.
 
-**Bump `CACHE_VERSION` in `sw.js` on any deploy that changes a precached asset.** This is
-the one ongoing obligation on this list.
+Static assets are served **stale-while-revalidate**: the cached copy is returned at once
+and a fresh one is fetched and written over it in the background.
+
+The first version was cache-first with no revalidation, which meant an asset, once cached,
+was served forever unless someone remembered to bump `CACHE_VERSION`. That shipped a stale
+background script to a live browser and the background stopped rendering, with nothing to
+indicate why — everything was behaving exactly as written. Correctness must not depend on
+a step someone has to remember, so it no longer does. Bumping `CACHE_VERSION` still evicts
+everything at once and is useful on a large deploy, but it is now an optimisation rather
+than an obligation.
 
 ## 6. Custom domain — OPTIONAL, OUTSTANDING
 

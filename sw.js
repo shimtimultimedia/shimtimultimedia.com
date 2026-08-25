@@ -1,9 +1,11 @@
 /*
  * Shimti Multimedia - Service Worker
  *
- * Registered by assets/scripts/register-sw.js. Bump CACHE_VERSION below on any deploy
- * that changes a precached asset, or returning visitors keep the old copy until the
- * cache happens to be evicted.
+ * Registered by assets/scripts/register-sw.js.
+ *
+ * Static assets are stale-while-revalidate, so a changed asset propagates on its own
+ * within one page load. Bumping CACHE_VERSION still evicts everything at once and is
+ * useful for a big deploy, but nothing depends on anyone remembering to do it.
  *
  * Three things here differ from the naive version and each fixes a real failure mode:
  *
@@ -26,7 +28,7 @@
 
 // Bump this on every deploy that changes precached assets. The activate handler below
 // then removes the previous cache automatically.
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `shimti-${CACHE_VERSION}`;
 
 // Resolved against the worker's scope, so these work on any base path.
@@ -112,15 +114,33 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: cache first for speed, refreshing the entry in the background.
+  /*
+   * Static assets: stale while revalidate.
+   *
+   * The cached copy is served immediately, AND a fresh copy is fetched in the background
+   * and written over it. The previous version only did the first half - it returned the
+   * cached response and stopped - so once an asset was in the cache it was served from
+   * there forever, and the only way to ever see a new one was for somebody to remember to
+   * bump CACHE_VERSION on the deploy that changed it.
+   *
+   * That is not a caching policy, it is a trap. It served a stale background script to a
+   * live browser and the background simply stopped appearing, with nothing to indicate
+   * why, because everything was behaving exactly as written.
+   *
+   * Revalidating means a stale asset costs one page load and then corrects itself, with
+   * nothing for anyone to remember. CACHE_VERSION still exists, and bumping it still
+   * evicts everything at once, but correctness no longer depends on it.
+   */
   event.respondWith((async () => {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+
+    const fresh = fetch(request).then((response) => {
+      if (response.ok) cache.put(request, response.clone());
+      return response;
+    }).catch(() => null);
+
+    // Offline with nothing cached is the only case with nothing to return.
+    return cached || (await fresh) || Response.error();
   })());
 });
