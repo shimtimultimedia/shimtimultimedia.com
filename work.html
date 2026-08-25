@@ -71,14 +71,16 @@
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="section-header">
-    <a class="section-home" href="./" aria-label="Shimti Multimedia - return to home">
-      <img src="assets/images/logo.png" alt="" width="72" height="72">
-      <span>Shimti Multimedia</span>
-    </a>
+    <div class="section-brand">
+      <a class="section-home" href="./" aria-label="Shimti Multimedia - return to home">
+        <img src="assets/images/logo.png" alt="" width="72" height="72">
+        <span>Shimti Multimedia</span>
+      </a>
 
-    <!-- The studio's line, not the page's. Each page keeps its own eyebrow above its
-         title; this one belongs to the brand and so sits with the brand. -->
-    <p class="section-tagline">Bringing Art To Life since 2007.</p>
+      <!-- Subtitle, not a sibling. The wordmark and this line are one lockup, so
+           they are grouped and spaced as one. -->
+      <p class="section-tagline">Bringing Art To Life since 2007.</p>
+    </div>
     <nav aria-label="Sections">
       <ul class="section-nav">
         <li><a class="section-nav-home" href="./">Home</a></li>
@@ -94,19 +96,16 @@
 
   <main id="main" class="section-main">
     <article>
-      <p class="section-eyebrow">Projects in digital and print.</p>
       <h1 class="section-title">Work</h1>
 
-      <img class="section-hero" src="assets/images/sections/work.webp" alt="" width="1920" height="1080" decoding="async">
+      <!-- The eyebrow is laid over the hero rather than stacked above the title.
+           A figure, because the caption belongs to the image it sits on. -->
+      <figure class="section-hero-frame">
+        <img class="section-hero" src="assets/images/sections/work.webp" alt="" width="1920" height="1080" decoding="async">
+        <figcaption class="section-eyebrow">Projects in digital and print.</figcaption>
+      </figure>
 
       <p class="section-intro">Traverse the dynamic landscape of our portfolio, showcasing Shimti Multimedia&rsquo;s groundbreaking projects in digital and print assets. Explore how we blend art and technology to create lasting impact&mdash;your inspiration for what&rsquo;s possible starts here.</p>
-
-      <section class="section-placeholder" aria-labelledby="more-heading">
-        <h2 id="more-heading">More detail coming</h2>
-        <p>This section is being written. In the meantime, you can
-          <a href="contact.html">get in touch</a> or
-          <a href="./">return to the main interface</a>.</p>
-      </section>
     </article>
   </main>
 

@@ -119,10 +119,24 @@ a:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.55rem;
   padding: clamp(0.5rem, 1.2vw, 0.8rem) clamp(1rem, 4vw, 3rem) clamp(0.45rem, 1vw, 0.7rem);
   text-align: center;
   border-bottom: 1px solid rgba(180, 220, 255, 0.25);
+}
+
+/*
+ * Wordmark and tagline are one thing, so they are grouped and spaced as one.
+ *
+ * They used to be two children of the header sharing its gap, which spaced them the same
+ * distance apart as the navigation below - so they read as two separate items rather than
+ * as a title and its subtitle.
+ */
+.section-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
 }
 
 .section-home {
@@ -248,12 +262,48 @@ a:hover {
   color: #0a3a5c;
 }
 
+/*
+ * The hero, and the line laid over it.
+ *
+ * The frame exists only to give the caption something to be positioned against; the image
+ * keeps its own sizing so the space is still reserved before it loads.
+ */
+.section-hero-frame {
+  position: relative;
+  margin: 0 0 2rem;
+  border-radius: 10px;
+  /* Clips the scrim to the rounded corners - without this it squares off the bottom two. */
+  overflow: hidden;
+}
+
 .section-eyebrow {
-  margin: 0 0 0.5rem;
-  color: var(--muted-color);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 3.5rem clamp(0.9rem, 2.5vw, 1.5rem) clamp(0.7rem, 1.8vw, 1rem);
+  color: #ffffff;
   font-size: clamp(0.72rem, 1.5vw, 0.85rem);
   letter-spacing: 0.18em;
   text-transform: uppercase;
+
+  /*
+   * A scrim, not a guess.
+   *
+   * Text on an image has no contrast it can rely on - a photograph can be any brightness
+   * at any point, and this one changes per page. The gradient guarantees a dark ground
+   * under the words wherever the image happens to be pale, which is what keeps this
+   * legible rather than hoping the photographs cooperate. The tall top padding is what
+   * gives the fade room to be gradual instead of a band.
+   */
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.55) 45%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 .section-title {
@@ -272,8 +322,6 @@ a:hover {
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  margin-bottom: 2rem;
   /* width/height plus aspect-ratio reserve the space before the image arrives, so the
      text below never jumps once it loads. */
 }
@@ -281,26 +329,6 @@ a:hover {
 .section-intro {
   margin: 0 0 2.5rem;
   font-size: clamp(0.9rem, 2vw, 1.05rem);
-}
-
-.section-placeholder {
-  padding: 1.25rem 1.5rem;
-  background: var(--panel-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-}
-
-.section-placeholder h2 {
-  margin: 0 0 0.5rem;
-  font-size: clamp(0.85rem, 1.8vw, 1rem);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.section-placeholder p {
-  margin: 0;
-  font-size: clamp(0.8rem, 1.7vw, 0.92rem);
-  color: var(--muted-color);
 }
 
 /* ---------- Footer ---------- */

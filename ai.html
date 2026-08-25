@@ -71,14 +71,16 @@
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="section-header">
-    <a class="section-home" href="./" aria-label="Shimti Multimedia - return to home">
-      <img src="assets/images/logo.png" alt="" width="72" height="72">
-      <span>Shimti Multimedia</span>
-    </a>
+    <div class="section-brand">
+      <a class="section-home" href="./" aria-label="Shimti Multimedia - return to home">
+        <img src="assets/images/logo.png" alt="" width="72" height="72">
+        <span>Shimti Multimedia</span>
+      </a>
 
-    <!-- The studio's line, not the page's. Each page keeps its own eyebrow above its
-         title; this one belongs to the brand and so sits with the brand. -->
-    <p class="section-tagline">Bringing Art To Life since 2007.</p>
+      <!-- Subtitle, not a sibling. The wordmark and this line are one lockup, so
+           they are grouped and spaced as one. -->
+      <p class="section-tagline">Bringing Art To Life since 2007.</p>
+    </div>
     <nav aria-label="Sections">
       <ul class="section-nav">
         <li><a class="section-nav-home" href="./">Home</a></li>
@@ -94,19 +96,16 @@
 
   <main id="main" class="section-main">
     <article>
-      <p class="section-eyebrow">Tools and consultation for the AI frontier.</p>
       <h1 class="section-title">AI</h1>
 
-      <img class="section-hero" src="assets/images/sections/ai.webp" alt="" width="1920" height="1080" decoding="async">
+      <!-- The eyebrow is laid over the hero rather than stacked above the title.
+           A figure, because the caption belongs to the image it sits on. -->
+      <figure class="section-hero-frame">
+        <img class="section-hero" src="assets/images/sections/ai.webp" alt="" width="1920" height="1080" decoding="async">
+        <figcaption class="section-eyebrow">Tools and consultation for the AI frontier.</figcaption>
+      </figure>
 
       <p class="section-intro">Navigate the AI frontier with Shimti Multimedia&rsquo;s advanced services, symbolized by a landscape of intelligent circuits. Uncover our cutting-edge tools and consultations that empower your creative vision&mdash;prepare to unlock new realms of possibility.</p>
-
-      <section class="section-placeholder" aria-labelledby="more-heading">
-        <h2 id="more-heading">More detail coming</h2>
-        <p>This section is being written. In the meantime, you can
-          <a href="contact.html">get in touch</a> or
-          <a href="./">return to the main interface</a>.</p>
-      </section>
     </article>
   </main>
 
