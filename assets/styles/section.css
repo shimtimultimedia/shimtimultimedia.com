@@ -326,6 +326,54 @@ a:hover {
      text below never jumps once it loads. */
 }
 
+/*
+ * Long-form content inside the sheet.
+ *
+ * The sheet used to hold one paragraph, so it needed no typographic scale. It holds real
+ * writing now, and writing needs a hierarchy to be read rather than just displayed:
+ * headings that are clearly headings, and space between blocks that separates ideas
+ * instead of merely existing.
+ */
+.section-main h2 {
+  margin: 2.5rem 0 0.75rem;
+  font-size: clamp(1rem, 2.2vw, 1.3rem);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.section-main p {
+  margin: 0 0 1.1rem;
+}
+
+.section-list {
+  margin: 0 0 1.4rem;
+  padding: 0;
+  list-style: none;
+  /* Two columns where there is room, one where there is not. Eight single words spread
+     across four thin columns read as scattered; paired up they read as a set. min() keeps
+     the track from exceeding the container on a narrow screen. */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 0.35rem 1.5rem;
+}
+
+.section-list li {
+  padding-left: 1.1rem;
+  position: relative;
+}
+
+.section-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.45rem;
+  height: 0.45rem;
+  background: var(--accent);
+}
+
 .section-intro {
   margin: 0 0 2.5rem;
   font-size: clamp(0.9rem, 2vw, 1.05rem);
