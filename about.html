@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-doors="closed">
+<html lang="en" data-page="section">
 <head>
   <meta charset="UTF-8">
 
@@ -53,11 +53,9 @@
 <body>
 
   <!-- The sliding doors.
-       Present on every page, in the same two named elements, differing only in where they
-       rest: apart on the homepage, shut everywhere else. A cross-document view transition
-       animates each door from its old resting position to its new one, which is what makes
-       entering a section shut them and coming home pull them open - with no per-page
-       animation code. aria-hidden because they are scenery; nothing here is content.
+       Present on every page, in the same two named elements, resting open on every page. Crossing between the
+       machinery and a page shuts them, holds for a beat and opens them again; moving
+       between two pages leaves them alone. aria-hidden because they are scenery; nothing here is content.
        See assets/styles/doors.css. -->
   <div class="doors" aria-hidden="true">
     <div class="door door-left"></div>
@@ -76,6 +74,7 @@
     <p class="section-tagline">Bringing Art To Life since 2007.</p>
     <nav aria-label="Sections">
       <ul class="section-nav">
+        <li><a class="section-nav-home" href="./">Home</a></li>
         <li><a href="about.html" aria-current="page">About</a></li>
         <li><a href="ai.html">AI</a></li>
         <li><a href="work.html">Work</a></li>

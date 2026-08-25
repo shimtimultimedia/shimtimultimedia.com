@@ -1,135 +1,184 @@
 /*
- * Shimti Multimedia - door transition support
+ * Shimti Multimedia - the airlock
  *
- * The doors are CSS. This exists for one thing the stylesheet cannot know on its own:
- * whether this page load is the end of a view transition or a load in its own right.
+ * The doors themselves are CSS. This decides when they should move, which comes down to
+ * one question the stylesheet cannot answer on its own: is this navigation crossing
+ * between the machinery and a page, or is it just one page to another?
  *
- * The homepage opens its doors on load, because arriving directly at the site should show
- * the reveal rather than the aftermath of it. But arriving home FROM a section is a view
- * transition, which is already animating those same doors apart. Both at once animates one
- * element twice - the CSS animation wins, snaps the doors to open, and the transition
- * plays against a target that has already moved.
+ *   home <-> section    a level change. Shut, pause, open.
+ *   section -> section  an ordinary link. Nothing.
  *
- * pagereveal fires on the incoming document before its first frame, and carries the
- * transition when there is one. That is the only moment this can be known, and it is early
- * enough to matter.
+ * Leaving is animated here, on the outgoing page, before the navigation is allowed to
+ * happen. Arriving is animated by the incoming page on load. The two halves meet while the
+ * screen is behind two opaque panels, which is what hides the load itself.
  *
- * Everything here is an enhancement. Where pagereveal is unsupported, the homepage simply
- * always opens its doors under its own power, which is the correct behaviour anyway - just
- * occasionally doubled with a transition.
+ * Everything degrades to a plain navigation. If this file fails to run, every link still
+ * works and every page still rests with its doors open - the ceremony is lost, nothing
+ * else is.
  *
  * @requires assets/styles/doors.css
  */
 
 'use strict';
 
-/*
- * The doors must never be able to hide the site.
- *
- * Opening them is a CSS animation, and a CSS animation can be applied and running and
- * still never advance - a frozen document timeline reports exactly that: playState
- * "running", currentTime stuck at 0. In that state the FROM keyframe holds, which is shut,
- * and the homepage sits behind two opaque panels indefinitely. Not a blank-looking page: a
- * blank page.
- *
- * That is not hypothetical either. It is precisely what the browser pane used to develop
- * this does, so it is a real state a real engine can be in.
- *
- * Timers run independently of the animation timeline, so one can check the other. If the
- * doors have not actually moved by the time they should have finished, they are put where
- * they belong. The reveal is lost; the site is not.
- */
-function guardAgainstStuckDoors() {
-    if (document.documentElement.dataset.doors !== 'open') return;
+(function () {
+    const html = document.documentElement;
+    const isHomePage = () => html.dataset.page === 'home';
 
-    const door = document.querySelector('.door-left');
-    if (!door) return;
+    /** True when a URL is this site's homepage, whatever path the site is served from. */
+    function urlIsHome(href) {
+        const url = new URL(href, location.href);
+        // The homepage is the only page served from a directory root rather than a
+        // filename, on a user site and a project subpath alike.
+        return /(^|\/)(index\.html)?$/.test(url.pathname);
+    }
 
-    const declared = getComputedStyle(document.documentElement)
-        .getPropertyValue('--door-duration').trim();
-    const ms = declared.endsWith('ms') ? parseFloat(declared)
-        : declared.endsWith('s') ? parseFloat(declared) * 1000
-            : 700;
+    /** True when moving between the machinery and a page, in either direction. */
+    const crossesTheAirlock = (destination) => urlIsHome(destination) !== isHomePage();
 
-    setTimeout(() => {
-        // Still overlapping the viewport means it never moved.
-        if (door.getBoundingClientRect().right > 4) {
-            document.documentElement.setAttribute('data-doors-stuck', '');
-            const log = window.ShimtiUtils && window.ShimtiUtils.Logger;
-            if (log) {
-                new log('Doors').warn('Opening animation never ran; doors forced open', {
-                    afterMs: ms * 2,
-                });
-            }
-        }
-    }, ms * 2);
-}
+    /* ------------------------------------------------------------------ arriving */
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', guardAgainstStuckDoors);
-} else {
-    guardAgainstStuckDoors();
-}
+    function openOnArrival() {
+        const from = window.navigation
+            && window.navigation.activation
+            && window.navigation.activation.from
+            && window.navigation.activation.from.url;
 
-/**
- * Names the journey, so the stylesheet can time it.
- *
- * All three navigations move the doors correctly on their own, but they do not want the
- * same treatment for the page BEHIND the doors:
- *
- *   shutting  the incoming page must stay hidden until the doors have actually met.
- *             Letting it fade in while they are still closing shows the destination
- *             through the gap and destroys the illusion that the doors are carrying it.
- *   opening   the machinery should be there the moment the doors part, not fade up
- *             afterwards - it is meant to have been behind them all along.
- *   swapping  neither door moves, so the content should simply cross over, quickly.
- *
- * None of that can be expressed without knowing where the navigation came from, and the
- * incoming document only learns that from the navigation entry it is activating.
- *
- * @returns {string} a view-transition type
- */
-function journeyType() {
-    const arrivingHome = document.documentElement.dataset.doors === 'open';
-    if (arrivingHome) return 'opening';
+        /*
+         * Whether this was a level change is decided by comparing where the visitor came
+         * FROM against which side this page is on - not against this page's own URL, which
+         * would only ever compare a page to itself.
+         *
+         * No previous entry means the site was entered from outside: a typed URL, a
+         * bookmark, a shared link. That is an arrival too, and the most important one to
+         * show, so it gets the full airlock.
+         */
+        if (from && urlIsHome(from) === isHomePage()) return;
 
-    const from = window.navigation
-        && window.navigation.activation
-        && window.navigation.activation.from
-        && window.navigation.activation.from.url;
+        html.setAttribute('data-airlock', 'in');
+        guardAgainstStuckDoors();
+    }
 
-    // No previous entry means this document was not reached from within the site, so
-    // treat it as a fresh arrival behind shut doors.
-    if (!from) return 'shutting';
+    /* ------------------------------------------------------------------- leaving */
 
-    // The homepage is the only page served from a directory root rather than a filename.
-    const cameFromHome = /\/(index\.html)?(\?|#|$)/.test(new URL(from, location.href).pathname
-        + new URL(from, location.href).search);
+    function shutThenNavigate(destination) {
+        html.setAttribute('data-airlock', 'out');
 
-    return cameFromHome ? 'shutting' : 'swapping';
-}
+        const closing = document.querySelector('.door-left');
+        const wait = durationMs('--door-close', 460);
 
-window.addEventListener('pagereveal', (event) => {
-    if (!event.viewTransition) return;
+        /*
+         * Driven off the animation actually finishing, with a timer as the backstop.
+         *
+         * animationend is the honest signal, but it never fires if the animation could not
+         * run - and a navigation that waits forever for it would leave the visitor stuck on
+         * a page they asked to leave. The timer guarantees the navigation happens; the
+         * event just makes it happen at the right moment when things are working.
+         */
+        let gone = false;
+        const go = () => {
+            if (gone) return;
+            gone = true;
+            location.href = destination;
+        };
 
-    // Types drive :active-view-transition-type() in doors.css. Added here rather than in
-    // the outgoing page's pageswap because this is the document whose styles run the
-    // transition, so this is where the type has to be true.
-    if (event.viewTransition.types) {
-        event.viewTransition.types.add(journeyType());
+        if (closing) closing.addEventListener('animationend', go, { once: true });
+        setTimeout(go, wait + 120);
+    }
+
+    /* -------------------------------------------------------------------- helpers */
+
+    function durationMs(customProperty, fallback) {
+        const raw = getComputedStyle(html).getPropertyValue(customProperty).trim();
+        if (raw.endsWith('ms')) return parseFloat(raw);
+        if (raw.endsWith('s')) return parseFloat(raw) * 1000;
+        return fallback;
     }
 
     /*
-     * Marked on <html> rather than <body> because the stylesheet needs it while matching
-     * the door rules, and body is not guaranteed to be parsed when this fires.
+     * The doors must never be able to hide the site.
      *
-     * Removed once the transition settles, so a later load of this same document - a back
-     * navigation restoring it from the cache, say - opens the doors properly again rather
-     * than inheriting a flag from a navigation that has long finished.
+     * An arrival starts from shut, and a CSS animation can be applied and running and
+     * still never advance - a frozen document timeline reports playState "running" with
+     * currentTime pinned at 0. In that state the first keyframe holds and the page sits
+     * behind two opaque panels indefinitely. Not a page that looks broken: a page that
+     * cannot be seen.
+     *
+     * Timers run independently of the animation clock, so one can check the other. If the
+     * doors have not actually moved by the time they should have finished, they are put
+     * where they belong. The ceremony is lost; the site is not.
      */
-    document.documentElement.setAttribute('data-vt-arriving', '');
+    function guardAgainstStuckDoors() {
+        const door = document.querySelector('.door-left');
+        if (!door) return;
 
-    event.viewTransition.finished.finally(() => {
-        document.documentElement.removeAttribute('data-vt-arriving');
+        const total = durationMs('--door-pause', 260) + durationMs('--door-open', 560);
+
+        setTimeout(() => {
+            // Still overlapping the viewport means it never moved.
+            if (door.getBoundingClientRect().right > 4) {
+                html.setAttribute('data-doors-stuck', '');
+                const Logger = window.ShimtiUtils && window.ShimtiUtils.Logger;
+                if (Logger) {
+                    new Logger('Doors').warn('Arrival animation never ran; doors forced open', {
+                        afterMs: Math.round(total * 1.6),
+                    });
+                }
+            }
+        }, total * 1.6);
+    }
+
+    /* --------------------------------------------------------------------- wiring */
+
+    document.addEventListener('click', (event) => {
+        // Anything other than a plain left click belongs to the browser: new tabs,
+        // downloads, context menus and the like must not be swallowed by scenery.
+        if (event.defaultPrevented || event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+        const link = event.target instanceof Element && event.target.closest('a[href]');
+        if (!link || link.hasAttribute('download')) return;
+
+        /*
+         * Attributes, not properties, because the radial menu is SVG.
+         *
+         * On an SVG <a> both href and target are SVGAnimatedString objects rather than
+         * strings. An object is always truthy, so a property-based `if (link.target)`
+         * guard rejects every link in the menu - the entire primary navigation - while
+         * looking perfectly correct, and href stringifies to "[object SVGAnimatedString]"
+         * instead of a URL. Attributes read the same on both element types.
+         */
+        if (link.getAttribute('target')) return;
+
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#')) return;
+
+        const url = new URL(href, location.href);
+        if (url.origin !== location.origin) return;
+        if (url.href === location.href) return;
+        if (!crossesTheAirlock(url.href)) return;
+
+        // Reduced motion means no door movement at all, so there is nothing to wait for
+        // and intercepting the navigation would only delay it.
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        event.preventDefault();
+        shutThenNavigate(url.href);
     });
-});
+
+    /*
+     * The airlock does its own animating, so the browser's transition would be a second
+     * opinion on the same navigation. Skipped rather than styled away, because the screen
+     * is already behind two opaque panels by then and there is nothing left to conceal.
+     */
+    window.addEventListener('pageswap', (event) => {
+        if (!event.viewTransition) return;
+        if (html.getAttribute('data-airlock') === 'out') event.viewTransition.skipTransition();
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', openOnArrival);
+    } else {
+        openOnArrival();
+    }
+}());
