@@ -6,7 +6,7 @@ menu, an animated particle grid, and a rotating field of concentric rings.
 **Status:** alpha. The site is served publicly by GitHub Pages but is marked `noindex`
 until launch. See [LAUNCH.md](LAUNCH.md) for the full go-live checklist.
 
-**Live:** https://shimtimultimedia.github.io/shimtimultimedia.com/
+**Live:** https://shimtimultimedia.com/
 
 ## Stack
 

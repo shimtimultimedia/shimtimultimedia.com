@@ -26,3 +26,7 @@
 .gitattributes text eol=lf
 .gitignore text eol=lf
 
+# GitHub Pages reads this file as the literal custom domain, so a stray carriage return
+# becomes part of the domain name. Pinned to LF rather than left to `text=auto`, which
+# resolves differently depending on the checkout platform's core.autocrlf.
+CNAME text eol=lf

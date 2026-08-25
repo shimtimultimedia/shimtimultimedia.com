@@ -78,19 +78,65 @@ a step someone has to remember, so it no longer does. Bumping `CACHE_VERSION` st
 everything at once and is useful on a large deploy, but it is now an optimisation rather
 than an obligation.
 
-## 6. Custom domain — OPTIONAL, OUTSTANDING
+## 6. Custom domain — CODE DONE, DNS OUTSTANDING
 
-The site lives at `https://shimtimultimedia.github.io/shimtimultimedia.com/`. Every
-internal URL is relative, so moving does not require touching a single asset path — only
-the absolute URLs in the document head change.
+Every internal URL is relative, so the move touches no asset path. Only the absolute URLs
+in the document heads, the sitemap and robots.txt changed.
 
-- [ ] Add a `CNAME` file at the repository root containing exactly: `shimtimultimedia.com`
-- [ ] Point DNS at GitHub Pages (four `A` records for the apex, or a `CNAME` record for
-      `www` -> `shimtimultimedia.github.io`).
-- [ ] Update the absolute URLs in every page: `canonical`, `og:url`, `og:image`,
-      `twitter:image`, and the `url`/`logo` fields in the JSON-LD block in `index.html`.
-- [ ] Update the `Sitemap:` line in `robots.txt` and every `<loc>` in `sitemap.xml`.
-- [ ] Enable **Enforce HTTPS** in Settings -> Pages once the certificate is issued.
+### Done in the repository
+
+- [x] `CNAME` at the repository root containing exactly `shimtimultimedia.com`, LF-only.
+      Pinned to LF in `.gitattributes`: Pages reads this file as the literal domain, so a
+      stray carriage return becomes part of the domain name.
+- [x] All 42 absolute URLs rebased to `https://shimtimultimedia.com/` across the seven
+      pages (`canonical`, `og:url`, `og:image`, `twitter:image`, and the `url`/`logo`
+      fields in the JSON-LD block), `sitemap.xml`, `robots.txt`, `README.md`, and
+      `SITE_URL` in the Audit workflow.
+- [x] A **Canonical host** job added to the Quality workflow that fails the build if the
+      old host appears in any served file, or if `CNAME` is not one clean line.
+
+### ⚠ Deploy order matters
+
+**Do not push this before DNS resolves.** The `CNAME` file is what makes Pages switch to
+the custom domain, and it also makes the `github.io` address redirect there. Push it
+before DNS is answering and the site is unreachable at *both* addresses — and the
+canonical, `og:image` and sitemap URLs would all point at a host that does not exist.
+
+Correct order:
+
+1. **Add the DNS records** at the registrar, and wait for them to propagate.
+
+   Apex `shimtimultimedia.com` — four `A` records:
+
+   ```
+   185.199.108.153
+   185.199.109.153
+   185.199.110.153
+   185.199.111.153
+   ```
+
+   Optionally the four `AAAA` records for IPv6:
+
+   ```
+   2606:50c0:8000::153
+   2606:50c0:8001::153
+   2606:50c0:8002::153
+   2606:50c0:8003::153
+   ```
+
+   And for `www`, a `CNAME` record pointing at `shimtimultimedia.github.io` — the account,
+   **without** the repository name.
+
+2. **Verify** with `dig shimtimultimedia.com +short` (or `nslookup`) that the A records
+   are answering.
+3. **Then push this commit.** Pages picks up the `CNAME` file and starts serving the
+   domain.
+4. Wait for GitHub to issue the TLS certificate — usually minutes, occasionally an hour.
+5. Enable **Enforce HTTPS** in Settings → Pages once the certificate exists.
+6. Re-run the **Audit** workflow; it now points at the new domain.
+
+If it needs backing out, delete `CNAME` and revert the rebase commit — the `github.io`
+address starts serving again as soon as Pages redeploys.
 
 ## 7. Development logging — DONE
 

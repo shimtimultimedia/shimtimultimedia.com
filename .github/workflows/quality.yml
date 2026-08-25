@@ -81,6 +81,54 @@ jobs:
             .
           fail: true
 
+  canonical-host:
+    name: Canonical host
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Every absolute URL the site serves must name one host.
+      #
+      # The domain appears 40-odd times across the pages, the sitemap and robots.txt -
+      # canonical, og:url, og:image, twitter:image, the JSON-LD block, every <loc>. A
+      # migration that misses one of them produces the worst kind of failure: nothing
+      # errors, the page renders, and a canonical or an og:image quietly points at a host
+      # that either redirects or does not resolve. Search engines and link scrapers act on
+      # exactly those tags.
+      #
+      # So the invariant is asserted rather than trusted: the old host must appear in
+      # nothing that is served. Docs are excluded on purpose - LAUNCH.md has to be able to
+      # name the old host to describe the DNS records.
+      - name: No stale host in served files
+        run: |
+          if grep -rn "shimtimultimedia\.github\.io" \
+               --include='*.html' --include='*.xml' --include='*.txt' .; then
+            echo "::error::Old host still referenced in a served file - the domain migration is incomplete."
+            exit 1
+          fi
+          echo "All served absolute URLs use the canonical host."
+
+      # A CNAME with a carriage return in it is a domain with a carriage return in it, and
+      # GitHub Pages will simply fail to match it.
+      - name: CNAME is a single clean line
+        run: |
+          # Conditional on the file existing, deliberately. The custom domain is
+          # staged: the rebased URLs land before CNAME does, because committing CNAME is
+          # what actually switches Pages over, and that must not happen until DNS
+          # resolves. Requiring the file here would fail every build during that window,
+          # and a gate that fails for a reason nobody can fix is one people learn to
+          # ignore.
+          if [ ! -f CNAME ]; then
+            echo "No CNAME yet - custom domain not switched on. Skipping."
+            exit 0
+          fi
+          if grep -q $'\r' CNAME; then
+            echo "::error::CNAME contains a carriage return"; exit 1
+          fi
+          lines=$(wc -l < CNAME)
+          test "$lines" -le 1 || { echo "::error::CNAME must be one line, found $lines"; exit 1; }
+          echo "CNAME: $(cat CNAME)"
+
   frame-loop:
     name: Background frame loop
     runs-on: ubuntu-latest
