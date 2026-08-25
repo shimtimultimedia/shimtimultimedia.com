@@ -207,7 +207,29 @@
             worker.onerror = (event) => giveUp('worker error: ' + (event.message || 'unknown'));
 
             worker.onmessage = (event) => {
-                if (!event.data || event.data.type !== 'ready' || settled) return;
+                const data = event.data;
+                if (!data) return;
+
+                /*
+                 * Progress reports from the worker, after the canvas is gone.
+                 *
+                 * The host cannot inspect a transferred canvas, so without these a worker
+                 * that initialises and then paints nothing is indistinguishable from one
+                 * that is working - the log says it started, and the screen stays black.
+                 * These turn that silence into a specific complaint naming the step that
+                 * did not happen.
+                 */
+                if (data.type === 'sized' || data.type === 'started') {
+                    bgLogger.log('Background ' + data.type, data.sizing || {});
+                    return;
+                }
+                if (data.type === 'failed') {
+                    bgLogger.error('Background worker failed at ' + data.at,
+                        new Error(data.error));
+                    return;
+                }
+
+                if (data.type !== 'ready' || settled) return;
                 settled = true;
                 clearTimeout(timer);
 

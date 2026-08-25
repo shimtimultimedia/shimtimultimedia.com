@@ -33,8 +33,30 @@ self.addEventListener('message', (event) => {
             // only one that can draw to it.
             field = createBackgroundField(message.canvas);
             field.setReducedMotion(message.reduceMotion);
-            field.resize(message.sizing);
+
+            /*
+             * Every step is reported back, because once the canvas is transferred the host
+             * is blind.
+             *
+             * A worker that starts, answers ready, accepts init and then fails to paint
+             * looks identical from the page to one that is working perfectly: the console
+             * says the background initialised, the canvas is the right size, and the
+             * screen is black. There is no way to tell those apart from outside, which is
+             * exactly the position this got into.
+             *
+             * So the worker says what it actually managed to do. A missing 'painted' is a
+             * loud, specific signal instead of silence.
+             */
+            try {
+                field.resize(message.sizing);
+                self.postMessage({ type: 'sized', sizing: message.sizing });
+            } catch (error) {
+                self.postMessage({ type: 'failed', at: 'resize', error: String(error) });
+                throw error;
+            }
+
             field.start();
+            self.postMessage({ type: 'started' });
             break;
 
         case 'resize':
