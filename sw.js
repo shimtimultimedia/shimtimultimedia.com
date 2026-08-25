@@ -28,7 +28,7 @@
 
 // Bump this on every deploy that changes precached assets. The activate handler below
 // then removes the previous cache automatically.
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `shimti-${CACHE_VERSION}`;
 
 // Resolved against the worker's scope, so these work on any base path.
@@ -52,6 +52,7 @@ const PRECACHE_PATHS = [
   'assets/styles/section.css',
   'assets/styles/doors.css',
   'assets/styles/workbench.css',
+  'assets/styles/gallery.css',
   'assets/scripts/ui-elements.js',
   'assets/scripts/section-panels.js',
   'assets/scripts/node-panels.js',
@@ -60,12 +61,17 @@ const PRECACHE_PATHS = [
   'assets/scripts/register-sw.js',
   'assets/scripts/doors.js',
   'assets/scripts/workbench.js',
+  'assets/scripts/gallery.js',
   'assets/scripts/background-render.js',
   'assets/scripts/background-worker.js',
   'assets/data/languages.json',
   'assets/fonts/Orbitron-Variable.woff2',
   'assets/images/logo.png',
   'assets/images/og-card.jpg',
+  // Only the first portrait. The other four are lazy-loaded and only ever wanted by
+  // visitors who actually reach the founder page, so they are cached on first use by the
+  // runtime handler instead of downloaded by everyone at install time.
+  'assets/images/founder/portrait-1.webp',
 ];
 
 self.addEventListener('install', (event) => {

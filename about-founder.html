@@ -45,6 +45,7 @@
   <link rel="preload" href="assets/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/styles/section.css">
   <link rel="stylesheet" href="assets/styles/doors.css">
+  <link rel="stylesheet" href="assets/styles/gallery.css">
   <!-- In <head>, and deliberately NOT deferred.
        This decides whether the incoming navigation is a level change and marks <html>
        before <body> exists, so the very first painted frame already has the doors shut.
@@ -107,16 +108,74 @@
 
       <h1 class="section-title">Who is behind it</h1>
 
-      <p class="section-intro">Shimti Multimedia was founded in 2007 by <strong>Bryant
-        Duhart</strong>, who directs the studio and its work.</p>
+      <p class="section-intro"><strong>Bryant Duhart</strong> &mdash; Founder and Creative
+        Director. He established Shimti Multimedia in 2007 and has directed its work
+        since.</p>
 
-      <h2>Where he comes from</h2>
+      <!--
+        The slideshow.
 
-      <p>Born and raised in Stockton, California. Based in Germany. Working internationally
-        &mdash; which is the plain reason the front door greets visitors in thirty-six
-        languages rather than one.</p>
+        A real scrolling strip: with scripting off it is still swipeable and every
+        photograph is still reachable, and the controls below stay hidden until the
+        script confirms there is behaviour behind them. The first image loads eagerly
+        because it is the one on screen; the rest are lazy, so arriving here costs one
+        picture rather than five. Dimensions are declared on every image so the box is
+        reserved before any of them arrive and nothing below shifts.
+        See assets/scripts/gallery.js.
+      -->
+      <div class="gallery" data-gallery role="group" aria-roledescription="carousel"
+           aria-label="Photographs of Bryant Duhart">
+        <ul class="gallery-track" data-gallery-track>
+          <li class="gallery-slide">
+            <img src="assets/images/founder/portrait-1.webp" width="1376" height="768"
+                 decoding="async"
+                 alt="Bryant Duhart in a teal suit and dark sunglasses, standing against a wooden slatted wall.">
+          </li>
+          <li class="gallery-slide">
+            <img src="assets/images/founder/portrait-2.webp" width="1376" height="768"
+                 loading="lazy" decoding="async"
+                 alt="Bryant Duhart sitting on a park bench in a denim shirt, smiling, with green trees behind him.">
+          </li>
+          <li class="gallery-slide">
+            <img src="assets/images/founder/portrait-3.webp" width="1376" height="768"
+                 loading="lazy" decoding="async"
+                 alt="Bryant Duhart at work in a music studio, a session open on the screen and monitors either side of it.">
+          </li>
+          <li class="gallery-slide">
+            <img src="assets/images/founder/portrait-4.webp" width="1376" height="768"
+                 loading="lazy" decoding="async"
+                 alt="Bryant Duhart in a dark suit on a balcony at night, city lights spread out behind him.">
+          </li>
+          <li class="gallery-slide">
+            <img src="assets/images/founder/portrait-5.webp" width="1376" height="768"
+                 loading="lazy" decoding="async"
+                 alt="Bryant Duhart in a winter coat and flat cap on the National Mall, the Washington Monument behind him.">
+          </li>
+        </ul>
 
-      <h2>The range</h2>
+        <div class="gallery-controls" data-gallery-controls>
+          <ul class="gallery-dots" data-gallery-dots></ul>
+          <span class="gallery-count" data-gallery-count></span>
+          <button type="button" class="gallery-button" data-gallery-prev
+                  aria-label="Previous photograph">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 1.5L4.5 8l6.5 6.5V1.5z"/></svg>
+          </button>
+          <button type="button" class="gallery-button gallery-play" data-gallery-play
+                  aria-pressed="false" aria-label="Play the slideshow"></button>
+          <button type="button" class="gallery-button" data-gallery-next
+                  aria-label="Next photograph">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 1.5L11.5 8 5 14.5V1.5z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <h2>Background</h2>
+
+      <p>Born and raised in Stockton, California. Based in Germany, working
+        internationally &mdash; which is the plain reason the front door greets visitors in
+        thirty-six languages rather than one.</p>
+
+      <h2>Range of practice</h2>
 
       <p>Design, engineering, and the business that carries both, held by one person. That is why
         the five practices can share a roof without work being handed between departments to
@@ -125,13 +184,6 @@
 
       <p>All of it self-taught &mdash; less a gap in the story than the method behind it. None of
         it was handed over, so none of it is borrowed.</p>
-
-      <h2>The record</h2>
-
-      <p>Rather than recite it here, it lives where it belongs:
-        <a href="https://shimtimultimedia.github.io/bryant-duhart/">the portfolio</a>.</p>
-
-      <p><a href="contact.html">Get in touch</a> to start something.</p>
 
       <nav class="pager" aria-label="More about the studio">
         <a class="pager-prev" href="about-process.html"><span>Previous</span>How we work</a>
@@ -142,5 +194,6 @@
   <footer class="section-footer">
     <p>&copy; 2026 Shimti Multimedia.</p>
   </footer>
+  <script src="assets/scripts/gallery.js" defer></script>
 </body>
 </html>

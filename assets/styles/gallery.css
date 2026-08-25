@@ -1,0 +1,185 @@
+/*
+ * Shimti Multimedia - slideshow gallery
+ *
+ * The track is a real horizontally scrolling element with CSS scroll snapping, not a
+ * stack of absolutely positioned slides toggled by a class. That choice carries the
+ * whole component:
+ *
+ *   - touch swiping, trackpad swiping and shift-scroll are the browser's own, so no
+ *     pointer/drag handling is written here at all. WCAG 2.2 SC 2.5.7 asks that nothing
+ *     depend on a dragging movement, and nothing does - the buttons do everything.
+ *   - with scripting off the strip still scrolls and every photograph is still reachable,
+ *     so the gallery degrades to a scrollable filmstrip rather than to a single frozen
+ *     image with four unreachable ones behind it.
+ *   - the browser owns the scroll position, so "which slide is showing" is observed
+ *     rather than remembered, and the two can never disagree.
+ *
+ * The controls are hidden until the script marks the gallery ready, because a Pause
+ * button with no slideshow behind it is worse than no button.
+ */
+
+.gallery {
+  margin: 2rem 0 2.5rem;
+}
+
+.gallery-track {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  /* The track is the scroll container, so it must not also bounce the sheet behind it. */
+  overscroll-behavior-x: contain;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The scrollbar is noise under a set of photographs that carry their own position
+   indicator; the dots and the counter say where you are. */
+.gallery-track {
+  scrollbar-width: none;
+}
+
+.gallery-track::-webkit-scrollbar {
+  display: none;
+}
+
+.gallery-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  /* Without this a snap target can be scrolled past when the user flicks hard, which
+     lands the track between two slides and leaves the dots pointing at neither. */
+  scroll-snap-stop: always;
+  min-width: 0;
+  margin: 0;
+}
+
+.gallery-slide img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Declared in the markup too, but repeated here so the box is reserved even if the
+     attributes are ever dropped - a gallery that grows by 400px on load moves the
+     paragraph the visitor is reading. */
+  aspect-ratio: 1376 / 768;
+  object-fit: cover;
+}
+
+/* Hidden until the script says the behaviour behind them exists. */
+.gallery-controls {
+  display: none;
+}
+
+.gallery[data-ready] .gallery-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+/*
+ * Every control is at least 24x24 CSS pixels of pointer target (WCAG 2.2 SC 2.5.8),
+ * including the dots - which are drawn small but padded out to a full target.
+ */
+.gallery-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.gallery-button:hover {
+  background: var(--panel-bg);
+}
+
+.gallery-button svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+/* One icon per state, swapped by the button's own pressed state rather than by the
+   script rewriting markup - the script sets one attribute and the CSS does the rest. */
+.gallery-play .gallery-icon-play {
+  display: none;
+}
+
+.gallery-play[aria-pressed="false"] .gallery-icon-play {
+  display: block;
+}
+
+.gallery-play[aria-pressed="false"] .gallery-icon-pause {
+  display: none;
+}
+
+.gallery-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin: 0 auto 0 0.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.gallery-dot {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* The visible dot is the pseudo-element; the button around it is the target. */
+  position: relative;
+}
+
+.gallery-dot::before {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  translate: -50% -50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--border-color);
+}
+
+.gallery-dot[aria-current="true"]::before {
+  background: var(--accent);
+  width: 0.65rem;
+  height: 0.65rem;
+}
+
+.gallery-count {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-color);
+  flex: none;
+}
+
+/*
+ * Reduce-motion.
+ *
+ * The site-wide rule at the end of section.css flattens animations and transitions, but
+ * smooth scrolling is neither, so it has to be turned off by name. The script separately
+ * declines to start the slideshow at all under the same preference - the two together
+ * mean nothing in this component moves unless the visitor asks it to.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-track {
+    scroll-behavior: auto;
+  }
+}
