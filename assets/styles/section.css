@@ -347,6 +347,21 @@ a:hover {
   margin: 0 0 1.1rem;
 }
 
+/*
+ * The address, given the weight of the thing it is.
+ *
+ * This page exists to produce one action, so the address is set as a heading rather than
+ * buried in a sentence - a visitor who reads nothing else on the page should still leave
+ * with it. Wrapping is forced on because an email address is one long unbreakable word and
+ * would otherwise overflow the sheet on a narrow screen.
+ */
+.section-contact {
+  margin: 0 0 2rem;
+  font-size: clamp(1.05rem, 3.2vw, 1.75rem);
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
 .section-list {
   margin: 0 0 1.4rem;
   padding: 0;
