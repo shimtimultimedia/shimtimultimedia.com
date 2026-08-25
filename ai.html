@@ -45,6 +45,13 @@
   <link rel="preload" href="assets/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/styles/section.css">
   <link rel="stylesheet" href="assets/styles/doors.css">
+  <!-- In <head>, and deliberately NOT deferred.
+       This decides whether the incoming navigation is a level change and marks <html>
+       before <body> exists, so the very first painted frame already has the doors shut.
+       Deferred, it ran after the document had parsed: the page painted with the doors
+       open, then they snapped shut and reopened, so arriving home showed the machinery
+       first and the airlock second - which reads as no airlock at all. -->
+  <script src="assets/scripts/doors.js"></script>
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="assets/images/favicon/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon.png">
@@ -106,6 +113,5 @@
   <footer class="section-footer">
     <p>&copy; 2026 Shimti Multimedia.</p>
   </footer>
-  <script src="assets/scripts/doors.js" defer></script>
 </body>
 </html>

@@ -56,7 +56,6 @@
         if (from && urlIsHome(from) === isHomePage()) return;
 
         html.setAttribute('data-airlock', 'in');
-        guardAgainstStuckDoors();
     }
 
     /* ------------------------------------------------------------------- leaving */
@@ -176,9 +175,33 @@
         if (html.getAttribute('data-airlock') === 'out') event.viewTransition.skipTransition();
     });
 
+    /*
+     * The arrival is decided NOW, while the document is still parsing.
+     *
+     * This file is loaded from <head> without defer, which is deliberate and is the whole
+     * reason the airlock works in both directions. Deferred, it ran after the document had
+     * parsed - by which time the page had already painted with the doors at rest, open. The
+     * doors then snapped shut and opened again, so arriving home showed the machinery
+     * first and the airlock afterwards, which reads as no airlock at all. Coming from the
+     * homepage hid the fault, because the closing half had already played on the page being
+     * left.
+     *
+     * Marking <html> before <body> exists means the first frame the browser paints already
+     * has the doors shut. Nothing is ever seen before the doors decide to reveal it.
+     */
+    openOnArrival();
+
+    /*
+     * The rest needs elements, so it waits. The guard measures a door and the click handler
+     * is only useful once there is something to click.
+     */
+    function wireUp() {
+        if (html.getAttribute('data-airlock') === 'in') guardAgainstStuckDoors();
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', openOnArrival);
+        document.addEventListener('DOMContentLoaded', wireUp);
     } else {
-        openOnArrival();
+        wireUp();
     }
 }());
