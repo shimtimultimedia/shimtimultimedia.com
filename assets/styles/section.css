@@ -410,30 +410,46 @@ a:hover {
 }
 
 /*
- * The channels, on every page.
+ * The channels. Contact only, deliberately.
  *
- * A single wrapping row rather than a list: this is a footer in a layout where the window
- * does not scroll, so every pixel it takes comes straight out of the reading area. Small,
- * quiet, and out of the way until wanted.
+ * They lived in the footer of every page, which put seven links in front of someone on
+ * every single screen and took the height out of a reading area that cannot scroll the
+ * window to get it back. They belong on the page where a visitor has already decided to
+ * make contact.
  */
-.section-social {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.35rem 1.1rem;
-  margin: 0 0 0.6rem;
+.channel-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.4rem 1rem;
+  margin: 0 0 2rem;
+  padding: 0;
+  list-style: none;
 }
 
-.section-social a {
+.channel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
   color: var(--muted-color);
   text-decoration: none;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
-.section-social a:hover,
-.section-social a:focus-visible {
+/* The mark takes the link's colour, so one file serves both states. */
+.channel-mark {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  fill: currentColor;
+}
+
+.channel:hover,
+.channel:focus-visible {
   color: var(--accent);
+}
+
+.channel:hover span,
+.channel:focus-visible span {
   text-decoration: underline;
 }
 

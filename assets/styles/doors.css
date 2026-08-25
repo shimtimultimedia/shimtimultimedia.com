@@ -61,6 +61,17 @@
      and the homepage's own layers occupy 0-50, documented in styles.css. */
   z-index: 100;
   pointer-events: none;
+
+  /*
+   * Clipped to the viewport, and it has to be.
+   *
+   * At rest each door is translated a full width outside the window. Being fixed does not
+   * spare the document from them: they extended the page sideways, which raised a
+   * horizontal scrollbar, and that scrollbar stole height from a layout built on the
+   * window never scrolling at all. A stray 12px of vertical scroll on a page that is
+   * supposed to be fixed, traced back to two panels parked off the right edge.
+   */
+  overflow: hidden;
 }
 
 .door {

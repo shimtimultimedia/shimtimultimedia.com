@@ -45,6 +45,7 @@
   <link rel="preload" href="assets/fonts/Orbitron-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/styles/section.css">
   <link rel="stylesheet" href="assets/styles/doors.css">
+  <link rel="stylesheet" href="assets/styles/workbench.css">
   <!-- In <head>, and deliberately NOT deferred.
        This decides whether the incoming navigation is a level change and marks <html>
        before <body> exists, so the very first painted frame already has the doors shut.
@@ -107,6 +108,106 @@
 
       <p class="section-intro">Traverse the dynamic landscape of our portfolio, showcasing Shimti Multimedia&rsquo;s groundbreaking projects in digital and print assets. Explore how we blend art and technology to create lasting impact&mdash;your inspiration for what&rsquo;s possible starts here.</p>
 
+      <h2>The workbench</h2>
+
+      <p>Rather than describe what the studio can do, here it is, running. Every instrument
+        below is operable &mdash; drag it, scrub it, switch it. Use the arrow keys if you would
+        rather not use a pointer.</p>
+
+      <p class="bench-placeholder"><strong>[TO CONFIRM: every image below is a placeholder,
+        borrowed from elsewhere on this site so the instruments can be built and judged before
+        the real material exists. What each one needs is written under it.]</strong></p>
+
+      <!-- 1. Reveal -------------------------------------------------------------- -->
+      <section class="bench" data-bench="reveal" aria-labelledby="bench-reveal">
+        <h3 class="bench-title" id="bench-reveal">Sketch to final</h3>
+        <p class="bench-note">Drag the handle across the image.</p>
+
+        <div class="bench-stage">
+          <img src="assets/images/sections/work.webp" alt="The initial sketch" width="1920" height="1080" decoding="async">
+          <div class="bench-clip">
+            <img src="assets/images/sections/about.webp" alt="The finished artwork" width="1920" height="1080" decoding="async">
+          </div>
+          <input class="bench-range" type="range" min="0" max="100" value="50" step="1"
+                 aria-label="Reveal the finished artwork">
+        </div>
+
+        <p class="bench-note"><strong>[TO CONFIRM: one pair &mdash; a sketch and its final, or an
+          ungraded frame and its grade. Same crop, same dimensions.]</strong></p>
+      </section>
+
+      <!-- 2. Turntable ----------------------------------------------------------- -->
+      <section class="bench" data-bench="turntable" aria-labelledby="bench-turntable"
+               data-frames="assets/images/sections/about.webp,assets/images/sections/ai.webp,assets/images/sections/contact.webp,assets/images/sections/media.webp,assets/images/sections/shop.webp,assets/images/sections/work.webp">
+        <h3 class="bench-title" id="bench-turntable">Turn the model</h3>
+        <p class="bench-note">Scrub to rotate.</p>
+
+        <div class="bench-stage">
+          <img class="bench-frame" src="assets/images/sections/shop.webp" alt="A 3D model, rotating" width="1920" height="1080" decoding="async">
+        </div>
+        <input class="bench-range bench-scrub" type="range" min="0" max="5" value="0" step="1"
+               aria-label="Rotate the model">
+
+        <p class="bench-note"><strong>[TO CONFIRM: 24 to 36 renders of one model, one per step of
+          a full turn, same camera and lighting throughout. Any of your published models will
+          do &mdash; this is a batch render, not new work.]</strong></p>
+      </section>
+
+      <!-- 3. Grade --------------------------------------------------------------- -->
+      <section class="bench" data-bench="grade" aria-labelledby="bench-grade">
+        <h3 class="bench-title" id="bench-grade">Find the look</h3>
+        <p class="bench-note">Same frame, four treatments.</p>
+
+        <div class="bench-stage" data-grade="neutral">
+          <img src="assets/images/sections/media.webp" alt="A frame under the selected treatment" width="1920" height="1080" decoding="async">
+        </div>
+
+        <div class="bench-options" role="group" aria-label="Colour treatment">
+          <button class="bench-option" type="button" data-grade="neutral" aria-pressed="true">Neutral</button>
+          <button class="bench-option" type="button" data-grade="warm" aria-pressed="false">Warm</button>
+          <button class="bench-option" type="button" data-grade="cool" aria-pressed="false">Cool</button>
+          <button class="bench-option" type="button" data-grade="bleach" aria-pressed="false">Bleach</button>
+        </div>
+
+        <p class="bench-note"><strong>[TO CONFIRM: one frame exported four times, graded properly.
+          The filters standing in here are approximations &mdash; a look is a curve, not a filter
+          stack, and the difference is the whole point of the instrument.]</strong></p>
+      </section>
+
+      <!-- 4. Construction -------------------------------------------------------- -->
+      <section class="bench" data-bench="construction" data-guides="off" aria-labelledby="bench-construction">
+        <h3 class="bench-title" id="bench-construction">Under the mark</h3>
+        <p class="bench-note">Show the geometry a logo was built on.</p>
+
+        <div class="bench-stage">
+          <div class="bench-mark">
+            <img src="assets/images/logo.png" alt="The finished mark" width="72" height="72">
+          </div>
+
+          <svg class="bench-guides" viewBox="0 0 160 90" aria-hidden="true" focusable="false"
+               preserveAspectRatio="xMidYMid meet">
+            <g fill="none" stroke="#8cf" stroke-width="0.4" opacity="0.9">
+              <circle cx="80" cy="45" r="26"/>
+              <circle cx="80" cy="45" r="17"/>
+              <circle cx="80" cy="45" r="8.5"/>
+              <line x1="80" y1="9" x2="80" y2="81"/>
+              <line x1="44" y1="45" x2="116" y2="45"/>
+              <line x1="54" y1="19" x2="106" y2="71"/>
+              <line x1="106" y1="19" x2="54" y2="71"/>
+              <rect x="54" y="19" width="52" height="52"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="bench-options">
+          <button class="bench-option" type="button" data-guides aria-pressed="false">Show guides</button>
+        </div>
+
+        <p class="bench-note"><strong>[TO CONFIRM: one of your marks as SVG, with the construction
+          circles and axes it was actually drawn on. The guides here are a stand-in shape, not
+          your geometry.]</strong></p>
+      </section>
+
       <h2>The record</h2>
 
       <p>Nineteen years of it, kept where it can be looked through properly rather than
@@ -131,23 +232,8 @@
   </main>
 
   <footer class="section-footer">
-    <!-- The studio elsewhere. A nav rather than a list of links, because that is what it
-         is, and it carries its own label so a screen reader can tell it apart from the
-         section navigation in the masthead.
-         Text, not icons: the CSP restricts images to this origin, and brand icons would
-         mean either loading them from someone else's server or shipping fourteen files to
-         say what seven words already say. -->
-    <nav class="section-social" aria-label="Shimti Multimedia elsewhere">
-      <a href="https://www.linkedin.com/in/shimtimultimedia/">LinkedIn</a>
-      <a href="https://www.instagram.com/shimtimultimedia/">Instagram</a>
-      <a href="https://www.facebook.com/shimti.multimedia/">Facebook</a>
-      <a href="https://x.com/Shimtimedia">X</a>
-      <a href="https://www.tiktok.com/@shimtimultimedia1">TikTok</a>
-      <a href="https://www.tumblr.com/blog/shimti999-blog">Tumblr</a>
-      <a href="https://www.reddit.com/user/Naive_Butterscotch93/">Reddit</a>
-    </nav>
-
     <p>&copy; 2026 Shimti Multimedia.</p>
   </footer>
+  <script src="assets/scripts/workbench.js" defer></script>
 </body>
 </html>

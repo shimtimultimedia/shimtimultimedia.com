@@ -1,0 +1,246 @@
+/*
+ * Shimti Multimedia - the workbench
+ *
+ * Styling for the instruments on the Work page. They live inside the white sheet, so they
+ * inherit its ink palette rather than the interface's glow.
+ *
+ * @requires assets/scripts/workbench.js
+ */
+
+.bench {
+  margin: 0 0 2.5rem;
+}
+
+.bench-title {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1rem, 2.2vw, 1.3rem);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.bench-note {
+  margin: 0 0 1rem;
+  color: var(--muted-color);
+  font-size: clamp(0.8rem, 1.7vw, 0.92rem);
+}
+
+.bench-stage {
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  /* Reserved before the images arrive, so nothing below jumps as they load. */
+  aspect-ratio: 16 / 9;
+  background: #0b0e13;
+}
+
+.bench-stage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ------------------------------------------------------------------- reveal */
+
+/*
+ * The finished version sits on top and is clipped to the handle. inset() clips rather than
+ * resizes, so both images stay the same size and the seam moves across a single picture
+ * instead of squashing one half of it.
+ */
+.bench-clip {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 calc(100% - var(--reveal, 50%)) 0 0);
+}
+
+/* The seam, so the boundary is visible rather than merely implied. */
+.bench-clip::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  background: #eaffff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+/*
+ * Shared appearance for both controls. Positioning is NOT here, deliberately.
+ *
+ * It used to be: this rule carried position:absolute and inset:0 so the reveal handle could
+ * lie across its image. The turntable's scrub wears the same class for its thumb styling
+ * and inherited all of it - and with no positioned ancestor it resolved against the
+ * viewport, stretched over the entire window, and pushed its own top margin past the
+ * bottom edge. Twelve pixels of scroll on a layout whose whole premise is that the window
+ * does not scroll, from a slider that was supposed to be sitting under a picture.
+ *
+ * Layout belongs to whichever instrument needs it, so it lives with them below.
+ */
+.bench-range {
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+/*
+ * Reveal only: the control lies across the whole stage, invisible, so the image itself is
+ * draggable and the thumb is all that is seen.
+ */
+[data-bench="reveal"] .bench-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.bench-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 2px solid #eaffff;
+  background: rgba(5, 7, 11, 0.65);
+  backdrop-filter: blur(2px);
+  cursor: ew-resize;
+}
+
+.bench-range::-moz-range-thumb {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 2px solid #eaffff;
+  background: rgba(5, 7, 11, 0.65);
+  cursor: ew-resize;
+}
+
+.bench-range:focus-visible {
+  outline: 3px solid var(--focus-outline);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------- turntable */
+
+/*
+ * The turntable's control sits under its stage rather than over it: a rotation wants a
+ * visible position, and an invisible handle would give no sense of where in the spin you
+ * are.
+ */
+.bench-scrub {
+  position: static;
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0.75rem 0 0;
+  accent-color: var(--accent);
+  /* Left as the platform draws it: a visible track communicates position in a rotation,
+     which is the one thing the reveal handle deliberately hides. */
+  appearance: auto;
+  cursor: grab;
+}
+
+.bench-scrub:focus-visible {
+  outline: 3px solid var(--focus-outline);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------- grade */
+
+.bench-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.75rem 0 0;
+}
+
+.bench-option {
+  /* 24px minimum target, per WCAG 2.5.8. */
+  min-height: 2.25rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.bench-option:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.bench-option[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.bench-option:focus-visible {
+  outline: 3px solid var(--focus-outline);
+  outline-offset: 2px;
+}
+
+/*
+ * Grades as filters.
+ *
+ * Placeholders that stand in for real colour work: a look is a curve, not a filter stack.
+ * They are here so the instrument can be operated and judged before the real frames exist,
+ * and each is replaced by a graded still rather than tuned.
+ */
+.bench-stage[data-grade="neutral"] img { filter: none; }
+.bench-stage[data-grade="warm"] img { filter: saturate(1.15) sepia(0.22) hue-rotate(-12deg) contrast(1.05); }
+.bench-stage[data-grade="cool"] img { filter: saturate(1.1) hue-rotate(12deg) brightness(1.02) contrast(1.08); }
+.bench-stage[data-grade="bleach"] img { filter: saturate(0.35) contrast(1.25) brightness(1.06); }
+
+.bench-stage img {
+  transition: filter 220ms ease;
+}
+
+/* ------------------------------------------------------------ construction */
+
+.bench-guides {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.bench[data-guides="on"] .bench-guides {
+  opacity: 1;
+}
+
+.bench-mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.bench-mark img {
+  width: 42%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* ----------------------------------------------------------- reduced motion */
+
+/*
+ * These are driven by the visitor, not by a timer, so there is nothing here that moves on
+ * its own to switch off. Only the incidental easing goes.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .bench-stage img,
+  .bench-guides {
+    transition: none;
+  }
+}
