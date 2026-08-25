@@ -118,6 +118,20 @@ html[data-doors="closed"] .doors {
   z-index: 0;
 }
 
+/*
+ * No seam once they have met.
+ *
+ * The edge lighting reads as two doors while they are moving, which is the point of it.
+ * The moment they are shut it stops being an edge and becomes a line drawn down the
+ * middle of the page - the doors have become one surface, and a surface has no seam.
+ *
+ * The closing animation still shows it: a view transition cross-fades the old door image
+ * into the new one, so the lit edge fades out exactly as the doors come together.
+ */
+html[data-doors="closed"] .door {
+  border: 0;
+}
+
 html[data-doors="closed"] body > *:not(.doors) {
   position: relative;
   z-index: 1;
@@ -207,12 +221,56 @@ html[data-doors-stuck][data-doors="open"] .door.door-right {
 }
 
 /*
- * The page behind the doors crosses over faster than the doors move, so it has settled by
- * the time they finish and there is no content visibly sliding around underneath them.
+ * The page behind the doors is timed per journey. doors.js names which one is running.
  */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: calc(var(--door-duration) * 0.55);
+
+/*
+ * SHUTTING - into a section.
+ *
+ * The destination must not appear until the doors have actually met. Fading it in while
+ * they are still closing shows the page through the closing gap, which breaks the whole
+ * conceit that the doors are carrying it.
+ *
+ * So the old page - the machinery - holds at full strength for the entire close, and the
+ * new one is switched on at the moment the doors touch. By then it is behind two opaque
+ * panels, so the switch itself is invisible.
+ */
+html:active-view-transition-type(shutting)::view-transition-old(root) {
+  animation: none;
+}
+
+html:active-view-transition-type(shutting)::view-transition-new(root) {
+  animation: door-reveal 1ms linear var(--door-duration) both;
+}
+
+@keyframes door-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/*
+ * OPENING - back to the machinery.
+ *
+ * The machinery is meant to have been there all along, so it is present from the first
+ * frame rather than fading up as the doors part. The section content leaves quickly,
+ * because it belonged to the doors that are now sliding away.
+ */
+html:active-view-transition-type(opening)::view-transition-new(root) {
+  animation: none;
+}
+
+html:active-view-transition-type(opening)::view-transition-old(root) {
+  animation-duration: calc(var(--door-duration) * 0.35);
+}
+
+/*
+ * SWAPPING - section to section.
+ *
+ * Neither door moves, so this is only a content change and should feel like one.
+ */
+html:active-view-transition-type(swapping)::view-transition-old(root),
+html:active-view-transition-type(swapping)::view-transition-new(root) {
+  animation-duration: calc(var(--door-duration) * 0.4);
 }
 
 /* ----------------------------------------------------------------- reduced motion */

@@ -99,34 +99,57 @@ a:hover {
 
 /* ---------- Header ---------- */
 
+/*
+ * Stacked and centred: masthead, then the studio line, then the navigation.
+ *
+ * The old header put a small wordmark on the left and the nav on the right, which reads as
+ * an app toolbar. This is a page - the doors have shut and this is what is printed on them
+ * - so it gets a masthead, and the masthead is the biggest thing on it.
+ */
 .section-header {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem clamp(1rem, 4vw, 3rem);
+  gap: 0.75rem;
+  padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1rem, 4vw, 3rem) clamp(1rem, 2.5vw, 1.5rem);
+  text-align: center;
   border-bottom: 1px solid rgba(180, 220, 255, 0.25);
 }
 
 .section-home {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  font-weight: 600;
+  gap: clamp(0.6rem, 1.6vw, 1.1rem);
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: clamp(0.75rem, 1.6vw, 0.95rem);
+  /* Masthead scale. Grows with the viewport but stops before it wraps awkwardly on a
+     wide monitor. */
+  font-size: clamp(1.35rem, 4.2vw, 2.9rem);
+  line-height: 1.1;
   text-decoration: none;
 }
 
 .section-home img {
   filter: brightness(1.1);
+  /* Tied to the text it sits beside, so the lockup keeps its proportions at every size
+     rather than the logo drifting relative to the wordmark. */
+  width: clamp(2.4rem, 6.4vw, 4.5rem);
+  height: auto;
+}
+
+.section-tagline {
+  margin: 0;
+  color: var(--muted-color);
+  font-size: clamp(0.7rem, 1.6vw, 0.9rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .section-nav {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.4rem;
   list-style: none;
   margin: 0;
@@ -159,12 +182,56 @@ a:hover {
 
 /* ---------- Main ---------- */
 
+/*
+ * The page itself: a white sheet spanning everything between header and footer.
+ *
+ * The doors are the dark surround. What is printed on them is an ordinary page, and an
+ * ordinary page is a light one - so this is where the sci-fi shell stops and readable
+ * long-form content starts. The colours are re-declared rather than inherited, because
+ * every token in :root is tuned for light text on black and every one of them is wrong
+ * here.
+ */
 .section-main {
   flex: 1;
   width: 100%;
+
+  /*
+   * The tokens are re-pointed rather than the rules being overridden one by one.
+   *
+   * Every value in :root is tuned for pale text glowing on black, and every one of them
+   * is wrong on a white sheet - the muted grey turns invisible, the panel fill and the
+   * borders disappear into the background. Redefining the same names here means each
+   * existing rule keeps working and simply resolves to ink instead of light. Anything
+   * added to the sheet later inherits the correct palette without knowing this happened.
+   *
+   * All four foreground values clear WCAG 1.4.3 AA against white: the body text at about
+   * 17:1, the muted text and the link colour both around 7:1.
+   */
+  --text-color: #10151c;
+  --muted-color: #4a5560;
+  --panel-bg: #f2f5f8;
+  --border-color: #c9d3dc;
+  --accent: #10517d;
+  --focus-outline: #10517d;
+
+  background: #ffffff;
+  color: var(--text-color);
+}
+
+/* The sheet is full width; the reading column inside it is not. */
+.section-main > article {
   max-width: 72ch;
   margin: 0 auto;
   padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 3rem);
+}
+
+.section-main a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
+.section-main a:hover {
+  color: #0a3a5c;
 }
 
 .section-eyebrow {
@@ -230,6 +297,7 @@ a:hover {
   color: var(--muted-color);
   font-size: clamp(0.7rem, 1.4vw, 0.8rem);
   letter-spacing: 0.08em;
+  text-align: center;
 }
 
 .section-footer p {

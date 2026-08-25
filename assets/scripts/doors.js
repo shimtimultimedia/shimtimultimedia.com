@@ -71,8 +71,53 @@ if (document.readyState === 'loading') {
     guardAgainstStuckDoors();
 }
 
+/**
+ * Names the journey, so the stylesheet can time it.
+ *
+ * All three navigations move the doors correctly on their own, but they do not want the
+ * same treatment for the page BEHIND the doors:
+ *
+ *   shutting  the incoming page must stay hidden until the doors have actually met.
+ *             Letting it fade in while they are still closing shows the destination
+ *             through the gap and destroys the illusion that the doors are carrying it.
+ *   opening   the machinery should be there the moment the doors part, not fade up
+ *             afterwards - it is meant to have been behind them all along.
+ *   swapping  neither door moves, so the content should simply cross over, quickly.
+ *
+ * None of that can be expressed without knowing where the navigation came from, and the
+ * incoming document only learns that from the navigation entry it is activating.
+ *
+ * @returns {string} a view-transition type
+ */
+function journeyType() {
+    const arrivingHome = document.documentElement.dataset.doors === 'open';
+    if (arrivingHome) return 'opening';
+
+    const from = window.navigation
+        && window.navigation.activation
+        && window.navigation.activation.from
+        && window.navigation.activation.from.url;
+
+    // No previous entry means this document was not reached from within the site, so
+    // treat it as a fresh arrival behind shut doors.
+    if (!from) return 'shutting';
+
+    // The homepage is the only page served from a directory root rather than a filename.
+    const cameFromHome = /\/(index\.html)?(\?|#|$)/.test(new URL(from, location.href).pathname
+        + new URL(from, location.href).search);
+
+    return cameFromHome ? 'shutting' : 'swapping';
+}
+
 window.addEventListener('pagereveal', (event) => {
     if (!event.viewTransition) return;
+
+    // Types drive :active-view-transition-type() in doors.css. Added here rather than in
+    // the outgoing page's pageswap because this is the document whose styles run the
+    // transition, so this is where the type has to be true.
+    if (event.viewTransition.types) {
+        event.viewTransition.types.add(journeyType());
+    }
 
     /*
      * Marked on <html> rather than <body> because the stylesheet needs it while matching
