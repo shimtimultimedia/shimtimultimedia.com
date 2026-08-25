@@ -16,7 +16,31 @@
 
 'use strict';
 
-if ('serviceWorker' in navigator) {
+/*
+ * Never on the dev server.
+ *
+ * A service worker's whole job is to answer requests from a cache, which is precisely
+ * wrong while files are being edited: it serves the snapshot it took, the edit appears to
+ * have no effect, and the page silently runs code that no longer exists on disk. That
+ * already happened once here - a cached background script survived a browser restart and
+ * the background simply stopped rendering.
+ *
+ * The dev server sets no-store on everything for exactly this reason; registering a worker
+ * in front of it undoes that. Production gets the offline cache, localhost gets the file
+ * that is actually on disk.
+ *
+ * Any worker registered here previously is torn down, so a machine that already has the
+ * bad one does not need it cleared by hand.
+ */
+const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
+
+if ('serviceWorker' in navigator && LOCAL) {
+    navigator.serviceWorker.getRegistrations()
+        .then((regs) => regs.forEach((r) => r.unregister()))
+        .catch(() => {});
+}
+
+if ('serviceWorker' in navigator && !LOCAL) {
     window.addEventListener('load', () => {
         // Relative on purpose. On a GitHub Pages PROJECT site the app lives under
         // /shimtimultimedia.com/, so an absolute '/sw.js' would resolve to the user-site
