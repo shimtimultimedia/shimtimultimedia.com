@@ -9,6 +9,25 @@
 
 .bench {
   margin: 0 0 2.5rem;
+
+  /*
+   * Narrower than the reading column on purpose.
+   *
+   * The page image at the top is the full measure, and an instrument set to the same
+   * width competes with it - the eye reads two things of equal weight and cannot tell
+   * which is the subject. Capped in rem rather than as a percentage so the instruments
+   * stay the same physical size as the column widens, which keeps them subordinate.
+   *
+   * Everything inside inherits the cap, so the stage, the title, the note and the
+   * controls all stay on one edge instead of the controls hanging off a narrower image.
+   */
+  max-width: 32rem;
+}
+
+/* The route from an example to the practice it demonstrates. */
+.bench-more {
+  margin: -1.5rem 0 2.5rem;
+  font-size: 0.9rem;
 }
 
 .bench-title {

@@ -48,6 +48,11 @@ const PRECACHE_PATHS = [
   'media.html',
   'shop.html',
   'work.html',
+  'work-design.html',
+  'work-3d.html',
+  'work-film.html',
+  'work-sound.html',
+  'work-digital.html',
   'assets/styles/styles.css',
   'assets/styles/section.css',
   'assets/styles/doors.css',
@@ -72,6 +77,18 @@ const PRECACHE_PATHS = [
   // visitors who actually reach the founder page, so they are cached on first use by the
   // runtime handler instead of downloaded by everyone at install time.
   'assets/images/founder/portrait-1.webp',
+  'assets/images/sections/name-seal.webp',
+  'assets/images/sections/name-tablet.webp',
+  'assets/images/sections/name-builder.webp',
+  'assets/images/craft/craft-bench.webp',
+  'assets/images/ai/ai-plate.webp',
+  'assets/images/hub/hub-name.webp',
+  'assets/images/hub/hub-craft.webp',
+  'assets/images/hub/hub-process.webp',
+  'assets/images/hub/hub-founder.webp',
+  'assets/images/hub/hub-where.webp',
+  'assets/images/process/process-plans.webp',
+  'assets/images/craft/craft-ai.webp',
 ];
 
 self.addEventListener('install', (event) => {

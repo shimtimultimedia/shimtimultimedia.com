@@ -252,6 +252,10 @@ a:hover {
   max-width: 72ch;
   margin: 0 auto;
   padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 3rem);
+
+  /* Makes this the size reference for .section-title below, so the heading can be sized
+     against the column it has to fit inside rather than against the viewport. */
+  container-type: inline-size;
 }
 
 .section-main a {
@@ -307,9 +311,122 @@ a:hover {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
+/*
+ * A plate, not a hero.
+ *
+ * .section-hero crops to 16/9 with object-fit: cover, which is right for a photograph
+ * chosen to fill a band and wrong for an artefact. This image is a cylinder-seal
+ * impression roughly 1.94:1, so cover would shave the cuneiform panels off both ends -
+ * cutting away the part of the object that carries the writing. A plate therefore shows
+ * the whole thing at its own proportions, deriving the box from the width and height
+ * attributes so the space is still reserved before it loads.
+ *
+ * The credit sits below the image rather than in a .section-eyebrow laid over it, for the
+ * same reason: an overlay would cover the artefact it is captioning.
+ */
+.section-plate {
+  margin: 0 0 2rem;
+}
+
+.section-plate img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  /* A dark ground, so a scanned object with a ragged edge reads as a plate rather than as
+     a picture bleeding into the sheet. */
+  background: #12161c;
+}
+
+.section-plate figcaption {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted-color);
+}
+
+/*
+ * A smaller figure, set into the text rather than interrupting it.
+ *
+ * Floated left directly under its heading so the paragraphs run down the right of it and
+ * then close underneath - the ordinary magazine set, and the reason the figure has to be
+ * written into the markup BEFORE the paragraphs it wraps: a float only pushes content
+ * that comes after it in source order.
+ *
+ * Sized in rem rather than as a percentage so the picture stays the same physical size as
+ * the column widens, which keeps it subordinate to the writing on a large screen.
+ *
+ * Museum photographs arrive with their own pale backdrop, so no ground is painted behind
+ * them - one would only show as a rim.
+ */
+.section-figure {
+  float: left;
+  width: 14rem;
+  margin: 0.4rem 1.5rem 0.9rem 0;
+}
+
+.section-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+/* Only ever a credit a licence demands, never a description - the alt text carries what
+   the picture shows. */
+.section-figure figcaption {
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--muted-color);
+}
+
+/*
+ * A float escapes its own section unless something stops it, so a tall picture would
+ * otherwise hang down beside the NEXT heading and shove it sideways. Clearing every
+ * heading ends the wrap where the section ends.
+ */
+.section-main h2,
+.pager {
+  clear: both;
+}
+
+/*
+ * Below roughly 34em the column is too narrow to hold a picture and a readable line
+ * beside it - the text would set in a four-word gutter. So the float is dropped and the
+ * figure becomes a normal block.
+ */
+@media (max-width: 34em) {
+  .section-figure {
+    float: none;
+    width: auto;
+    max-width: 18rem;
+    margin: 1.25rem 0 1.5rem;
+  }
+}
+
+/*
+ * Sized against the reading column, not the viewport.
+ *
+ * The old value was clamp(2rem, 7vw, 3.5rem), which is a bet that no page ever gets a
+ * long title. "How we got the name" needed 876px of the 865px available and wrapped to
+ * two lines, and the fix of dropping the maximum a notch would have been a magic number
+ * good until the next title.
+ *
+ * cqi is a percentage of the column's own inline size, and the width a line of set caps
+ * needs is also proportional to the type size - so a title sized in cqi keeps the same
+ * ratio to the measure at every width, and the longest title on the site fits on one line
+ * by construction rather than by coincidence. 6.2cqi leaves headroom over the 6.39cqi at
+ * which the longest one would touch the edge.
+ *
+ * The bounds still matter: on a phone the column is too narrow for a heading this long to
+ * hold one line at a readable size, so it wraps there, which is normal and fine.
+ */
 .section-title {
   margin: 0 0 1.5rem;
-  font-size: clamp(2rem, 7vw, 3.5rem);
+  font-size: clamp(1.5rem, 6.2cqi, 3.5rem);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -434,6 +551,42 @@ a:hover {
   margin: 0 0 2rem;
   padding: 0;
   list-style: none;
+}
+
+/*
+ * The thumbnail on a hub card.
+ *
+ * Each one is the opening image of the page the card links to, so the picture is a preview
+ * of the destination rather than decoration. aria-hidden and tabindex="-1" because the
+ * heading beneath already links to the same place: without that, every card would present
+ * a screen reader with two identical links and a keyboard user with two tab stops for one
+ * destination. The alt is empty for the same reason.
+ */
+.hub-thumb {
+  display: block;
+  margin: 0 0 0.6rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.hub-thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+/* The routes inside the last card: a list, but not a bulleted one - it is already inside
+   a list item, and a second level of bullets reads as a menu rather than as prose. */
+.hub-routes {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted-color);
 }
 
 .hub h3 {
