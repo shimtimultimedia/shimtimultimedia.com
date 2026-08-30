@@ -21,10 +21,19 @@ import { join, extname, normalize, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { createReadStream } from 'node:fs';
-import { TYPES, SEEKABLE } from './dev-mime.js';
+import { TYPES, SEEKABLE, NEVER_SERVED } from './dev-mime.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
-const PORT = Number(process.env.PORT) || 3000;
+/*
+ * Port, in order of preference: --port on the command line, then PORT in the environment,
+ * then 3000. The flag exists because the scheduled task that keeps this running cannot set
+ * environment variables, and a server whose correctness depends on an env var someone has
+ * to remember to set is a server that will one day come up on the wrong port.
+ */
+const portFlag = process.argv.indexOf('--port');
+const PORT = Number(portFlag !== -1 && process.argv[portFlag + 1])
+  || Number(process.env.PORT)
+  || 3000;
 
 // The table lives in dev-mime.js so a test can check it without starting a listener.
 
@@ -139,6 +148,11 @@ const server = createServer(async (req, res) => {
     const info = await stat(target);
     const file = info.isDirectory() ? join(target, 'index.html') : target;
     const ext = extname(file).toLowerCase();
+
+    // Executables and shell scripts are never site content. 404 rather than 403, so the
+    // response does not confirm that the file is there.
+    if (NEVER_SERVED.has(ext)) return send(res, 404, 'text/plain', '404 Not Found');
+
     const type = TYPES[ext];
     if (!type) {
       // Loud, once per extension. The old silent fallback to octet-stream is precisely
@@ -213,6 +227,15 @@ server.on('clientError', (_err, socket) => {
 
 process.on('uncaughtException', (err) => {
   console.error('  [dev] recovered from:', err.message);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`
+  Port ${PORT} is already in use - another copy is probably running.`);
+    process.exit(1);
+  }
+  throw err;
 });
 
 server.listen(PORT, () => {

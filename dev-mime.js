@@ -53,3 +53,16 @@ export const TYPES = {
 export const SEEKABLE = new Set([
   '.m4a', '.mp3', '.wav', '.ogg', '.mp4', '.webm',
 ]);
+
+/*
+ * Repo tooling that lives beside the site but is never part of it.
+ *
+ * The keepalive scripts tripped the MIME guard, and the tempting fix was to give them a
+ * type. That would have been the wrong answer: the question is not "what type is a .cmd",
+ * it is "why would a web server hand one to a visitor at all". They are declared
+ * unservable instead, the server refuses them, and the guard stops asking for a type it
+ * should never need.
+ */
+export const NEVER_SERVED = new Set([
+  '.cmd', '.bat', '.ps1', '.vbs', '.sh', '.exe', '.dll', '.msi',
+]);

@@ -18,7 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { TYPES, SEEKABLE } from '../dev-mime.js';
+import { TYPES, SEEKABLE, NEVER_SERVED } from '../dev-mime.js';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'tests']);
@@ -65,14 +65,19 @@ const unmapped = new Map();
 for (const file of tracked) {
   const ext = path.extname(file).toLowerCase();
   // Extensionless files (LICENSE and friends) are documentation, not served assets.
-  if (!ext || TYPES[ext]) continue;
+  if (!ext || TYPES[ext] || NEVER_SERVED.has(ext)) continue;
   if (!unmapped.has(ext)) unmapped.set(ext, file);
 }
 for (const [ext, example] of unmapped) {
   failures.push(`no MIME type for "${ext}" (e.g. ${example}) - add it to dev-mime.js`);
 }
 
-// 2. Audio and video must be declared seekable, or the scrub bar does nothing.
+// 2. Nothing may be both servable and forbidden - one of the two lists would be a lie.
+for (const ext of NEVER_SERVED) {
+  if (TYPES[ext]) failures.push(`"${ext}" is in both TYPES and NEVER_SERVED`);
+}
+
+// 3. Audio and video must be declared seekable, or the scrub bar does nothing.
 for (const [ext, type] of Object.entries(TYPES)) {
   if (/^(audio|video)\//.test(type) && !SEEKABLE.has(ext)) {
     failures.push(`"${ext}" is ${type} but missing from SEEKABLE - seeking would break`);
