@@ -183,3 +183,114 @@
     scroll-behavior: auto;
   }
 }
+
+/*
+ * Stacked transitions: fade and flip.
+ *
+ * Both take the slides out of the row and pile them in one place, so the track stops
+ * being a scroller. Scroll snapping is switched off with them - leaving it on would let a
+ * trackpad drag the stack sideways underneath the animation.
+ */
+[data-transition="fade"] .gallery-track,
+[data-transition="flip"] .gallery-track {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  scroll-snap-type: none;
+}
+
+[data-transition="fade"] .gallery-slide,
+[data-transition="flip"] .gallery-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+}
+
+/* --- fade ------------------------------------------------------------------------- */
+
+[data-transition="fade"] .gallery-slide {
+  opacity: 0;
+  transition: opacity 520ms ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-transition="fade"] .gallery-slide.is-current {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+/* The outgoing frame stays lit underneath for the length of the crossfade, so the two
+   pictures dissolve into one another rather than both dimming through the paper. */
+[data-transition="fade"] .gallery-slide.is-leaving {
+  opacity: 0;
+  z-index: 1;
+}
+
+/* --- flip ------------------------------------------------------------------------- */
+
+/*
+ * A page turn. The track is given depth and each slide is a leaf hinged on its left edge,
+ * so the outgoing frame swings away from the spine like a comic being read.
+ *
+ * backface-visibility hides the reverse of the leaf mid-turn; without it the image shows
+ * through mirrored, which reads as a glitch rather than as paper.
+ */
+[data-transition="flip"] .gallery-track {
+  perspective: 1600px;
+}
+
+[data-transition="flip"] .gallery-slide {
+  transform-origin: left center;
+  transform: rotateY(-105deg);
+  backface-visibility: hidden;
+  opacity: 0;
+  transition: transform 620ms cubic-bezier(0.4, 0.05, 0.2, 1), opacity 200ms ease 120ms;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-transition="flip"] .gallery-slide.is-current {
+  transform: rotateY(0deg);
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+[data-transition="flip"] .gallery-slide.is-leaving {
+  transform: rotateY(-105deg);
+  opacity: 1;
+  z-index: 3;
+  transition: transform 620ms cubic-bezier(0.4, 0.05, 0.2, 1), opacity 200ms ease 420ms;
+}
+
+/* Going backwards, the leaf comes back from the same side it left by. */
+[data-transition="flip"] .gallery-slide.is-reverse.is-current {
+  transform: rotateY(0deg);
+}
+
+/* A spine, so the hinge has something to turn on. */
+[data-transition="flip"] .gallery-track::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(to right, rgba(16, 21, 28, 0.35), rgba(16, 21, 28, 0));
+  z-index: 4;
+  pointer-events: none;
+}
+
+/*
+ * Under reduce-motion both become a plain cut. The site-wide rule already collapses the
+ * durations; these turn off the transform as well, so nothing swings at 0.01ms either.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-transition="flip"] .gallery-slide {
+    transform: none;
+  }
+
+  [data-transition="flip"] .gallery-slide:not(.is-current) {
+    opacity: 0;
+  }
+}

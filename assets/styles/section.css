@@ -374,6 +374,45 @@ a:hover {
   border-radius: 8px;
 }
 
+/*
+ * A banner, whether or not it goes anywhere yet.
+ *
+ * Linked entries carry this on an <a>, the rest on a <span>, so one rule covers both and
+ * there is nothing to remember when an address arrives. Only the anchor takes a pointer
+ * cursor and focus, so the picture reacts to the mouse without promising a click that
+ * cannot be honoured.
+ *
+ * transform is used for the growth rather than width/height because it is composited:
+ * it cannot reflow the paragraph wrapped around the float, so the text beside it stays
+ * exactly where it was while the picture lifts. The site-wide reduce-motion rule at the
+ * end of this file flattens the transition for anyone who asks for that; the glow still
+ * appears, so the affordance survives without the movement.
+ */
+.shop-link {
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+/* A span is inline by default, which would collapse the box around the picture. */
+span.shop-link {
+  display: block;
+}
+
+.shop-link:hover,
+.shop-link:focus-visible {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 20px 2px rgba(16, 81, 125, 0.45);
+}
+
+/* The outline would be hidden by the overflow clip above, so the glow is the focus
+   indicator - stated explicitly rather than left to the browser to lose. */
+.shop-link:focus-visible {
+  outline: 2px solid var(--focus-outline);
+  outline-offset: 3px;
+}
+
 /* Only ever a credit a licence demands, never a description - the alt text carries what
    the picture shows. */
 .section-figure figcaption {
@@ -389,8 +428,24 @@ a:hover {
  * heading ends the wrap where the section ends.
  */
 .section-main h2,
+.section-main h3,
 .pager {
   clear: both;
+}
+
+/*
+ * A section break needs to be bigger than the gaps inside a section, or the groups read
+ * as one continuous list. The h3 entries sit 2rem apart, so the h2 above them gets more
+ * than double that - and the rule marks the boundary for the eye without adding a word.
+ */
+.section-main h2 + .section-icon {
+  margin-top: 0.25rem;
+}
+
+.section-main h3 ~ h2 {
+  margin-top: 4.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border-color);
 }
 
 /*
@@ -454,11 +509,45 @@ a:hover {
  */
 .section-main h2 {
   margin: 2.5rem 0 0.75rem;
-  font-size: clamp(1rem, 2.2vw, 1.3rem);
+  /*
+   * Sized from the column like .section-title, so the two keep their relationship at any
+   * width instead of drifting apart as the viewport changes. About 3.6cqi against the
+   * title's 6.2cqi - clearly a heading, clearly not the name of the page.
+   */
+  font-size: clamp(1.15rem, 3.6cqi, 2rem);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
+}
+
+/*
+ * A third level, for pages that group entries under a section - the marketplaces on Shop.
+ * Deliberately quieter than h2: same family, no uppercasing, and ink rather than accent,
+ * so the eye reads it as an item inside the group above rather than as a new group.
+ */
+/*
+ * The mark under a section title.
+ *
+ * Sits between the heading and its first line of text, so it reads as belonging to the
+ * section rather than floating beside it. Takes currentColor and the heading's accent, so
+ * one file serves the light sheet and would serve a dark one unchanged. Purely decorative
+ * - the heading immediately above already names the section - hence aria-hidden in the
+ * markup and no title element here.
+ */
+.section-icon {
+  display: block;
+  width: 3.75rem;
+  height: 3.75rem;
+  margin: 0 0 1.1rem;
+  fill: var(--accent);
+}
+
+.section-main h3 {
+  margin: 2rem 0 0.5rem;
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
 }
 
 .section-main p {
@@ -699,6 +788,71 @@ a:hover {
 .section-intro {
   margin: 0 0 2.5rem;
   font-size: clamp(0.9rem, 2vw, 1.05rem);
+}
+
+/*
+ * Back to top.
+ *
+ * Fixed to the viewport rather than placed in the sheet, so it stays put while the thing
+ * it controls scrolls underneath it. Sat above the footer rather than over it - the
+ * footer is short and a button crossing it reads as a mistake.
+ *
+ * 2.75rem square, comfortably past the 24px minimum target of WCAG 2.5.8, and it inherits
+ * the sheet's ink rather than the interface's glow because it sits against white.
+ *
+ * [hidden] is honoured explicitly: this element is display:flex, and a class-based display
+ * beats the browser's own [hidden] { display: none }, which would otherwise leave the
+ * button on screen permanently.
+ */
+.to-top {
+  position: fixed;
+  right: clamp(0.75rem, 2vw, 1.5rem);
+  bottom: 3.5rem;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+
+  border: 1px solid #c9d3dc;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #10517d;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(16, 21, 28, 0.18);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.to-top[hidden] {
+  display: none;
+}
+
+.to-top svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+.to-top:hover,
+.to-top:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(16, 81, 125, 0.35);
+}
+
+.to-top:focus-visible {
+  outline: 2px solid #10517d;
+  outline-offset: 3px;
+}
+
+/* The sheet is given tabindex="-1" when the button moves focus to it. That makes it
+   focusable, and a focus ring around the entire page is not useful - the scroll position
+   is the feedback. */
+.section-main:focus {
+  outline: none;
 }
 
 /* ---------- Footer ---------- */

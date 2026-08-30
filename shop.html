@@ -12,7 +12,7 @@
        that fetches, so every resource this page loads is covered. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'inline-speculation-rules'; worker-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Shop premium digital and print assets from Shimti Multimedia.">
+  <meta name="description" content="Models, music, footage, design and printed goods from Shimti Multimedia, sold through the marketplaces you already use.">
   <meta name="author" content="Shimti Multimedia">
   <meta name="theme-color" content="#000000">
 
@@ -22,7 +22,7 @@
   <link rel="canonical" href="https://shimtimultimedia.com/shop.html">
 
   <meta property="og:title" content="Shop | Shimti Multimedia">
-  <meta property="og:description" content="Shop premium digital and print assets from Shimti Multimedia.">
+  <meta property="og:description" content="Models, music, footage, design and printed goods from Shimti Multimedia, sold through the marketplaces you already use.">
   <meta property="og:image" content="https://shimtimultimedia.com/assets/images/og-card.jpg">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1200">
@@ -33,7 +33,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Shop | Shimti Multimedia">
-  <meta name="twitter:description" content="Shop premium digital and print assets from Shimti Multimedia.">
+  <meta name="twitter:description" content="Models, music, footage, design and printed goods from Shimti Multimedia, sold through the marketplaces you already use.">
   <meta name="twitter:image" content="https://shimtimultimedia.com/assets/images/og-card.jpg">
 
   <!-- The only font the page loads, and it is needed for first paint, so it is worth
@@ -56,6 +56,36 @@
   <link rel="icon" href="assets/images/favicon/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/images/favicon/apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
+
+  <!-- The shops, as a list. Deliberately not Product/Offer markup: no transaction happens
+       on this page and no price is stated, so an Offer would be a claim about something
+       that is not here. ItemList describes what the page actually is. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Where Shimti Multimedia's work is sold",
+    "description": "Marketplaces carrying models, music, footage, design assets and print.",
+    "itemListOrder": "https://schema.org/ItemListUnordered",
+    "numberOfItems": 7,
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Fab",
+        "url": "https://www.fab.com/sellers/Shimtimultimedia" },
+      { "@type": "ListItem", "position": 2, "name": "CGTrader",
+        "url": "https://www.cgtrader.com/designers/shimtimultimedia" },
+      { "@type": "ListItem", "position": 3, "name": "TurboSquid",
+        "url": "https://www.turbosquid.com/Search/Artists/shimtimultimedia" },
+      { "@type": "ListItem", "position": 4, "name": "Sketchfab",
+        "url": "https://sketchfab.com/shimtimultimedia" },
+      { "@type": "ListItem", "position": 5, "name": "Pinshape",
+        "url": "https://pinshape.com/users/327672-shimtimultimedia?tab=designs" },
+      { "@type": "ListItem", "position": 6, "name": "Redbubble",
+        "url": "https://www.redbubble.com/people/Shimti/shop" },
+      { "@type": "ListItem", "position": 7, "name": "Threadless",
+        "url": "https://shimtimultimedia.threadless.com/" }
+    ]
+  }
+  </script>
 </head>
 <body>
 
@@ -102,38 +132,446 @@
            A figure, because the caption belongs to the image it sits on. -->
       <figure class="section-hero-frame">
         <img class="section-hero" src="assets/images/sections/shop.webp" alt="" width="1920" height="1080" decoding="async">
-        <figcaption class="section-eyebrow">Premium digital and print assets.</figcaption>
+        <figcaption class="section-eyebrow">Models, music, footage, design, print.</figcaption>
       </figure>
 
-      <p class="section-intro">Wander through our storefront landscape, filled with premium digital and print assets ready for your projects. Discover the tools that bring your ideas to life with Shimti Multimedia&mdash;your journey to creative excellence begins with a single purchase.</p>
+      <p class="section-intro">Finished work, sold outright: models, music, footage,
+        design and printed goods. Each is published wherever that kind of thing is already
+        bought, so you can use an account you have rather than opening another one. Some of
+        it you download, some of it arrives in the post &mdash; the sections below are
+        sorted by which.</p>
 
-      <h2>3D models</h2>
+      <h2>3D</h2>
 
-      <p>Models are published across the major marketplaces, so you can buy through whichever
-        one you already work in.</p>
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464z"/></svg>
 
-      <ul class="section-list">
-        <li><a href="https://www.fab.com/sellers/Shimtimultimedia">Fab</a></li>
-        <li><a href="https://sketchfab.com/shimtimultimedia">Sketchfab</a></li>
-        <li><a href="https://www.cgtrader.com/designers/shimtimultimedia">CGTrader</a></li>
-        <li><a href="https://pinshape.com/users/327672-shimtimultimedia?tab=designs">Pinshape</a></li>
-        <li><strong>[TO CONFIRM: the public TurboSquid seller page. The link supplied was a
-          dashboard, which only works while signed in as you.]</strong></li>
-      </ul>
+      <p>Models built to a brief and published wherever people buy them. What you get is a file you download.</p>
+
+      <h3>Fab</h3>
+
+      <figure class="section-figure">
+        <a class="shop-link" target="_blank" rel="noopener" href="https://www.fab.com/sellers/Shimtimultimedia">
+          <img src="assets/images/shop/shop-fab.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="Shimti Multimedia on Fab (opens in a new tab)">
+        </a>
+      </figure>
+
+      <p>Epic&rsquo;s marketplace, and where the old Unreal Engine Marketplace and the Sketchfab store were folded together. The one to use if you are building in Unreal.</p>
+
+      <h3>CGTrader</h3>
+
+      <figure class="section-figure">
+        <a class="shop-link" target="_blank" rel="noopener" href="https://www.cgtrader.com/designers/shimtimultimedia">
+          <img src="assets/images/shop/shop-cgtrader.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="Shimti Multimedia on CGTrader (opens in a new tab)">
+        </a>
+      </figure>
+
+      <p>A large independent marketplace with broad format coverage. Usually the quickest route to a specific file format.</p>
+
+      <h3>TurboSquid</h3>
+
+      <figure class="section-figure">
+        <a class="shop-link" target="_blank" rel="noopener" href="https://www.turbosquid.com/Search/Artists/shimtimultimedia">
+          <img src="assets/images/shop/shop-turbosquid.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="Shimti Multimedia on TurboSquid (opens in a new tab)">
+        </a>
+      </figure>
+
+      <p>The oldest of them, and the one most companies already have a purchasing relationship with. If procurement is involved, it is the path of least resistance.</p>
+
+      <h3>Unity Asset Store</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-unity.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Unity Asset Store wordmark over a grid of asset thumbnails.">
+        </span>
+      </figure>
+
+      <p>The half of the games market Fab does not cover. Anything built for Unreal has a Unity counterpart worth publishing.</p>
+
+      <h3>itch.io</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-itch.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The itch.io wordmark and shopfront mark on a pink and red gradient.">
+        </span>
+      </figure>
+
+      <p>Where independent developers actually shop, and the least corporate of them. Good for asset packs and for anything playable.</p>
+
+      <h3>Sketchfab</h3>
+
+      <figure class="section-figure">
+        <a class="shop-link" target="_blank" rel="noopener" href="https://sketchfab.com/shimtimultimedia">
+          <img src="assets/images/shop/shop-sketchfab.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="Shimti Multimedia on Sketchfab (opens in a new tab)">
+        </a>
+      </figure>
+
+      <p>Not a shop &mdash; the store side moved to Fab &mdash; but the best place to judge the work before buying it elsewhere. Every model turns and zooms in the browser at full resolution, which shows topology and texturing that preview renders hide.</p>
+
+      <h2>Sound</h2>
+
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path d="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.896 2.5 2m9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2"/><path fill-rule="evenodd" d="M14 11V2h1v9zM6 3v10H5V3z"/><path d="M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4z"/></svg>
+
+      <p>Music and sound design, licensed for use in other people&rsquo;s work. A track written once is sold for as long as it is listed.</p>
+
+      <h3>AudioJungle</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-audiojungle.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The AudioJungle wordmark with a frog and a scatter of musical notes.">
+        </span>
+      </figure>
+
+      <p>Envato&rsquo;s audio marketplace, and the busiest single destination for royalty-free music and effects.</p>
+
+      <h3>Pond5</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-pond5.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Pond5 wordmark in black on white.">
+        </span>
+      </figure>
+
+      <p>Music, effects and footage in one place, which suits a studio that produces both.</p>
+
+      <h3>Artlist</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-artlist.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Artlist wordmark over an editor at a desk in a darkened room.">
+        </span>
+      </figure>
+
+      <p>Subscription rather than per-track licensing. A different buyer: production companies who license continuously rather than per project.</p>
+
+      <h3>Splice</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-splice.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Splice wordmark and mark on a pale rounded field.">
+        </span>
+      </figure>
+
+      <p>Loops, one-shots and sample packs &mdash; raw material for other producers rather than finished cues.</p>
+
+      <h3>Bandcamp</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-bandcamp.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Bandcamp wordmark over a burst of orange and red.">
+        </span>
+      </figure>
+
+      <p>For anything that is a record rather than a licence. Sold direct, to listeners instead of to editors.</p>
+
+      <h2>Film &amp; photography</h2>
+
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path fill-rule="evenodd" d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2zm11.5 5.175 3.5 1.556V4.269l-3.5 1.556zM2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"/></svg>
+
+      <p>Footage and stills, licensed the same way. Material already shot for past projects is inventory that currently earns nothing.</p>
+
+      <h3>Adobe Stock</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-adobestock.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Adobe Stock wordmark over a painted landscape with a distant mountain.">
+        </span>
+      </figure>
+
+      <p>Sits inside the software most buyers already have open, which is most of why it sells.</p>
+
+      <h3>Shutterstock</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-shutterstock.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Shutterstock wordmark in white on red.">
+        </span>
+      </figure>
+
+      <p>The largest general library, and the one corporate buyers default to.</p>
+
+      <h3>Storyblocks</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-storyblocks.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Storyblocks wordmark beside a yellow coin mark on black.">
+        </span>
+      </figure>
+
+      <p>Subscription-based, aimed at people producing volume on a fixed budget.</p>
+
+      <h3>Artgrid</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-artgrid.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Artgrid wordmark over an editor working at a colour-grading suite.">
+        </span>
+      </figure>
+
+      <p>Curated and cinema-leaning. Higher bar to get in, less competition once you are.</p>
+
+      <h2>Design</h2>
+
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path d="M8 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m4 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M5.5 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/><path d="M16 8c0 3.15-1.866 2.585-3.567 2.07C11.42 9.763 10.465 9.473 10 10c-.603.683-.475 1.819-.351 2.92C9.826 14.495 9.996 16 8 16a8 8 0 1 1 8-8m-8 7c.611 0 .654-.171.655-.176.078-.146.124-.464.07-1.119-.014-.168-.037-.37-.061-.591-.052-.464-.112-1.005-.118-1.462-.01-.707.083-1.61.704-2.314.369-.417.845-.578 1.272-.618.404-.038.812.026 1.16.104.343.077.702.186 1.025.284l.028.008c.346.105.658.199.953.266.653.148.904.083.991.024C14.717 9.38 15 9.161 15 8a7 7 0 1 0-7 7"/></svg>
+
+      <p>The reusable half of design work: fonts, textures, templates, mockups, icon sets, and the colour grades already built for film work.</p>
+
+      <h3>Creative Market</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-creativemarket.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Creative Market wordmark in white on olive green.">
+        </span>
+      </figure>
+
+      <p>The most designer-facing of them, and the best fit for fonts, textures and brand kits.</p>
+
+      <h3>Envato</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-envato.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Envato wordmark and leaf mark on cream.">
+        </span>
+      </figure>
+
+      <p>GraphicRiver and Elements together reach the widest audience for templates.</p>
+
+      <h3>Design Cuts</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-designcuts.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The DesignCuts wordmark in white on near-black.">
+        </span>
+      </figure>
+
+      <p>Curated bundles rather than an open marketplace. Fewer listings, better margins.</p>
+
+      <h2>AI</h2>
+
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0m-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z"/></svg>
+
+      <p>The tooling itself, sold as a product rather than used as one. This is the only category on the page where the studio has an advantage most sellers do not.</p>
+
+      <h3>Civitai</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-civitai.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Civitai wordmark over a dark blue network of connected points.">
+        </span>
+      </figure>
+
+      <p>Where trained models and LoRAs are actually distributed and discovered.</p>
+
+      <h3>Workflow packs</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-workflow.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="A node graph in a dark editor, boxes wired together in sequence.">
+        </span>
+      </figure>
+
+      <p>ComfyUI graphs, prompt sets and pipelines, sold direct. What takes a client three weeks to work out is a file here.</p>
 
       <h2>Print</h2>
 
-      <p>Artwork on things you can hold, printed and shipped on demand.</p>
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/></svg>
 
-      <ul class="section-list">
-        <li><a href="https://www.redbubble.com/people/Shimti/shop">Redbubble</a></li>
-        <li><a href="https://shimtimultimedia.threadless.com/">Threadless</a></li>
-      </ul>
+      <p>Artwork on things you can hold. What you get is an object, made and posted when you order it.</p>
+
+      <h3>Redbubble</h3>
+
+      <figure class="section-figure">
+        <a class="shop-link" target="_blank" rel="noopener" href="https://www.redbubble.com/people/Shimti/shop">
+          <img src="assets/images/shop/shop-redbubble.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="Shimti Multimedia on Redbubble (opens in a new tab)">
+        </a>
+      </figure>
+
+      <p>The wider catalogue: prints, apparel, cases, stickers and homeware, each made and shipped when someone orders it.</p>
+
+      <h3>Threadless</h3>
+
+      <figure class="section-figure">
+        <a class="shop-link" target="_blank" rel="noopener" href="https://shimtimultimedia.threadless.com/">
+          <img src="assets/images/shop/shop-threadless.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="Shimti Multimedia on Threadless (opens in a new tab)">
+        </a>
+      </figure>
+
+      <p>Apparel first, and a more curated shopfront. The same artwork, chosen for the things people actually wear.</p>
+
+      <h3>INPRNT</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-inprnt.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The INPRNT wordmark in white on orange.">
+        </span>
+      </figure>
+
+      <p>Gallery-grade art prints. Lower volume than Redbubble, considerably better margin and considerably better paper.</p>
+
+      <h3>Displate</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-displate.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Displate wordmark in white on blue.">
+        </span>
+      </figure>
+
+      <p>Metal posters, and a buyer who is decorating a room rather than buying a novelty.</p>
+
+      <h3>Society6</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-society6.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The society6 wordmark printed on a canvas tote bag.">
+        </span>
+      </figure>
+
+      <p>Homeware and furnishings &mdash; the same artwork on objects the others do not make.</p>
+
+      <h3>Etsy</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-etsy.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="An illuminated Etsy sign above a shopfront on a street at night.">
+        </span>
+      </figure>
+
+      <p>The one place on this list where a physical 3D print can be sold as a finished object rather than as a file.</p>
+
+      <h2>3D printing</h2>
+
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2zm3.564 1.426L5.596 5 8 5.961 14.154 3.5zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464z"/></svg>
+
+      <p>The bridge between the two halves of the page: files meant to leave a printer as objects.</p>
+
+      <h3>Pinshape</h3>
+
+      <figure class="section-figure">
+        <a class="shop-link" target="_blank" rel="noopener" href="https://pinshape.com/users/327672-shimtimultimedia?tab=designs">
+          <img src="assets/images/shop/shop-pinshape.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="Shimti Multimedia on Pinshape (opens in a new tab)">
+        </a>
+      </figure>
+
+      <p>Files prepared to come off a printer as an object rather than to sit in a scene. You download it and print it yourself.</p>
+
+      <h3>Shapeways</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-shapeways.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Shapeways wordmark in red and white on dark navy.">
+        </span>
+      </figure>
+
+      <p>The same files, printed and posted for you, in materials a desktop machine cannot manage.</p>
+
+      <h2>Direct</h2>
+
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.37 2.37 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0M1.5 8.5A.5.5 0 0 1 2 9v6h1v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5h6V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5M4 15h3v-5H4zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1zm3 0h-2v3h2z"/></svg>
+
+      <p>Everything above is someone else&rsquo;s platform, taking a cut and owning the customer. This is the studio&rsquo;s own counter &mdash; the only one where the buyer is a buyer rather than a stranger a marketplace lent out.</p>
+
+      <h3>Gumroad</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-gumroad.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Gumroad wordmark on pink, surrounded by cartoon illustrations.">
+        </span>
+      </figure>
+
+      <p>Sells any digital file with almost no setup, at a fraction of a marketplace cut. The fastest way to have a shop of your own.</p>
+
+      <h3>Payhip</h3>
+
+      <figure class="section-figure">
+        <span class="shop-link">
+          <img src="assets/images/shop/shop-payhip.webp" width="640" height="360"
+               loading="lazy" decoding="async"
+               alt="The Payhip wordmark above screenshots of its seller dashboard.">
+        </span>
+      </figure>
+
+      <p>The same idea with EU VAT handled for you, which matters when you are selling from Germany.</p>
+      <h2>Not on the shelf</h2>
+
+      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true"
+           focusable="false"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/></svg>
+
+      <p>Everything above is finished work, already made. If what you need does not exist
+        yet, that is commissioned rather than bought &mdash;
+        <a href="work.html">Work</a> is what the studio takes on, and
+        <a href="contact.html">Contact</a> is the way in.</p>
+
     </article>
   </main>
 
   <footer class="section-footer">
     <p>&copy; 2026 Shimti Multimedia.</p>
   </footer>
+  <script src="assets/scripts/back-to-top.js" defer></script>
 </body>
 </html>

@@ -62,8 +62,30 @@
       slide.setAttribute('aria-label', `${i + 1} of ${slides.length}`);
     });
 
+    // 'slide' scrolls a strip; 'fade' and 'flip' stack the slides and swap them by index.
+    // The strip is the default because it is the only one that still works with scripting
+    // off - the other two would leave six images piled on top of each other.
+    const mode = root.dataset.transition || 'slide';
+    const stacked = mode === 'fade' || mode === 'flip';
+
     function goTo(target, instant) {
       const wrapped = (target + slides.length) % slides.length;
+
+      if (stacked) {
+        // Which way the page turns matters for flip: going forward should throw the
+        // current leaf to the left, going back should bring it in from the left.
+        const back = wrapped === (index - 1 + slides.length) % slides.length;
+        slides.forEach((slide, i) => {
+          slide.classList.toggle('is-current', i === wrapped);
+          slide.classList.toggle('is-leaving', i === index && i !== wrapped);
+          slide.classList.toggle('is-reverse', back);
+        });
+        index = wrapped;
+        paint();
+        arm();
+        return;
+      }
+
       // Slides are exactly one track-width wide (flex: 0 0 100%, no gap), so the offset
       // of slide n is n track-widths. Keeping the arithmetic here rather than reading
       // offsetLeft avoids depending on which ancestor happens to be positioned.
@@ -178,16 +200,19 @@
       }
     }, { root: track, threshold: 0.6 });
 
-    slides.forEach((slide) => watcher.observe(slide));
+    if (!stacked) slides.forEach((slide) => watcher.observe(slide));
+    else slides[0].classList.add('is-current');
 
     // A resize changes what one track-width means, so the snap position of the current
     // slide moves. Re-seating it instantly keeps the strip aligned instead of parked
     // between two photographs.
     let resizeTimer = 0;
-    new ResizeObserver(() => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => goTo(index, true), 120);
-    }).observe(track);
+    if (!stacked) {
+      new ResizeObserver(() => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => goTo(index, true), 120);
+      }).observe(track);
+    }
 
     root.setAttribute('data-ready', '');
     playButton.innerHTML = ICON_PAUSE + ICON_PLAY;

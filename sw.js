@@ -65,7 +65,16 @@ const PRECACHE_PATHS = [
   'assets/scripts/background.js',
   'assets/scripts/register-sw.js',
   'assets/scripts/doors.js',
+  'assets/scripts/back-to-top.js',
   'assets/scripts/workbench.js',
+  'assets/scripts/bench-canvas.js',
+  'assets/scripts/bench-media.js',
+  'assets/scripts/bench-3d.js',
+  'assets/scripts/bench-chat.js',
+  'assets/scripts/bench-app.js',
+  'assets/scripts/bench-design.js',
+  'assets/scripts/gallery.js',
+  'assets/styles/gallery.css',
   'assets/scripts/gallery.js',
   'assets/scripts/background-render.js',
   'assets/scripts/background-worker.js',
@@ -73,6 +82,7 @@ const PRECACHE_PATHS = [
   'assets/fonts/Orbitron-Variable.woff2',
   'assets/images/logo.png',
   'assets/images/og-card.jpg',
+  'assets/images/sections/shop.webp',
   // Only the first portrait. The other four are lazy-loaded and only ever wanted by
   // visitors who actually reach the founder page, so they are cached on first use by the
   // runtime handler instead of downloaded by everyone at install time.
@@ -81,6 +91,8 @@ const PRECACHE_PATHS = [
   'assets/images/sections/name-tablet.webp',
   'assets/images/sections/name-builder.webp',
   'assets/images/craft/craft-bench.webp',
+  'assets/images/bench/bench-grade.webp',
+  'assets/images/bench/poster-footsteps.webp',
   'assets/images/ai/ai-plate.webp',
   'assets/images/hub/hub-name.webp',
   'assets/images/hub/hub-craft.webp',

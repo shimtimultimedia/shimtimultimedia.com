@@ -131,25 +131,10 @@
         });
     }
 
-    /* ---------------------------------------------------------------- construction */
-
-    /** Guides over a finished mark: the geometry a logo was built on, shown on demand. */
-    function setUpConstruction(bench) {
-        const toggle = bench.querySelector('[data-guides]');
-        if (!toggle) return;
-
-        toggle.addEventListener('click', () => {
-            const on = bench.dataset.guides === 'on';
-            bench.dataset.guides = on ? 'off' : 'on';
-            toggle.setAttribute('aria-pressed', String(!on));
-        });
-    }
-
     const setUp = {
         reveal: setUpReveal,
         turntable: setUpTurntable,
         grade: setUpGrade,
-        construction: setUpConstruction,
     };
 
     /*
@@ -167,8 +152,38 @@
      * is what the observer defers now. If it never fires, the frames simply load when the
      * control first asks for them, and everything still works.
      */
+    /*
+     * Line each icon up with its stage, not with its instrument.
+     *
+     * The link is centred on the .bench by default, and a .bench is as tall as its title,
+     * its note and its controls happen to make it - a note that wraps onto a third line
+     * pushes that centre down. Across fourteen instruments that put the icons anywhere
+     * between 197px and 241px from the top, which reads as a wobbling column rather than
+     * a row of buttons.
+     *
+     * The stage is the one part every instrument shares at exactly the same size, so it is
+     * what they are measured against. It cannot be done in CSS: the offset depends on how
+     * much text sits above the stage, which is only known once it has wrapped.
+     */
+    function alignLinks() {
+        benches.forEach((bench) => {
+            const link = bench.querySelector('.bench-link');
+            const stage = bench.querySelector('.bench-stage, .gallery-track');
+            if (!link || !stage) return;
+            const top = stage.offsetTop + stage.offsetHeight / 2 - link.offsetHeight / 2;
+            link.style.top = top + 'px';
+            link.style.translate = 'none';
+        });
+    }
+
     benches.forEach((bench) => {
         setUp[bench.dataset.bench]?.(bench);
         bench.dataset.ready = '';
     });
+
+    alignLinks();
+    // Re-measure when anything reflows: a resized window rewraps the notes, and the
+    // galleries and canvases settle after their own scripts have run.
+    new ResizeObserver(alignLinks).observe(document.body);
+    window.addEventListener('load', alignLinks);
 }());
