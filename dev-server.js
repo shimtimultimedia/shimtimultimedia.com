@@ -20,29 +20,13 @@ import { watch } from 'node:fs';
 import { join, extname, normalize, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { createReadStream } from 'node:fs';
+import { TYPES, SEEKABLE } from './dev-mime.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
 
-const TYPES = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.xml': 'application/xml; charset=utf-8',
-  '.txt': 'text/plain; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
-  '.gif': 'image/gif',
-  '.ico': 'image/x-icon',
-  '.ttf': 'font/ttf',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-};
+// The table lives in dev-mime.js so a test can check it without starting a listener.
 
 // Connected browser tabs, held open as Server-Sent Event streams.
 const clients = new Set();
@@ -76,6 +60,46 @@ function send(res, status, type, body, extraHeaders = {}) {
     ...extraHeaders,
   });
   res.end(body);
+}
+
+const warned = new Set();
+
+/*
+ * Byte-range delivery, streamed rather than buffered.
+ *
+ * readFile() on a 5MB clip pulls the whole thing into memory for every seek; a stream
+ * hands over only the slice asked for. An unsatisfiable range gets a 416 rather than a
+ * confusing empty 206.
+ */
+function sendRange(req, res, file, size, type) {
+  const header = req.headers.range;
+  if (!header || !/^bytes=/.test(header)) {
+    res.writeHead(200, {
+      'Content-Type': type,
+      'Content-Length': size,
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'no-store, max-age=0',
+    });
+    return createReadStream(file).pipe(res);
+  }
+
+  const [rawStart, rawEnd] = header.replace('bytes=', '').split('-');
+  const start = rawStart ? Number(rawStart) : 0;
+  const end = rawEnd ? Math.min(Number(rawEnd), size - 1) : size - 1;
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end || start >= size) {
+    res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+    return res.end();
+  }
+
+  res.writeHead(206, {
+    'Content-Type': type,
+    'Content-Range': `bytes ${start}-${end}/${size}`,
+    'Content-Length': end - start + 1,
+    'Accept-Ranges': 'bytes',
+    'Cache-Control': 'no-store, max-age=0',
+  });
+  return createReadStream(file, { start, end }).pipe(res);
 }
 
 const server = createServer(async (req, res) => {
@@ -115,7 +139,23 @@ const server = createServer(async (req, res) => {
     const info = await stat(target);
     const file = info.isDirectory() ? join(target, 'index.html') : target;
     const ext = extname(file).toLowerCase();
-    const type = TYPES[ext] || 'application/octet-stream';
+    const type = TYPES[ext];
+    if (!type) {
+      // Loud, once per extension. The old silent fallback to octet-stream is precisely
+      // what let mislabelled media ship unnoticed.
+      if (!warned.has(ext)) {
+        warned.add(ext);
+        console.warn(`  [dev] no MIME type for "${ext}" (${relative(ROOT, file)})`
+          + ' - add it to dev-mime.js; serving as application/octet-stream');
+      }
+    }
+
+    // Media is requested in pieces. Answering a Range request with the whole file and a
+    // 200 leaves the scrub bar inert, which reads as a broken player rather than a
+    // broken server.
+    if (SEEKABLE.has(ext)) {
+      return sendRange(req, res, file, info.size, type);
+    }
 
     if (ext === '.html') {
       const html = await readFile(file, 'utf8');
@@ -125,7 +165,7 @@ const server = createServer(async (req, res) => {
       return send(res, 200, type, injected);
     }
 
-    return send(res, 200, type, await readFile(file));
+    return send(res, 200, type || 'application/octet-stream', await readFile(file));
   } catch {
     // Serve the real 404 page so it can be worked on like any other page.
     try {

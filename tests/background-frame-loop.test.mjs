@@ -23,6 +23,15 @@
  * Run with:  node --expose-gc tests/background-frame-loop.test.mjs
  */
 
+if (typeof global.gc !== 'function') {
+  console.error('');
+  console.error('  background-frame-loop: cannot run without --expose-gc.');
+  console.error('  Without it the heap cannot be collected on demand, so growth here'
+    + ' measures uncollected garbage rather than a leak - which reads as a failure.');
+  console.error('  Run:  node --expose-gc tests/background-frame-loop.test.mjs');
+  process.exit(2);
+}
+
 import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
@@ -95,7 +104,7 @@ if (!pending) {
 
 const sampleEvery = Math.round(FRAMES / 8);
 const heap = () => {
-    if (global.gc) global.gc();
+    global.gc();
     return process.memoryUsage().heapUsed / 1048576;
 };
 
