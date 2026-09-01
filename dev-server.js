@@ -19,11 +19,21 @@ import { readFile, stat } from 'node:fs/promises';
 import { watch } from 'node:fs';
 import { join, extname, normalize, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { createReadStream } from 'node:fs';
 import { TYPES, SEEKABLE, NEVER_SERVED } from './dev-mime.js';
 
-const ROOT = dirname(fileURLToPath(import.meta.url));
+/*
+ * Root, so one server can serve either site.
+ *
+ * Defaults to this file's own directory, which is what it always did. --root points it at
+ * another checkout instead - the portfolio lives in a separate repository and does not
+ * need a second copy of this file to be viewable alongside the studio site.
+ */
+const rootFlag = process.argv.indexOf('--root');
+const ROOT = rootFlag !== -1 && process.argv[rootFlag + 1]
+  ? resolve(process.argv[rootFlag + 1])
+  : dirname(fileURLToPath(import.meta.url));
 /*
  * Port, in order of preference: --port on the command line, then PORT in the environment,
  * then 3000. The flag exists because the scheduled task that keeps this running cannot set
