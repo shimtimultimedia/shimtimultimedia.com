@@ -21,7 +21,18 @@ permissions:
   contents: read
 
 env:
-  SITE_URL: https://shimtimultimedia.com/
+  # The address that actually serves this site.
+  #
+  # This pointed at https://shimtimultimedia.com/, which does not. That domain is
+  # registered but unreachable: the IONOS account holding it was closed and its
+  # nameservers still point at a cancelled Wix account, so the URL currently returns 404
+  # from Wix. Every Lighthouse run against it was auditing someone else's error page -
+  # scoring a site that is not this one, and failing http-status-code for a reason no
+  # commit here could fix.
+  #
+  # Keep this in step with the canonical host asserted in quality.yml. When DNS resolves
+  # to GitHub Pages, both change together.
+  SITE_URL: https://shimtimultimedia.github.io/shimtimultimedia.com/
 
 jobs:
   links:
