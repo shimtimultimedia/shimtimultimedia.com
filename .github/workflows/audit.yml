@@ -57,12 +57,17 @@ jobs:
           #
           # The trade is explicit: a genuinely dead link on one of those hosts will not be
           # caught here. Everything self-hosted still is, and that is where our mistakes go.
+          #
+          # localhost is excluded because README.md documents how to run the dev server.
+          # That is an instruction to a reader, not a link to a live resource, and CI has
+          # nothing listening on port 3000. Reporting it as a broken link is noise.
           args: >-
             --no-progress
             --max-retries 3
             --timeout 20
             --include-mail=false
             --accept 200,206,301,302,403,429,999
+            --exclude ^http://localhost
             .
           fail: true
 

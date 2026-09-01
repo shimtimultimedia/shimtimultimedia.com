@@ -6,7 +6,12 @@ menu, an animated particle grid, and a rotating field of concentric rings.
 **Status:** alpha. The site is served publicly by GitHub Pages but is marked `noindex`
 until launch. See [LAUNCH.md](LAUNCH.md) for the full go-live checklist.
 
-**Live:** https://shimtimultimedia.com/
+**Live:** https://shimtimultimedia.github.io/shimtimultimedia.com/
+
+**Custom domain:** `shimtimultimedia.com` is registered and owned, but does not currently
+reach this site. Its nameservers still point at a cancelled Wix account and the IONOS
+account that manages it has been closed, so the domain answers 404 from Wix. Recovering it
+needs the auth code from IONOS support; see [LAUNCH.md](LAUNCH.md).
 
 ## Stack
 
