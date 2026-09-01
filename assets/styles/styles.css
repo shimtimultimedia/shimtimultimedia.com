@@ -299,6 +299,14 @@ canvas#backgroundCanvas {
   pointer-events: auto;
 }
 
+/* The wordmark is the page's <h1>. It is a heading for structure, not for size, so the
+   browser's default margin and 2em type are cleared and it keeps the panel's own. */
+#shimtiPanel h1 {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+}
+
 #shimtiPanel img {
   height: 1.5em;
   aspect-ratio: 1;

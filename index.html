@@ -214,7 +214,12 @@
     <!-- alt="" because the company name is already spelled out in the span beside it.
          A description here would make a screen reader announce the brand twice over. -->
     <img src="assets/images/logo.png" alt="" width="24" height="24">
-    <span>SHIMTI MULTIMEDIA</span>
+    <!-- The page's <h1>, rather than a <span> beside one that does not exist. This was the
+         only page on the site with no top-level heading: a screen reader arrived at the
+         machinery with nothing naming it, and a search result had no heading to show. The
+         studio name was already here in plain sight, so it becomes the heading rather than
+         a hidden one being invented for the purpose. -->
+    <h1>SHIMTI MULTIMEDIA</h1>
   </div>
   <!--
     Radial menu. A <nav> landmark, with the accessible name on the landmark rather than

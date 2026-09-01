@@ -41,9 +41,18 @@ const PORT = Number(portFlag !== -1 && process.argv[portFlag + 1])
 const clients = new Set();
 
 // Injected into every HTML response. Kept deliberately small and dependency-free.
-const LIVE_RELOAD_SNIPPET = `
-<script>
-(function () {
+/*
+ * The live-reload client, served as a file rather than inlined into the page.
+ *
+ * WHY THIS IS NOT INLINE
+ *
+ * Every page here ships a Content-Security-Policy of script-src 'self', and an inline
+ * <script> violates it. The snippet used to be injected inline, so the browser blocked it
+ * on every single page load and live reload never once worked - silently, because the only
+ * evidence was a CSP error in a console nobody had open. Served from the same origin it
+ * satisfies 'self' and needs no change to the policy the real site depends on.
+ */
+const RELOAD_CLIENT = `(function () {
   var source = new EventSource('/__dev/reload');
   source.addEventListener('css', function () {
     // Re-request each stylesheet with a fresh query string. Replacing the href
@@ -58,9 +67,9 @@ const LIVE_RELOAD_SNIPPET = `
   source.addEventListener('reload', function () { location.reload(); });
   source.addEventListener('open', function () { console.log('[dev] live reload connected'); });
   source.onerror = function () { /* server restarting; EventSource retries on its own */ };
-})();
-</script>
-`;
+})();`;
+
+const LIVE_RELOAD_SNIPPET = '<script src="/__dev/reload-client.js" defer></script>';
 
 function send(res, status, type, body, extraHeaders = {}) {
   res.writeHead(status, {
@@ -120,6 +129,11 @@ const server = createServer(async (req, res) => {
     url = new URL(req.url, `http://localhost:${PORT}`);
   } catch {
     return send(res, 400, 'text/plain', 'Bad Request');
+  }
+
+  // The live-reload client script.
+  if (url.pathname === '/__dev/reload-client.js') {
+    return send(res, 200, 'text/javascript; charset=utf-8', RELOAD_CLIENT);
   }
 
   // Live-reload event stream.
