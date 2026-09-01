@@ -4,7 +4,7 @@
  * Restores original behavior from title-panel.js, handling logo load errors with minimal logging.
  * Uses shared ShimtiUtils.Logger for debugging, with verbose logging toggled by VERBOSE_LOGGING.
  * @requires DOM element with id 'shimtiPanel' containing an img element
- * @requires assets/images/logo.svg
+ * @requires assets/images/logo.png
  * @requires window.ShimtiUtils.Logger from ui-elements.js
  */
 
