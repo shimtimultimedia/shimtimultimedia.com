@@ -99,14 +99,39 @@ jobs:
       # So the invariant is asserted rather than trusted: the old host must appear in
       # nothing that is served. Docs are excluded on purpose - LAUNCH.md has to be able to
       # name the old host to describe the DNS records.
-      - name: No stale host in served files
+      # The host is declared once, here, rather than baked into the assertion. The gate
+      # still enforces the same invariant - one host across every served absolute URL -
+      # but reads which host that is from a single line, so the day the custom domain
+      # resolves this flips with the site in one edit instead of the gate having to be
+      # argued with.
+      #
+      # It names the github.io host on purpose. The custom domain is registered but
+      # unreachable: the IONOS account holding it was closed and its nameservers still
+      # point at a cancelled Wix account, so shimtimultimedia.com serves someone else's
+      # page. Canonicals naming it would aim search engines and link scrapers at a host
+      # that cannot serve this site.
+      - name: One canonical host across all served files
         run: |
-          if grep -rn "shimtimultimedia\.github\.io" \
+          CANONICAL="shimtimultimedia.github.io"
+          OTHER="shimtimultimedia.com"
+
+          # Matched at the host position only. "shimtimultimedia.com" is also this
+          # repository's NAME, so it appears as a path segment in every correct github.io
+          # URL - a plain substring search would flag every well-formed link on the site.
+          if grep -rnE "https?://${OTHER}([/\"'[:space:]]|$)" \
                --include='*.html' --include='*.xml' --include='*.txt' .; then
-            echo "::error::Old host still referenced in a served file - the domain migration is incomplete."
+            echo "::error::Absolute URLs name ${OTHER}, but the canonical host is ${CANONICAL}."
             exit 1
           fi
-          echo "All served absolute URLs use the canonical host."
+
+          # And the canonical host must actually be in use, so this cannot be passed by a
+          # site that has no absolute URLs left at all.
+          if ! grep -rqE "https?://${CANONICAL}/" \
+                 --include='*.html' --include='*.xml' --include='*.txt' .; then
+            echo "::error::Nothing names ${CANONICAL} - is the host declaration stale?"
+            exit 1
+          fi
+          echo "All served absolute URLs use ${CANONICAL}."
 
       # A CNAME with a carriage return in it is a domain with a carriage return in it, and
       # GitHub Pages will simply fail to match it.
