@@ -178,5 +178,145 @@
     "lang": "Estonian",
     "text": "Tere tulemast",
     "dir": "ltr"
+  },
+  {
+    "lang": "Korean",
+    "text": "환영합니다",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Bengali",
+    "text": "স্বাগত",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Ukrainian",
+    "text": "Ласкаво просимо",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Malay",
+    "text": "Selamat datang",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Persian",
+    "text": "خوش آمدید",
+    "dir": "rtl"
+  },
+  {
+    "lang": "Tamil",
+    "text": "வரவேற்பு",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Punjabi",
+    "text": "ਸੁਆਗਤ ਹੈ",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Telugu",
+    "text": "స్వాగతం",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Marathi",
+    "text": "स्वागत",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Amharic",
+    "text": "እንኳን ደህና መጡ",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Zulu",
+    "text": "Wamukelekile",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Hausa",
+    "text": "Barka da zuwa",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Somali",
+    "text": "Soo dhowow",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Igbo",
+    "text": "Nnoo",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Tigrinya",
+    "text": "እንቋዕ ብደሓን መፁ",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Xhosa",
+    "text": "Wamkelekile",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Shona",
+    "text": "Mhoro",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Tagalog",
+    "text": "Maligayang pagdating",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Burmese",
+    "text": "ကြိုဆိုပါတယ်",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Khmer",
+    "text": "ស្វាគមន៍",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Lao",
+    "text": "ຍິນດີຕ້ອນຮັບ",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Sinhala",
+    "text": "සාදරයෙන් පිළිගනිමු",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Nepali",
+    "text": "स्वागत छ",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Pashto",
+    "text": "ښه راغلاست",
+    "dir": "rtl"
+  },
+  {
+    "lang": "Malagasy",
+    "text": "Tongasoa",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Quechua",
+    "text": "Allinlla",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Guarani",
+    "text": "Tereg̃uahẽporãite",
+    "dir": "ltr"
+  },
+  {
+    "lang": "Maori",
+    "text": "Nau mai",
+    "dir": "ltr"
   }
 ]
