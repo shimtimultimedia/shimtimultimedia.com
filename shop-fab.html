@@ -9,8 +9,15 @@
        once the parser reaches this tag, and frame-ancestors, report-uri and sandbox are
        ignored entirely in meta form. It is placed immediately after charset - which must
        come first for the parser to decode the document correctly - and before anything
-       that fetches, so every resource this page loads is covered. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'inline-speculation-rules'; worker-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'none'">
+       that fetches, so every resource this page loads is covered.
+
+       frame-src names sketchfab.com, and this page is the only one on the site that
+       widens the policy at all. The viewers below are real Sketchfab embeds, and
+       default-src 'self' would block them silently - an empty rectangle, no error. The
+       grant is exactly one origin and exactly one directive: scripts, styles, images and
+       fetches from sketchfab.com remain blocked, so the iframe can run its own viewer and
+       nothing else. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'inline-speculation-rules'; worker-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; frame-src https://sketchfab.com; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Epics marketplace, and where the old Unreal Engine Marketplace and the Sketchfab store were folded together. The one to use if you are building in Unreal.">
   <meta name="author" content="Shimti Multimedia">
@@ -116,13 +123,37 @@
 
       <p class="section-intro">Epic&rsquo;s marketplace, and where the old Unreal Engine Marketplace and the Sketchfab store were folded together. The one to use if you are building in Unreal.</p>
 
-      <h2>What we sell there</h2>
+      <h2>What We Sell On FAB</h2>
 
-      <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464z"/></svg>
+      <div class="shelf-head">
+        <svg class="section-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464z"/></svg>
+        <p class="shop-visit"><a target="_blank" rel="noopener" href="https://www.fab.com/sellers/Shimtimultimedia">Visit the Fab store</a></p>
+      </div>
 
-      <p>Hats, helmets and blades &mdash; the Nemes Headdress, the broadsword set, the spears &mdash; packaged so they drop into an Unreal project without rework.</p>
+      <p>Game-ready 3D models, sold to developers to put straight into the games they
+        are building. Each one rigged, PBR-textured, unwrapped and built to a polygon
+        budget, so it survives contact with a real engine instead of only looking right
+        in a render. Delivered in the formats Unreal expects, which means it drops into
+        a project and works rather than needing a day of rework first.</p>
 
-      <p class="shop-visit"><a target="_blank" rel="noopener" href="https://www.fab.com/sellers/Shimtimultimedia">Visit the Fab store</a></p>
+      <figure class="model-embed">
+        <iframe src="https://sketchfab.com/models/6e86f0c9a4164d41915ccd8409fbb736/embed"
+                title="Egyptian Pharaoh Nemes (Tapered) - Rigged PBR - interactive 3D model"
+                loading="lazy" frameborder="0" allowfullscreen
+                allow="autoplay; fullscreen; xr-spatial-tracking"></iframe>
+        <figcaption>Egyptian Pharaoh Nemes (Tapered) &mdash; Rigged PBR &mdash;
+          <a target="_blank" rel="noopener" href="https://sketchfab.com/3d-models/egyptian-pharaoh-nemes-tapered-rigged-pbr-6e86f0c9a4164d41915ccd8409fbb736">open on Sketchfab</a></figcaption>
+      </figure>
+
+      <figure class="model-embed">
+        <iframe src="https://sketchfab.com/models/e8ab80aa364f4b289ff16826c26e2612/embed"
+                title="Egyptian Pharaoh Nemes Headdress - Rigged PBR - interactive 3D model"
+                loading="lazy" frameborder="0" allowfullscreen
+                allow="autoplay; fullscreen; xr-spatial-tracking"></iframe>
+        <figcaption>Egyptian Pharaoh Nemes Headdress &mdash; Rigged PBR &mdash;
+          <a target="_blank" rel="noopener" href="https://sketchfab.com/3d-models/egyptian-pharaoh-nemes-headdress-rigged-pbr-e8ab80aa364f4b289ff16826c26e2612">open on Sketchfab</a></figcaption>
+      </figure>
+
 
     </article>
   </main>

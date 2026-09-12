@@ -413,6 +413,57 @@ span.shop-link {
   outline-offset: 3px;
 }
 
+/* A live 3D viewer embedded from Sketchfab.
+   The iframe is sized by aspect-ratio rather than by the width/height Sketchfab's own
+   snippet hardcodes: those are fixed pixels, which overflow a phone. Reserving the box
+   with aspect-ratio also means the caption below never jumps once the viewer loads. */
+.model-embed {
+  margin: 2rem 0 0;
+}
+
+.model-embed iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+
+.model-embed figcaption {
+  margin: 0.55rem 0 0;
+  color: var(--muted-color);
+  font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+}
+
+/* The shelf icon and the page's one action, on a line together.
+   The icon alone left the button stranded under a paragraph, several lines from the
+   heading it belongs to. Wrapping puts the button under the icon on a narrow screen
+   rather than letting either shrink. */
+.shelf-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.1rem;
+  margin: 0 0 1.25rem;
+}
+
+/* Both children carry their own top margin for the stacked layout they used to be in;
+   inside this row it would push them out of alignment with the icon. */
+.shelf-head .shop-visit,
+.shelf-head .shop-status {
+  margin: 0;
+}
+
+/* The icon carries a 1.1rem bottom margin for the stacked layout it was built for.
+   Left on, flex centres its MARGIN box, which sits the visible cube half a rem above the
+   button beside it - close enough to look like a mistake rather than a choice. */
+.shelf-head .section-icon {
+  flex: none;
+  margin: 0;
+}
+
 /* The outbound link on a shop subpage.
    Given a border and padding rather than left as body text: it is the one action on the
    page, and it leaves the site, so it should not read as another sentence. */
