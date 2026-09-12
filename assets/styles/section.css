@@ -413,6 +413,39 @@ span.shop-link {
   outline-offset: 3px;
 }
 
+/* The outbound link on a shop subpage.
+   Given a border and padding rather than left as body text: it is the one action on the
+   page, and it leaves the site, so it should not read as another sentence. */
+.shop-visit {
+  margin: 1.5rem 0 0;
+}
+
+.shop-visit a {
+  display: inline-block;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: clamp(0.85rem, 1.7vw, 1rem);
+  letter-spacing: 0.06em;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.shop-visit a:hover,
+.shop-visit a:focus-visible {
+  background: var(--panel-bg);
+  box-shadow: 0 0 16px 1px rgba(136, 204, 255, 0.35);
+}
+
+/* Said plainly where a shelf has nothing on it yet. Muted, because it is a statement of
+   fact about the shop rather than something to act on - and stated at all because a card
+   that leads to an empty storefront is worse than one that says so first. */
+.shop-status {
+  margin: 1.5rem 0 0;
+  color: var(--muted-color);
+  font-style: italic;
+}
+
 /* Only ever a credit a licence demands, never a description - the alt text carries what
    the picture shows. */
 .section-figure figcaption {
