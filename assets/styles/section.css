@@ -417,8 +417,26 @@ span.shop-link {
    The iframe is sized by aspect-ratio rather than by the width/height Sketchfab's own
    snippet hardcodes: those are fixed pixels, which overflow a phone. Reserving the box
    with aspect-ratio also means the caption below never jumps once the viewer loads. */
-.model-embed {
+/* Two across, because this page will eventually carry a lot of these and a single
+   column of full-width viewers would turn it into a very long scroll. minmax(0, 1fr)
+   rather than 1fr: a grid track's default minimum is auto, which refuses to go below
+   the iframe's own width and would push the second column off the page. */
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
   margin: 2rem 0 0;
+}
+
+/* One column where two would leave each viewer too small to turn a model in. */
+@media (max-width: 40rem) {
+  .model-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.model-embed {
+  margin: 0;
 }
 
 .model-embed iframe {
