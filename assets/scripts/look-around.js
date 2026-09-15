@@ -123,6 +123,9 @@
 
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     stage.classList.remove('is-recentring');
+    // Hold the composition still for the duration - see #stage.is-gesturing in
+    // styles.css for why a moving one cannot be scaled smoothly.
+    stage.classList.add('is-gesturing');
 
     const list = Array.from(pointers.values());
     if (list.length === 1) {
@@ -185,6 +188,7 @@
     if (pointers.size === 0) {
       dragging = false;
       pinchStartDistance = 0;
+      stage.classList.remove('is-gesturing');
       settle();
     } else if (pointers.size === 1) {
       // Second finger lifted mid-pinch: continue as a drag from where that finger is,

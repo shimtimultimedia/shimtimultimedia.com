@@ -141,6 +141,31 @@ canvas#backgroundCanvas {
   touch-action: none;
 }
 
+/*
+ * While a finger is down the composition holds still.
+ *
+ * Ten rings animate here continuously, inside the layer the gesture transforms. Scaling a
+ * layer whose contents are still moving means the browser must re-rasterise that whole
+ * subtree at a new scale on every frame - a 1200px ring field at 2.8x device pixels - and
+ * on a phone it cannot keep up, so tiles arrive late and parts of the picture visibly pop
+ * in and out. That is the flicker, and it gets worse the more the gesture actually works.
+ *
+ * Pausing them makes the gesture what it is supposed to be: a still picture being moved,
+ * which is exactly how a phone treats a photograph. The rings resume the moment the
+ * finger lifts, from where they were - animation-play-state does not reset them.
+ *
+ * will-change is set only for the duration. Permanently it would hold a promoted layer,
+ * and its memory, for a gesture that may never happen.
+ */
+#stage.is-gesturing {
+  will-change: transform;
+}
+
+#stage.is-gesturing .ring-spin-cw,
+#stage.is-gesturing .ring-spin-ccw {
+  animation-play-state: paused;
+}
+
 /* Only while returning to centre. During the drag the transform must follow the finger
    exactly, and a transition there would make it lag behind by its own duration. */
 #stage.is-recentring {
