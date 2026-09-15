@@ -46,7 +46,19 @@ if ('serviceWorker' in navigator && !LOCAL) {
         // /shimtimultimedia.com/, so an absolute '/sw.js' would resolve to the user-site
         // root and register nothing. This resolves correctly there and on a custom domain
         // later, with no edit.
-        navigator.serviceWorker.register('sw.js').catch((error) => {
+        //
+        // updateViaCache: 'none' applies to THIS script, not to what it caches.
+        //
+        // By default the browser may serve sw.js itself from the ordinary HTTP cache for
+        // up to 24 hours. The worker decides how every other request on the site is
+        // answered, so a fix to the worker is the one update that must not wait a day to
+        // arrive - and the symptom if it does is indistinguishable from the fix not
+        // working, because the old worker is still the one answering.
+        //
+        // 'none' makes the browser revalidate sw.js against the network on every update
+        // check. It costs one conditional request and buys the guarantee that a corrected
+        // worker takes effect on the next visit rather than whenever a cache expires.
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch((error) => {
             const log = window.ShimtiUtils && window.ShimtiUtils.Logger;
             if (log) new log('ServiceWorker').warn('Registration failed', { error: String(error) });
         });
