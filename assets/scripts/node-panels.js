@@ -948,7 +948,15 @@
     const grabX = event.clientX - node.left;
     const grabY = event.clientY - node.top;
 
-    const move = (e) => place(node, e.clientX - grabX, e.clientY - grabY, true);
+    // A mouse keeps the circuit-grid precision expected on desktop. A finger needs
+    // direct 1:1 tracking: snapping every pointermove makes a small phone panel feel as
+    // though it is resisting the drag, then jumping away from the fingertip.
+    const move = (e) => place(
+      node,
+      e.clientX - grabX,
+      e.clientY - grabY,
+      !COARSE_POINTER,
+    );
 
     const end = (e) => {
       try {

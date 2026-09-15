@@ -959,6 +959,51 @@ canvas#backgroundCanvas {
    geometry; the narrow phone viewport simply hides what lies beyond its edges. This
    follows the max-width rules so pointer type, rather than width, wins on a phone. */
 @media (pointer: coarse) {
+  .node-panel {
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 90ms ease, background-color 90ms ease,
+      box-shadow 90ms ease, outline-color 90ms ease;
+  }
+
+  .node-panel.is-dragging {
+    border-color: #dff8ff;
+    background-color: rgba(16, 45, 60, 0.96);
+    box-shadow:
+      0 0 0 3px rgba(111, 224, 255, 0.34),
+      0 0 20px 7px rgba(83, 204, 255, 0.38);
+    outline: 2px solid rgba(223, 248, 255, 0.9);
+    outline-offset: 3px;
+  }
+
+  a[data-section].is-holding path {
+    filter: drop-shadow(0 0 8px rgba(180, 235, 255, 0.95));
+  }
+
+  .section-panel {
+    bottom: 64px;
+    width: min(320px, 82vw);
+    max-height: 32vh;
+  }
+
+  .section-panel-surface {
+    gap: 0.45rem;
+    padding: 0.65rem 0.75rem;
+    backdrop-filter: blur(3px);
+  }
+
+  .section-panel-image {
+    display: none;
+  }
+
+  .section-panel-title {
+    font-size: 0.85rem;
+  }
+
+  .section-panel-copy {
+    font-size: 0.68rem;
+    line-height: 1.45;
+  }
+
   #ringTitle {
     width: max(100vmin, 1388px);
     height: max(100vmin, 1388px);
