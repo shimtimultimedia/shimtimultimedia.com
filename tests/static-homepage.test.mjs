@@ -9,6 +9,7 @@ const html = read('index.html');
 const styles = read('assets/styles/styles.css');
 const panels = read('assets/scripts/node-panels.js');
 const sectionPanels = read('assets/scripts/section-panels.js');
+const orientationRecovery = read('assets/scripts/orientation-recovery.js');
 
 assert(!html.includes('look-around.js'), 'homepage must not load a stage gesture handler');
 assert(/#stage\s*{[\s\S]*?touch-action:\s*none/.test(styles), 'stage must reject browser gestures');
@@ -38,5 +39,10 @@ assert(!sectionPanels.includes('Touch two-step'),
   'a normal touch tap must not be converted into preview-first navigation');
 assert(/@media \(pointer: coarse\)[\s\S]*?\.section-panel\s*{[\s\S]*?width:\s*min\(320px, 82vw\)/.test(styles),
   'touch preview panels must use the compact phone dimensions');
+assert(html.includes('assets/scripts/orientation-recovery.js'),
+  'homepage must load the external orientation recovery under the script CSP');
+assert(/innerWidth > layoutWidth \* 1\.25/.test(orientationRecovery)
+  && /visualScale < 0\.8/.test(orientationRecovery),
+  'orientation recovery must require both the retained-width and browser-scale defects');
 
 console.log('  static-homepage: ok (fixed crop, direct panel dragging, tap navigation, hold previews)');
