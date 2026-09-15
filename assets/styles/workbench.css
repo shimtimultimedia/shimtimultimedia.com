@@ -364,6 +364,41 @@
   object-fit: cover;
 }
 
+/*
+ * Minimum size for the instrument controls.
+ *
+ * .bench-button had no rule of its own, so every one of these was a bare user-agent
+ * button: 13px type in 1px of padding, which measures 23x21 on a phone. WCAG 2.2
+ * SC 2.5.8 sets 24x24 as the floor, and Apple and Google both ask for 44 on touch.
+ *
+ * The floor is raised for everyone and raised further only where the pointer is coarse,
+ * so a mouse keeps the compact controls the instruments were designed around and a
+ * finger gets something it can actually hit. Only the box grows - type, border and
+ * colour are untouched, so nothing about these controls looks different on a desktop.
+ */
+.bench-button {
+  min-width: 24px;
+  min-height: 24px;
+}
+
+/* A range input is 16px tall by default, which is a 16px-tall target on a timeline
+   somebody is trying to scrub with a fingertip. Height here grows the control box and
+   its hit area; the track and thumb are drawn centred inside it and keep their size. */
+.transport-scrub {
+  min-height: 24px;
+}
+
+@media (pointer: coarse) {
+  .bench-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .transport-scrub {
+    min-height: 44px;
+  }
+}
+
 /* The playlist: numbered buttons, not a list of filenames. */
 .bench-playlist {
   display: flex;
