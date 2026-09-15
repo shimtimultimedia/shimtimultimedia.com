@@ -299,7 +299,11 @@
   transition: opacity 140ms;
 }
 
+/* :focus as well as :focus-visible. A touch device has no hover at all, and tapping a
+   focusable element does not usually satisfy :focus-visible - browsers reserve that for
+   keyboard intent - so on a phone these tooltips could not be opened by any means. */
 .pipe-node:hover > .pipe-tip,
+.pipe-node:focus > .pipe-tip,
 .pipe-node:focus-visible > .pipe-tip {
   opacity: 1;
   visibility: visible;
@@ -322,6 +326,33 @@
   left: auto;
   right: 0;
   transform: none;
+}
+
+/*
+ * On a phone a node-anchored tooltip cannot fit. It is 15rem wide, the row wraps, and a
+ * node near the right edge carries its tooltip off the screen - measured 27px past the
+ * edge at 375px. The first-child and last-child anchoring above cannot catch that,
+ * because those are DOM positions while the overflow depends on where a node WRAPS to,
+ * so the node that ends up visually last on a line is usually neither of them.
+ *
+ * Below 600px the tooltip stops being anchored to its node and becomes a bar pinned
+ * across the bottom of the screen - a width that always exists, whatever the row did.
+ * Only one tooltip is ever open, so they cannot collide with each other.
+ */
+@media (max-width: 600px) {
+  .pipe-tip,
+  .pipe-node:first-child > .pipe-tip,
+  .pipe-node:last-child > .pipe-tip {
+    position: fixed;
+    top: auto;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+    transform: none;
+    font-size: 0.8rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
