@@ -131,12 +131,34 @@ canvas#backgroundCanvas {
 
 /* Arced wordmark. Background, like the ring field it orbits with - the menu and the
    two nodes are the only foreground. */
+/*
+ * The wordmark ring has to clear the menu icons, and the two are sized by different
+ * rules - which is why they collide on a phone and nowhere else.
+ *
+ * #radialMenu is a fixed 400px square, so the icons sit at a constant 125px radius and
+ * occupy 100-150px from centre on every screen. The wordmark does the opposite: this
+ * element filled the viewport, and a 200-unit viewBox fitted to the smaller side puts
+ * the arc at about 0.30 of that side. Above roughly 500px the arc clears the icons
+ * comfortably; below it the arc shrinks into them. At 375px it lands at 113px, drawing
+ * the text straight through the lightbulb and the envelope.
+ *
+ * A media query alone would only move the collision to whatever width the query did not
+ * cover. The box is given a floor instead: never smaller than the size at which the arc
+ * clears the icons. 640px puts the glyph baseline near 166px, comfortably outside their
+ * 150px edge. At or above 640px this evaluates to exactly 100vmin, so the desktop layout
+ * is untouched. If #radialMenu's 400px ever changes, this number follows it.
+ *
+ * The floor alone is not enough. Pushing the ring out also pushes the text outward from
+ * its baseline, and at the default 8-unit size the far edge lands wider than a 375px
+ * screen. The size is reduced below 600px to buy that room back - see .ring-title.
+ */
 #ringTitle {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  width: max(100vmin, 640px);
+  height: max(100vmin, 640px);
+  transform: translate(-50%, -50%);
   z-index: 11;
   pointer-events: none;
   background: transparent;
@@ -617,6 +639,17 @@ canvas#backgroundCanvas {
      the visitor needs in order to choose a section. */
   .section-panel-image {
     aspect-ratio: 21 / 9;
+  }
+}
+
+/* The wordmark ring is pushed outward on small screens so it clears the menu icons
+   (see #ringTitle). Text on a path grows outward from its baseline, so at the default
+   8-unit size the ring's far edge would then sit wider than the screen. Smaller type
+   keeps the whole ring on a phone, and it is set here rather than on the element because
+   the font-size attribute in the markup is what this has to beat. */
+@media (max-width: 600px) {
+  .ring-title {
+    font-size: 5.5px;
   }
 }
 
