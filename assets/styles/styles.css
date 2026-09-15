@@ -126,44 +126,28 @@ canvas#backgroundCanvas {
      on the glass; this is what the page looks like before it ever does. */
   transform: translate3d(0, 0, 0);
 
-  /*
-   * Hands touch gestures to look-around.js rather than the browser.
-   *
-   * Native pinch-zoom cannot work on this page: every layer is position: fixed, so it is
-   * positioned against the LAYOUT viewport while native zoom moves the VISUAL one. The
-   * moment the two diverge the layers stop agreeing with each other and the composition
-   * visibly comes apart. Turning it off here is what lets the scripted version - one
-   * transform on one element, which cannot desynchronise - take over.
-   *
-   * Scoped to this element on this page. Every other page on the site is an ordinary
-   * document where the browser's zoom behaves correctly and is left alone.
-   */
-  touch-action: none;
+  /* One finger belongs to the translated composition. Two-finger browser zoom stays
+     available for accessibility; look-around.js deliberately implements no scaling. */
+  touch-action: pinch-zoom;
 }
 
 /*
- * While a finger is down the composition holds still.
- *
- * Ten rings animate here continuously, inside the layer the gesture transforms. Scaling a
- * layer whose contents are still moving means the browser must re-rasterise that whole
- * subtree at a new scale on every frame - a 1200px ring field at 2.8x device pixels - and
- * on a phone it cannot keep up, so tiles arrive late and parts of the picture visibly pop
- * in and out. That is the flicker, and it gets worse the more the gesture actually works.
- *
- * Pausing them makes the gesture what it is supposed to be: a still picture being moved,
- * which is exactly how a phone treats a photograph. The rings resume the moment the
- * finger lifts, from where they were - animation-play-state does not reset them.
- *
- * will-change is set only for the duration. Permanently it would hold a promoted layer,
- * and its memory, for a gesture that may never happen.
+ * Translation uses the already-painted texture. Promote the phone stage before the first
+ * touch so the initial drag cannot incur layer creation. Pinch zoom belongs to the browser;
+ * look-around.js never scales this large SVG/canvas subtree.
  */
-#stage.is-gesturing {
-  will-change: transform;
-}
+@media (pointer: coarse) {
+  #stage {
+    will-change: transform;
+  }
 
-#stage.is-gesturing .ring-spin-cw,
-#stage.is-gesturing .ring-spin-ccw {
-  animation-play-state: paused;
+  /* Chrome keeps each running SVG transform as a separate composited layer even when
+     its parent only translates. The phone exceeded its layer budget and checkerboarded
+     while panning. Mobile uses the same artwork as a static 29-layer composition; the
+     animated desktop presentation is unchanged. */
+  #stage * {
+    animation: none !important;
+  }
 }
 
 /* Only while returning to centre. During the drag the transform must follow the finger
@@ -203,6 +187,10 @@ canvas#backgroundCanvas {
   left: 50%;
   width: 100vmin;
   height: 100vmin;
+  /* The field intentionally extends to radius 191 around the 100-unit centre. Let that
+     geometry continue beyond this 200-unit SVG viewport; html/body still clip at the
+     browser edge, so landscape screens no longer expose a hard square cutoff. */
+  overflow: visible;
   transform: translate(-50%, -50%);
   z-index: 10;
   pointer-events: none;
@@ -227,6 +215,8 @@ canvas#backgroundCanvas {
   #backgroundRings {
     width: max(100vmin, 1200px);
     height: max(100vmin, 1200px);
+    /* Zooming out or panning reveals geometry outside the SVG's own viewport. */
+    overflow: visible;
   }
 }
 

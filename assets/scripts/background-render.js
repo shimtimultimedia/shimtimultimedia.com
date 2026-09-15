@@ -713,7 +713,8 @@ function createBackgroundField(canvas) {
          * removed completely at the centre and returns gradually outward - a falloff
          * rather than a cut. Baked into the bitmap, so it costs nothing per frame.
          */
-        const reach = BACKGROUND_CONFIG.HOLE_RADIUS + BACKGROUND_CONFIG.GRID_FADE;
+        const reach = BACKGROUND_CONFIG.HOLE_RADIUS
+            + (sizing.gridFade ?? BACKGROUND_CONFIG.GRID_FADE);
         const hole = bufCtx.createRadialGradient(cx, cy, 0, cx, cy, reach);
         hole.addColorStop(0, 'rgba(0, 0, 0, 1)');
         hole.addColorStop(BACKGROUND_CONFIG.HOLE_RADIUS / reach, 'rgba(0, 0, 0, 0.92)');
