@@ -108,6 +108,52 @@ canvas#backgroundCanvas {
 
 /* Background Ring Field */
 /*
+ * The stage holds every layer the homepage composes, so one transform moves all of them
+ * together - see the comment on #stage in index.html for why that has to be one piece.
+ *
+ * inset: 0 makes this box exactly the viewport, so children asking for top:0/left:0 and
+ * 100% resolve to what they did before it existed. It is the viewport in both
+ * orientations, so nothing here needs to know which way the phone is held.
+ *
+ * translate3d rather than translate: it keeps the whole composition on its own
+ * compositor layer, so dragging moves an already-painted texture instead of repainting a
+ * particle canvas and a ring field every frame.
+ */
+#stage {
+  position: fixed;
+  inset: 0;
+  /* The resting state. look-around.js writes this property directly while a finger is
+     on the glass; this is what the page looks like before it ever does. */
+  transform: translate3d(0, 0, 0);
+
+  /*
+   * Hands touch gestures to look-around.js rather than the browser.
+   *
+   * Native pinch-zoom cannot work on this page: every layer is position: fixed, so it is
+   * positioned against the LAYOUT viewport while native zoom moves the VISUAL one. The
+   * moment the two diverge the layers stop agreeing with each other and the composition
+   * visibly comes apart. Turning it off here is what lets the scripted version - one
+   * transform on one element, which cannot desynchronise - take over.
+   *
+   * Scoped to this element on this page. Every other page on the site is an ordinary
+   * document where the browser's zoom behaves correctly and is left alone.
+   */
+  touch-action: none;
+}
+
+/* Only while returning to centre. During the drag the transform must follow the finger
+   exactly, and a transition there would make it lag behind by its own duration. */
+#stage.is-recentring {
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #stage.is-recentring {
+    transition: none;
+  }
+}
+
+/*
  * The ring field is given the same size floor as the wordmark, and for the same reason.
  *
  * The radial menu is drawn in pixels - its icons sit 125px from centre on every screen -
