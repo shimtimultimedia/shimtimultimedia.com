@@ -176,12 +176,33 @@ canvas#backgroundCanvas {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: max(100vmin, 1200px);
-  height: max(100vmin, 1200px);
+  width: 100vmin;
+  height: 100vmin;
   transform: translate(-50%, -50%);
   z-index: 10;
   pointer-events: none;
   background: transparent;
+}
+
+/*
+ * The floor applies to touch screens only, and that scoping is the whole point.
+ *
+ * Applied everywhere, it also fires on any DESKTOP window whose smaller side is under
+ * 1200px - which is most windows that are not full screen on a large display. There the
+ * field becomes wider than the window and is cropped into a hard-edged band, with the
+ * outer rings cut off at the frame. That is a regression, and it is invisible when the
+ * only desktop you check is maximised on a 1397px-tall screen.
+ *
+ * A desktop window can be resized by the person using it, and when they make it smaller
+ * they expect the composition to fit what is left. A phone cannot be resized, and there
+ * the wheel - fixed at 250px - would otherwise fill two thirds of the field. So the phone
+ * gets the floor and the desktop keeps fitting the window, which is what each one needs.
+ */
+@media (pointer: coarse) {
+  #backgroundRings {
+    width: max(100vmin, 1200px);
+    height: max(100vmin, 1200px);
+  }
 }
 
 /* The radial menu. Positioned so it sits in front of the ring field and the wires
