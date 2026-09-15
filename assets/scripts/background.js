@@ -135,18 +135,6 @@
         let post = null;
         let field = null;
         let lastSizing = null;
-        const stage = document.getElementById('stage');
-        const playbackPaused = () => document.hidden
-            || !!(stage && stage.classList.contains('is-gesturing'));
-
-        function syncPlayback() {
-            const paused = playbackPaused();
-            if (post) post({ type: 'playback', paused });
-            else if (field) {
-                if (paused) field.stop();
-                else field.start();
-            }
-        }
         /*
          * Measured NOW, before either renderer is chosen.
          *
@@ -182,7 +170,7 @@
                 }
                 field = createBackgroundField(canvas);
                 field.setReducedMotion(reduceMotion());
-                if (!playbackPaused()) field.start();
+                field.start();
                 push();
                 bgLogger.log('Background initialised', { thread: 'main' });
             };
@@ -278,7 +266,6 @@
                         width: 1, height: 1, dpr: 1, spacing: GRID_SPACING, originX: 0, originY: 0,
                     },
                     reduceMotion: reduceMotion(),
-                    paused: playbackPaused(),
                 }, [offscreen]);
 
                 bgLogger.log('Background initialised', { thread: 'worker' });
@@ -302,15 +289,7 @@
          */
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) rebuildSoon();
-            syncPlayback();
         });
-
-        if (stage && typeof MutationObserver === 'function') {
-            new MutationObserver(syncPlayback).observe(stage, {
-                attributes: true,
-                attributeFilter: ['class'],
-            });
-        }
 
         if (reduceMotionQuery && reduceMotionQuery.addEventListener) {
             reduceMotionQuery.addEventListener('change', () => {

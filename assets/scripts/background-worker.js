@@ -55,7 +55,7 @@ self.addEventListener('message', (event) => {
                 throw error;
             }
 
-            if (!message.paused) field.start();
+            field.start();
             self.postMessage({ type: 'started' });
             break;
 
@@ -65,11 +65,6 @@ self.addEventListener('message', (event) => {
 
         case 'motion':
             field?.setReducedMotion(message.reduceMotion);
-            break;
-
-        case 'playback':
-            if (message.paused) field?.stop();
-            else field?.start();
             break;
 
         default:

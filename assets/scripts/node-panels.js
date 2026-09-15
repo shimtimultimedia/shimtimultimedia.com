@@ -40,6 +40,8 @@
   const KEY_STEP = 8;         // Pixels moved per arrow-key press.
   const KEY_STEP_LARGE = 32;  // With Shift held.
   const PORT_RADIUS = 5;
+  const COARSE_POINTER = !!(window.matchMedia
+    && window.matchMedia('(pointer: coarse)').matches);
 
   /*
    * `home` is the node's resting position: 12 o'clock above the wheel, 6 o'clock below.
@@ -47,10 +49,9 @@
    * `resizes` marks a node whose own content changes its width while the page is open,
    * and is therefore worth watching with a ResizeObserver. Only the welcome panel does:
    * it shrink-wraps a greeting that cycles through 36 languages. The title's text is
-   * fixed, so observing it would be watching for something that cannot happen. Its width
-   * still moves once when the webfont loads and again if the viewport crosses the point
-   * where its clamped font-size starts scaling - both already handled, by
-   * document.fonts.ready and by the resize handler.
+   * fixed, so observing it would be watching for something that cannot happen. A real
+   * viewport resize is handled separately; loading a font or changing copy only updates
+   * measurements and never moves either panel.
    */
   const NODES = [
     { id: 'shimtiPanel', label: 'Shimti Multimedia panel', home: 'top', resizes: false },
@@ -125,9 +126,11 @@
    */
   function homePosition(node) {
     const left = (window.innerWidth - node.w) / 2;
+    const topMargin = COARSE_POINTER ? EDGE_MARGIN : HOME_MARGIN_TOP;
+    const bottomMargin = COARSE_POINTER ? EDGE_MARGIN : HOME_MARGIN_BOTTOM;
     const top = node.home === 'bottom'
-      ? window.innerHeight - node.h - HOME_MARGIN_BOTTOM
-      : HOME_MARGIN_TOP;
+      ? window.innerHeight - node.h - bottomMargin
+      : topMargin;
     return { left, top };
   }
 
@@ -136,7 +139,10 @@
     if (node.userMoved) return;
     measureNode(node);
     const { left, top } = homePosition(node);
-    place(node, left, top, true);
+    // Desktop homes stay snapped to the circuit lattice. On a phone the requested home
+    // is the physical screen edge; snapping would pull each panel roughly one grid cell
+    // inward and make the top/bottom spacing visibly uneven.
+    place(node, left, top, !COARSE_POINTER);
   }
 
   /** Re-measures everything. For wheel rebuilds, where only the wires need updating. */
@@ -860,12 +866,15 @@
     if (snap) ({ left, top } = snapPortToGrid(node, left, top));
     const maxLeft = window.innerWidth - node.w - EDGE_MARGIN;
     const maxTop = window.innerHeight - node.h - EDGE_MARGIN;
-    const clear = clearOfWheel(
-      node,
-      clamp(left, EDGE_MARGIN, maxLeft),
-      clamp(top, EDGE_MARGIN, maxTop),
-      maxLeft,
-      maxTop
+    const bounded = {
+      left: clamp(left, EDGE_MARGIN, maxLeft),
+      top: clamp(top, EDGE_MARGIN, maxTop),
+    };
+    // On a phone the 400px desktop wheel is intentionally wider than the viewport, so
+    // no on-screen point can also be clear of it. Keep touch dragging bounded to the
+    // screen and allow the panels to cross the cropped wheel.
+    const clear = COARSE_POINTER ? bounded : clearOfWheel(
+      node, bounded.left, bounded.top, maxLeft, maxTop
     );
     node.left = clear.left;
     node.top = clear.top;
@@ -921,7 +930,7 @@
   function startDrag(node, event) {
     // Never begin a drag from something interactive inside the node.
     if (event.target.closest('a, button, input, select, textarea')) return;
-    if (event.button !== undefined && event.button !== 0) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
 
     event.preventDefault();
     // setPointerCapture throws NotFoundError if the pointer is no longer active - a
@@ -1001,14 +1010,6 @@
 
     drawWires();
 
-    // Orbitron loads after first paint and changes the branding panel's width, which
-    // moves its centre. Re-home once the font is ready so 12 o'clock is exact.
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => {
-        for (const node of nodes) applyHome(node);
-      });
-    }
-
     /*
      * Resize rebuilds every derived position, because on resize nothing is still valid.
      *
@@ -1087,9 +1088,9 @@
     }
 
     /*
-     * The welcome panel shrink-wraps its greeting, so its width changes every time the
-     * carousel cycles - and it must stay centred on the wheel's axis through every one
-     * of those changes.
+     * The welcome panel shrink-wraps its greeting, so its dimensions change every time
+     * the carousel cycles. Record that new size without changing its position: content
+     * changes must never look like an unsolicited drag or snap.
      *
      * A ResizeObserver watches the box itself. Watching the TEXT for mutations and
      * re-measuring in response was subtly wrong: the callback runs as a microtask, and
@@ -1098,8 +1099,8 @@
      * dropping down the centre line.
      *
      * A ResizeObserver cannot have that problem: it fires because the size changed and
-     * hands over the new size. Repositioning does not resize anything, so this cannot
-     * feed back on itself.
+     * hands over the new size. The next real viewport resize can then constrain the
+     * panel accurately, while an ordinary greeting or font change leaves it untouched.
      */
     if (window.ResizeObserver) {
       const sizeObserver = new ResizeObserver((entries) => {
@@ -1115,19 +1116,8 @@
           const h = border ? border.blockSize : node.el.getBoundingClientRect().height;
           if (Math.abs(w - node.w) < 0.5 && Math.abs(h - node.h) < 0.5) continue;
 
-          const cx = node.left + node.w / 2;
-          const cy = node.top + node.h / 2;
           node.w = w;
           node.h = h;
-
-          // Untouched nodes return home, which re-centres them. A node the visitor moved
-          // keeps its centre, so it grows evenly either side instead of creeping sideways.
-          if (node.userMoved) {
-            place(node, cx - w / 2, cy - h / 2);
-          } else {
-            const home = homePosition(node);
-            place(node, home.left, home.top, true);
-          }
           changed = true;
         }
         if (changed) drawWires();

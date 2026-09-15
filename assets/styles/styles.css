@@ -122,44 +122,10 @@ canvas#backgroundCanvas {
 #stage {
   position: fixed;
   inset: 0;
-  /* The resting state. look-around.js writes this property directly while a finger is
-     on the glass; this is what the page looks like before it ever does. */
   transform: translate3d(0, 0, 0);
-
-  /* One finger belongs to the translated composition. Two-finger browser zoom stays
-     available for accessibility; look-around.js deliberately implements no scaling. */
-  touch-action: pinch-zoom;
-}
-
-/*
- * Translation uses the already-painted texture. Promote the phone stage before the first
- * touch so the initial drag cannot incur layer creation. Pinch zoom belongs to the browser;
- * look-around.js never scales this large SVG/canvas subtree.
- */
-@media (pointer: coarse) {
-  #stage {
-    will-change: transform;
-  }
-
-  /* Chrome keeps each running SVG transform as a separate composited layer even when
-     its parent only translates. The phone exceeded its layer budget and checkerboarded
-     while panning. Mobile uses the same artwork as a static 29-layer composition; the
-     animated desktop presentation is unchanged. */
-  #stage * {
-    animation: none !important;
-  }
-}
-
-/* Only while returning to centre. During the drag the transform must follow the finger
-   exactly, and a transition there would make it lag behind by its own duration. */
-#stage.is-recentring {
-  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #stage.is-recentring {
-    transition: none;
-  }
+  /* The homepage is a fixed composition. Disable browser pan and pinch over it; menu
+     taps remain ordinary pointer activation. */
+  touch-action: none;
 }
 
 /*
@@ -173,13 +139,8 @@ canvas#backgroundCanvas {
  * to a 187px radius, so the same wheel fills two thirds of it and the page reads as if it
  * were zoomed in on the middle.
  *
- * 1200px restores the ratio - 600px of field around the same 125px wheel, the number the
- * desktop composition already uses. The outer rings then run off a phone screen, which is
- * correct: the field is meant to continue past the frame, and cropping it is what a small
- * window onto a large object looks like. Shrinking the wheel to fit instead would have
- * cost the icons their size, and they are the navigation.
- *
- * At or above 1200px this is exactly 100vmin, so nothing on a desktop moves.
+ * The phone floor is measured from the fullscreen desktop composition below. The outer
+ * rings run off a phone screen by design: the phone is a crop, not a reflow.
  */
 #backgroundRings {
   position: fixed;
@@ -200,21 +161,30 @@ canvas#backgroundCanvas {
 /*
  * The floor applies to touch screens only, and that scoping is the whole point.
  *
- * Applied everywhere, it also fires on any DESKTOP window whose smaller side is under
- * 1200px - which is most windows that are not full screen on a large display. There the
+ * Applied everywhere, it also fires on any desktop window whose smaller side is under
+ * the fullscreen reference - which is most non-maximised windows. There the
  * field becomes wider than the window and is cropped into a hard-edged band, with the
  * outer rings cut off at the frame. That is a regression, and it is invisible when the
  * only desktop you check is maximised on a 1397px-tall screen.
  *
- * A desktop window can be resized by the person using it, and when they make it smaller
- * they expect the composition to fit what is left. A phone cannot be resized, and there
- * the wheel - fixed at 250px - would otherwise fill two thirds of the field. So the phone
- * gets the floor and the desktop keeps fitting the window, which is what each one needs.
+ * A desktop window keeps fitting its viewport. A phone keeps the measured fullscreen
+ * geometry and exposes only the part inside its portrait or landscape frame.
  */
 @media (pointer: coarse) {
+  /* mobile-animations.js applies the same transforms as SVG attributes. Unlike CSS
+     transform animations, those do not allocate a compositor layer per ring. */
+  .ring-spin-cw,
+  .ring-spin-ccw,
+  .ring-marker-spin,
+  .rotating-squares,
+  .rotating-square,
+  .segmented-ring {
+    animation: none !important;
+  }
+
   #backgroundRings {
-    width: max(100vmin, 1200px);
-    height: max(100vmin, 1200px);
+    width: max(100vmin, 1388px);
+    height: max(100vmin, 1388px);
     /* Zooming out or panning reveals geometry outside the SVG's own viewport. */
     overflow: visible;
   }
@@ -981,6 +951,49 @@ canvas#backgroundCanvas {
   #radialMenu {
     width: 250px;
     height: 250px;
+  }
+}
+
+/* A coarse viewport is a movable crop of the desktop composition, not a separately
+   reflowed composition. Keep the three concentric systems on the measured 1388px/400px
+   geometry; the narrow phone viewport simply hides what lies beyond its edges. This
+   follows the max-width rules so pointer type, rather than width, wins on a phone. */
+@media (pointer: coarse) {
+  #ringTitle {
+    width: max(100vmin, 1388px);
+    height: max(100vmin, 1388px);
+  }
+
+  .ring-title {
+    font-size: 8px;
+  }
+
+  #radialMenu {
+    width: 400px;
+    height: 400px;
+  }
+
+  #shimtiPanel {
+    top: 20px;
+    padding: 8px 16px;
+  }
+
+  #shimtiPanel img {
+    height: 1.5em;
+  }
+
+  #shimtiPanel h1 {
+    font-size: 1.2em;
+  }
+
+  #shimtiPanelBottom {
+    bottom: 12px;
+    padding: 8px 16px;
+    max-width: min(90vw, 520px);
+  }
+
+  #shimtiPanelBottom #welcomeText {
+    font-size: 1em;
   }
 }
 
