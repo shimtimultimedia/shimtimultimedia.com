@@ -105,22 +105,27 @@ jobs:
       # resolves this flips with the site in one edit instead of the gate having to be
       # argued with.
       #
-      # It names the github.io host on purpose. The custom domain is registered but
-      # unreachable: the IONOS account holding it was closed and its nameservers still
-      # point at a cancelled Wix account, so shimtimultimedia.com serves someone else's
-      # page. Canonicals naming it would aim search engines and link scrapers at a host
-      # that cannot serve this site.
+      #
+      # It names the custom domain, which is where the site is served from. The
+      # github.io address must no longer appear in anything served: leaving a canonical
+      # or an og:url on it would tell search engines the real domain is a duplicate of a
+      # site that now redirects to it.
+      #
+      # The forbidden string is the old SITE ROOT - host plus repository path - not the
+      # bare github.io host. Those are not the same thing. The portfolio is a separate
+      # GitHub Pages site at shimtimultimedia.github.io/bryant-duhart, and the about and
+      # contact pages link to it on purpose. A gate written against the bare host would
+      # fail on those two correct links and force someone to weaken it.
       - name: One canonical host across all served files
         run: |
-          CANONICAL="shimtimultimedia.github.io"
-          OTHER="shimtimultimedia.com"
+          CANONICAL="shimtimultimedia.com"
+          OLD_ROOT="shimtimultimedia.github.io/shimtimultimedia.com"
 
-          # Matched at the host position only. "shimtimultimedia.com" is also this
-          # repository's NAME, so it appears as a path segment in every correct github.io
-          # URL - a plain substring search would flag every well-formed link on the site.
-          if grep -rnE "https?://${OTHER}([/\"'[:space:]]|$)" \
+          # Host plus repo path, so a link to the separate portfolio site on the same
+          # github.io host is not caught by it.
+          if grep -rnE "https?://${OLD_ROOT}([/\"'[:space:]]|$)" \
                --include='*.html' --include='*.xml' --include='*.txt' .; then
-            echo "::error::Absolute URLs name ${OTHER}, but the canonical host is ${CANONICAL}."
+            echo "::error::Absolute URLs still name ${OLD_ROOT}, but the site is served at ${CANONICAL}."
             exit 1
           fi
 
