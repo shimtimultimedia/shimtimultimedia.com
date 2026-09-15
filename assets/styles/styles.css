@@ -107,12 +107,32 @@ canvas#backgroundCanvas {
  */
 
 /* Background Ring Field */
+/*
+ * The ring field is given the same size floor as the wordmark, and for the same reason.
+ *
+ * The radial menu is drawn in pixels - its icons sit 125px from centre on every screen -
+ * while this layer filled the viewport, so its 200-unit viewBox was fitted to the smaller
+ * side. On a desktop that puts the field's outer radius near 600px around a 125px wheel,
+ * a ratio of about one to five, which is the composition: a small control panel set into
+ * something much larger. On a 375px phone the wheel does not move but the field collapses
+ * to a 187px radius, so the same wheel fills two thirds of it and the page reads as if it
+ * were zoomed in on the middle.
+ *
+ * 1200px restores the ratio - 600px of field around the same 125px wheel, the number the
+ * desktop composition already uses. The outer rings then run off a phone screen, which is
+ * correct: the field is meant to continue past the frame, and cropping it is what a small
+ * window onto a large object looks like. Shrinking the wheel to fit instead would have
+ * cost the icons their size, and they are the navigation.
+ *
+ * At or above 1200px this is exactly 100vmin, so nothing on a desktop moves.
+ */
 #backgroundRings {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  width: max(100vmin, 1200px);
+  height: max(100vmin, 1200px);
+  transform: translate(-50%, -50%);
   z-index: 10;
   pointer-events: none;
   background: transparent;
